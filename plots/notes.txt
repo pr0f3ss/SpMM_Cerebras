@@ -1,0 +1,2 @@
+peak bandwidth
+12 bytes/cycle

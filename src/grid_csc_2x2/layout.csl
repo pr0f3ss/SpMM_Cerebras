@@ -1,0 +1,148 @@
+// This program computes A*B on a 2-by-2 rectangle which has P0.0, P0.1, P1.0 and P1.1
+// The matrix A in CSC format is distributed to every PE via memcpy
+// The matrix B is distributed to first row PEs via memcpy
+// P1.0 and P1.1 sends out the result C_final via memcpy
+//
+// Each PE receives the local matrices representing A and B and computes A*B locally, then performs a row reduction to finish C_final = C_temp (west) + C_temp (east)
+// The last column contains the C_final and sends its result back to the host
+//
+
+// global routing colors
+param LAUNCH_ID: i16;
+
+// Lengths
+//    A_val     A_val_len x 1
+//    A_rowidx  A_rowidx_len x 1
+//    A_colptr  A_colptr_len x 1
+//    B         Kt x M
+//    C_temp    Nt x M
+//    C_final   Nt x M
+//
+// The unit test sets up the parameters Nt, Kt and M via cslc
+//    Nt = N / height
+//    Kt  = K / width
+//    M
+// where N, K and M are dimensions of global tensors A_global, B_global and C_global
+//    A_global is N x K (remember its represented in CSC format)
+//    B_global is K x M
+//    C_global is N x M
+
+
+param Nt:i32;         
+param Kt:i32; 
+param M:i32;  
+
+param A_val_len:i32;
+param A_rowidx_len:i32;
+param A_colptr_len:i32;
+
+param width: i16;
+param height: i16;
+
+const LAUNCH : color = @get_color(LAUNCH_ID);
+
+const RXACT_B: color  = @get_color(8) ;  // receive B
+const C_TEMP_REDUCE: color     = @get_color(9) ;  // row reduction
+
+// local tasks
+const COMP: color     = @get_color(12) ;
+const REDUCE: color   = @get_color(13) ;
+const DONE: color     = @get_color(14) ;
+
+// neither routing color nor local task
+const NONE: color     = @get_color(15) ; // NONE is don't care (neither routing color nor entrypoint)
+                             // the compiler emits an error for un-initialized colors or parameters
+                             // binding a non-routing local color to NONE to avoid the compilation error
+const EXIT: color     = @get_color(17);
+
+const memcpy = @import_module( "<memcpy_multi/get_params>", .{
+    .width = width,
+    .height = height
+    });
+
+
+layout{
+
+    @comptime_assert(2 == width);
+    @comptime_assert(2 == height);
+
+    // step 1: configure the rectangle which does not include halo
+    @set_rectangle(width, height);
+
+    // step 2: compile csl code for a set of PEx.y and generate out_x_y.elf
+    //   format: @set_tile_code(x, y, code.csl, param_binding);
+
+
+    // set common parameters that are shared across every PE
+    const comm_params = .{
+        .COMP=COMP,
+        .REDUCE=REDUCE,
+        .DONE=DONE,
+        .Nt=Nt,
+        .Kt=Kt,
+        .M=M,
+        .A_val_len=A_val_len,
+        .A_rowidx_len=A_rowidx_len,
+        .A_colptr_len=A_colptr_len,
+        .LAUNCH = LAUNCH,
+        .EXIT = EXIT
+    };
+
+    // first column: sends out C via C_TEMP_REDUCE color
+    // last row receives B, first row sends B
+    const memcpyParams0 = memcpy.get_params(0);
+    const route_00 = @concat_structs(
+        .{ .RXACT_B = NONE, .TXACT_B=RXACT_B, .RXACT_C = NONE, .TXACT_C = C_TEMP_REDUCE},
+        .{ .memcpyParams = memcpyParams0 } );
+    @set_tile_code(0, 0, "spmm_csc_memcpy.csl", @concat_structs(route_00, comm_params) );
+
+    const route_01 = @concat_structs(
+        .{ .RXACT_B = RXACT_B, .TXACT_B=NONE, .RXACT_C = NONE, .TXACT_C = C_TEMP_REDUCE},
+        .{ .memcpyParams = memcpyParams0 } );
+    @set_tile_code(0, 1, "spmm_csc_memcpy.csl", @concat_structs(route_01, comm_params) );
+
+    // second column: receive C via C_TEMP_REDUCE color
+    // last row receives B, first row sends B
+    const memcpyParams1 = memcpy.get_params(1);
+    const route_10 = @concat_structs(
+        .{ .RXACT_B = NONE, .TXACT_B=RXACT_B, .RXACT_C = C_TEMP_REDUCE , .TXACT_C = NONE},
+        .{ .memcpyParams = memcpyParams1 } );
+    @set_tile_code(1, 0, "spmm_csc_memcpy.csl", @concat_structs(route_10, comm_params) );
+
+    const route_11 = @concat_structs(
+        .{ .RXACT_B = RXACT_B, .TXACT_B=NONE, .RXACT_C = C_TEMP_REDUCE , .TXACT_C = NONE},
+        .{ .memcpyParams = memcpyParams1 } );
+    @set_tile_code(1, 1, "spmm_csc_memcpy.csl", @concat_structs(route_11, comm_params) );
+
+    // step 3: global and internal routing
+    //  format: @set_color_config(x, y, color, route);
+
+    // routing of RXACT_B
+    // - B is distributed along columns (size Kt x M)
+    // - then broadcast from the north to the south
+    // py = 0 receives B via H2D_2, and forwards B to south
+    // py = 1 receives B from north
+    @set_color_config(0, 0, RXACT_B, .{ .routes = .{ .rx = .{RAMP},  .tx = .{SOUTH} } });
+    @set_color_config(0, 1, RXACT_B, .{ .routes = .{ .rx = .{NORTH}, .tx = .{RAMP} } });
+
+    @set_color_config(1, 0, RXACT_B, .{ .routes = .{ .rx = .{RAMP}, .tx = .{SOUTH} } });
+    @set_color_config(1, 1, RXACT_B, .{ .routes = .{ .rx = .{NORTH}, .tx = .{RAMP} } });
+
+    // routing of C_temp (for row reduction)
+    // P0.0, P0.1: send local A*B (C_temp)
+    // P1.0, P1.1: receive local A*B (C_temp) of west PE
+    @set_color_config(0, 0, C_TEMP_REDUCE, .{ .routes = .{ .rx = .{RAMP}, .tx = .{EAST} } });
+    @set_color_config(0, 1, C_TEMP_REDUCE, .{ .routes = .{ .rx = .{RAMP}, .tx = .{EAST} } });
+    @set_color_config(1, 0, C_TEMP_REDUCE, .{ .routes = .{ .rx = .{WEST}, .tx = .{RAMP} } });
+    @set_color_config(1, 1, C_TEMP_REDUCE, .{ .routes = .{ .rx = .{WEST}, .tx = .{RAMP} } });
+
+    // export symbol name
+    @export_name("A_val", [*]f32, true);
+    @export_name("A_row_idx", [*]f32, true);
+    @export_name("A_col_ptr", [*]f32, true);
+    @export_name("B", [*]f32, true);
+    @export_name("C_temp", [*]f32, true);
+    @export_name("C_final", [*]f32, true);
+
+    @export_name("bcast_B", fn()void);
+}

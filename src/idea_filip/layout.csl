@@ -1,9 +1,11 @@
 // PxP = 4x4 grid
 const P = 4;
 
-const Nt = 14;
-const Kt = 14;
-const Mt = 14;
+const Nt = 8;
+const Kt = 4;
+const Mt = 4;
+
+// todo: Implement this correctly
 const nnz = 15;
 
 const c2d = @import_module("<collectives_2d/params>");

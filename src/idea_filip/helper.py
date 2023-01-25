@@ -47,6 +47,8 @@ def build_matrix_from_grid(N, K, A_i, A_j, A_val, A_grid_ptr):
     return A
 
 
+
+# ==== for testing: =====
 N = 32
 K = 16
 Nt = 8

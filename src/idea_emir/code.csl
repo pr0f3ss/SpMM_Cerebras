@@ -21,15 +21,16 @@ task main_task() void {
   // Multiplication result
   var result = [5]i16 {0, 0, 0, 0, 0};
 
-  // For item i IP
+  // For each row in A
   for (@range(i16, 5)) | i | {
     var nz_id = IP[i];
+    // For each non-zero value in row
     while(nz_id < IP[i + 1]){
       // Find location
       var x_index = J[nz_id];
       var val = V[nz_id];
 
-      // add product of multiplication
+      // add product of multiplication to the result
       result[i] = result[i] + val*x[x_index];
 
       // Increment nz_id

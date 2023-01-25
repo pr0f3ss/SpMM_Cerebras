@@ -1,0 +1,23 @@
+// PxP = 4x4 grid
+const P = 4;
+
+const Nt = 14;
+const Kt = 14;
+const Mt = 14;
+const nnz = 15;
+
+const c2d = @import_module("<collectives_2d/params>");
+
+layout {
+  @set_rectangle(P, P);
+
+  var Px: u16 = 0;
+  while (Px < P) : (Px += 1) {
+    var Py: u16 = 0;
+    while (Py < P) : (Py += 1) {
+      const params = c2d.get_params(Px, Py);
+      @set_tile_code(Px, Py, "pe.csl", .{ .c2d_params = params,
+        .Nt = Nt, .Kt = Kt, .Mt = Mt, .nnz = nnz });
+    }
+  }
+}

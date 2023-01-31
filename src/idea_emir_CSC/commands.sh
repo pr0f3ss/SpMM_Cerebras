@@ -1,4 +1,7 @@
 #!/usr/bin/env bash
-cslc ./code.csl --fabric-dims=3,3 \
+
+set -e
+
+cslc ./code.csl --fabric-dims=6,3 \
 --fabric-offsets=1,1 -o out
 cs_python run.py --name out

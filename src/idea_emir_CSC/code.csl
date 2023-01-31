@@ -1,65 +1,20 @@
-// Memory whose value we intend to update
-var global: i16 = 0;
-
-// Color along which we expect a wavelet.  Can be initialized using --colors.
 const main_color: color = @get_color(0);
-
-// Color along which we intend to send the output.
 const output_color: color = @get_color(1);
 
-// Data structure definition to send the output to the fabric.
-const dsd = @get_dsd(fabout_dsd, .{.fabric_color = output_color, .extent = 1});
-
-// Task that will be triggered when wavelet arrives
-task main_task() void {
-  // CSC implementation of sparse matrix A
-  var IP = [6]i16 { 0, 2, 3, 4, 7, 11 };
-  var J  = [11]i16 { 0, 2, 1, 3, 0, 2, 3, 0, 1, 2, 4 };
-  var V  = [11]i16 { 1, 5, 3, 10, 3, 8, 16, 5, 8, 17, 4 };
-  // Dense matrix to multiply with
-  var x = [5]i16 {1, 2, 1, 9, 8};
-  // Multiplication result
-  var result = [5]i16 {0, 0, 0, 0, 0};
-
-  // For each column in A
-  for (@range(i16, 5)) | i | {
-    var nz_id = IP[i];
-    // For each non-zero value in column
-    while(nz_id < IP[i + 1]){
-      // Find location
-      var y_index = J[nz_id];
-      var val = V[nz_id];
-
-      // add product of multiplication to the result
-      result[y_index] = result[y_index] + val*x[i];
-
-      // Increment nz_id
-      nz_id = nz_id + 1;
-    }
-  }
-
-  global = result[1];
-  @mov16(dsd, global);
-}
-
-// Define the initial state of colors and tasks
-comptime {
-
-  // Associate the appropriate task with the wavelet's color
-  @bind_task(main_task, main_color);
-
-  // Activate the color to run the task
-  @activate(main_color);
-}
-
 layout {
-  // Use just one 1 PE (rows=1, columns=1)
-  @set_rectangle(1, 1);
+  // Use a row of 4 PEs
+  @set_rectangle(4, 1);
 
-  // The lone PE in this kernel should execute the code in "code.csl"
-  @set_tile_code(0, 0, "code.csl");
+  var index: i16 = 0;
 
-  // Configure the wavelet route for the output message
-  const output_route = .{ .rx = .{ RAMP }, .tx = .{ EAST } };
-  @set_color_config(0, 0, output_color, .{ .routes = output_route });
+  while (index < 4) {
+    @set_tile_code(index, 0, "pe_program.csl",
+      .{ .trigger = main_color, .pe_id = index, .out_color = output_color });
+
+    // Configure the wavelet route for the output message
+    const output_route = .{ .rx = .{ RAMP }, .tx = .{ NORTH } };
+    @set_color_config(index, 0, output_color, .{ .routes = output_route });
+
+    index += 1;
+  }
 }

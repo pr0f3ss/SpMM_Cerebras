@@ -1,0 +1,52 @@
+// Not a complete program; the top-level source file is code.csl.
+
+param pe_id: i16;
+
+// Memory whose value we intend to update
+var global: i16 = 0;
+
+// Color along which we expect a wavelet
+param trigger: color;
+
+param out_color: color;
+const dsd = @get_dsd(fabout_dsd, .{.fabric_color = out_color, .extent = 1});
+
+// Task that will be triggered when wavelet arrives
+task pe_task() void {
+  // CSC implementation of sparse matrix A
+  var IP = [6]i16 { 0, 2, 3, 4, 7, 11 };
+  var J  = [11]i16 { 0, 2, 1, 3, 0, 2, 3, 0, 1, 2, 4 };
+  var V  = [11]i16 { 1, 5, 3, 10, 3, 8, 16, 5, 8, 17, 4 };
+  // Dense matrix to multiply with
+  var x = [5]i16 {1, 2, 1, 9, 8};
+  // Multiplication result
+  var result = [5]i16 {0, 0, 0, 0, 0};
+
+  // For each column in A
+  for (@range(i16, 5)) | i | {
+    var nz_id = IP[i];
+    // For each non-zero value in column
+    while(nz_id < IP[i + 1]){
+      // Find location
+      var y_index = J[nz_id];
+      var val = V[nz_id];
+
+      // add product of multiplication to the result
+      result[y_index] = result[y_index] + val*x[i];
+
+      // Increment nz_id
+      nz_id = nz_id + 1;
+    }
+  }
+
+  global = result[1];
+  @mov16(dsd, global);
+}
+
+comptime {
+  // Associate the appropriate task with the wavelet's color
+  @bind_task(pe_task, trigger);
+
+  // Activate the color to run the task
+  @activate(trigger);
+}

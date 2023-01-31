@@ -13,25 +13,25 @@ const dsd = @get_dsd(fabout_dsd, .{.fabric_color = output_color, .extent = 1});
 // Task that will be triggered when wavelet arrives
 task main_task() void {
   // CSR implementation of sparse matrix A
-  var IP = [6]i16 { 0, 3, 5, 8, 10, 11 };
-  var J  = [11]i16 { 0, 3, 4, 1, 4, 0, 3, 4, 2, 3, 4 };
-  var V  = [11]i16 { 1, 3, 5, 3, 8, 5, 8, 17, 10, 16, 14 };
+  var IP = [6]i16 { 0, 2, 3, 4, 7, 11 };
+  var J  = [11]i16 { 0, 2, 1, 3, 0, 2, 3, 0, 1, 2, 4 };
+  var V  = [11]i16 { 1, 5, 3, 10, 3, 8, 16, 5, 8, 17, 4 };
   // Dense matrix to multiply with
   var x = [5]i16 {1, 2, 1, 9, 8};
   // Multiplication result
   var result = [5]i16 {0, 0, 0, 0, 0};
 
-  // For each row in A
+  // For each column in A
   for (@range(i16, 5)) | i | {
     var nz_id = IP[i];
-    // For each non-zero value in row
+    // For each non-zero value in column
     while(nz_id < IP[i + 1]){
       // Find location
-      var x_index = J[nz_id];
+      var y_index = J[nz_id];
       var val = V[nz_id];
 
       // add product of multiplication to the result
-      result[i] = result[i] + val*x[x_index];
+      result[y_index] = result[y_index] + val*x[i];
 
       // Increment nz_id
       nz_id = nz_id + 1;

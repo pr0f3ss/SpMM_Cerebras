@@ -952,3 +952,93 @@
 @328 CTF Stats: num_inst_dispatch =          316
 @328 CTF Stats: num_inst_pipe     =          636
 @328 CTF Stats: num_switch_pos    =            0
+@0 GITREV=6fa1d2e77d85620a5a65599a2cbed8a986df5378, GITCLEAN=1
+@0 Create from size nx=3 ny=3
+@0 dimX=3, dimY=3
+@0 Invocation key is: sim7BE244BE55BDFD5B29AB87F48C81ACA9
+@0 Plan key is: plan812E72DC90B126745E4C4317EE299AEB
+@0 SimTraceCtf, flags:  wavelets=0 landing=1 inst=1 switch_positions=0 stalls=1
+@0 Architecture is: FYN
+@0 Simtile is: hwtile
+@367 No data movement in the last 50 cycles; stopping.
+@367 Thread  0
+@367 	internal: cur=5313294, tot=5313294, perCyc=  14477.64
+@367 	external: cur=4750128, tot=4750128, perCyc=  12943.13
+@367 Thread  1
+@367 	internal: cur=8439732, tot=8439732, perCyc=  22996.54
+@367 	external: cur=7538526, tot=7538526, perCyc=  20540.94
+@367 Thread  2
+@367 	internal: cur=2777130, tot=2777130, perCyc=   7567.11
+@367 	external: cur=2429658, tot=2429658, perCyc=   6620.32
+@367 Thread  3
+@367 	internal: cur=9834516, tot=9834516, perCyc=  26797.05
+@367 	external: cur=9172944, tot=9172944, perCyc=  24994.40
+@367 Thread  4
+@367 	internal: cur=4617270, tot=4617270, perCyc=  12581.12
+@367 	external: cur=4367880, tot=4367880, perCyc=  11901.58
+@367 Simulation used 0.03 real seconds, 0.02 user seconds, 0.01 system seconds, and ran at 12317.14 cyc/sec 258659.88 tile-cyc/sec with 5 threads, at 51731.98 tile-cyc/sec/thread , 110854.23 activetile-cyc/sec and  22170.85 activetile-cyc/sec/thread is. Initialization took 1.93 sec.
+@367 CTF Stats: num_stalls_       =          136
+@367 CTF Stats: num_wavelets      =           10
+@367 CTF Stats: num_inst_dispatch =          447
+@367 CTF Stats: num_inst_pipe     =          897
+@367 CTF Stats: num_switch_pos    =            0
+@0 GITREV=6fa1d2e77d85620a5a65599a2cbed8a986df5378, GITCLEAN=1
+@0 Create from size nx=3 ny=3
+@0 dimX=3, dimY=3
+@0 Invocation key is: simC54B8369D0F30A3F0FCA7646CFD9DC3D
+@0 Plan key is: plan812E72DC90B126745E4C4317EE299AEB
+@0 SimTraceCtf, flags:  wavelets=0 landing=1 inst=1 switch_positions=0 stalls=1
+@0 Architecture is: FYN
+@0 Simtile is: hwtile
+@367 No data movement in the last 50 cycles; stopping.
+@367 Thread  0
+@367 	internal: cur=2541132, tot=2541132, perCyc=   6924.07
+@367 	external: cur=2175732, tot=2175732, perCyc=   5928.43
+@367 Thread  1
+@367 	internal: cur=4178142, tot=4178142, perCyc=  11384.58
+@367 	external: cur=3745890, tot=3745890, perCyc=  10206.78
+@367 Thread  2
+@367 	internal: cur=20257560, tot=20257560, perCyc=  55197.71
+@367 	external: cur=19581012, tot=19581012, perCyc=  53354.26
+@367 Thread  3
+@367 	internal: cur=5256000, tot=5256000, perCyc=  14321.53
+@367 	external: cur=4726602, tot=4726602, perCyc=  12879.02
+@367 Thread  4
+@367 	internal: cur=4137570, tot=4137570, perCyc=  11274.03
+@367 	external: cur=3707820, tot=3707820, perCyc=  10103.05
+@367 Simulation used 0.03 real seconds, 0.01 user seconds, 0.02 system seconds, and ran at 12117.40 cyc/sec 254465.38 tile-cyc/sec with 5 threads, at 50893.08 tile-cyc/sec/thread , 109056.59 activetile-cyc/sec and  21811.32 activetile-cyc/sec/thread is. Initialization took 1.94 sec.
+@367 CTF Stats: num_stalls_       =          136
+@367 CTF Stats: num_wavelets      =           10
+@367 CTF Stats: num_inst_dispatch =          447
+@367 CTF Stats: num_inst_pipe     =          897
+@367 CTF Stats: num_switch_pos    =            0
+@0 GITREV=6fa1d2e77d85620a5a65599a2cbed8a986df5378, GITCLEAN=1
+@0 Create from size nx=3 ny=3
+@0 dimX=3, dimY=3
+@0 Invocation key is: sim0114744A532DCF103AC58A49C453F1E4
+@0 Plan key is: plan812E72DC90B126745E4C4317EE299AEB
+@0 SimTraceCtf, flags:  wavelets=0 landing=1 inst=1 switch_positions=0 stalls=1
+@0 Architecture is: FYN
+@0 Simtile is: hwtile
+@368 No data movement in the last 50 cycles; stopping.
+@368 Thread  0
+@368 	internal: cur=8956242, tot=8956242, perCyc=  24337.61
+@368 	external: cur=8582850, tot=8582850, perCyc=  23322.96
+@368 Thread  1
+@368 	internal: cur=3988800, tot=3988800, perCyc=  10839.13
+@368 	external: cur=3523446, tot=3523446, perCyc=   9574.58
+@368 Thread  2
+@368 	internal: cur=3004920, tot=3004920, perCyc=   8165.54
+@368 	external: cur=2643264, tot=2643264, perCyc=   7182.78
+@368 Thread  3
+@368 	internal: cur=6738264, tot=6738264, perCyc=  18310.50
+@368 	external: cur=6131214, tot=6131214, perCyc=  16660.91
+@368 Thread  4
+@368 	internal: cur=4067064, tot=4067064, perCyc=  11051.80
+@368 	external: cur=3610224, tot=3610224, perCyc=   9810.39
+@368 Simulation used 0.02 real seconds, 0.01 user seconds, 0.02 system seconds, and ran at 15757.44 cyc/sec 330906.15 tile-cyc/sec with 5 threads, at 66181.23 tile-cyc/sec/thread , 141816.92 activetile-cyc/sec and  28363.38 activetile-cyc/sec/thread is. Initialization took 1.95 sec.
+@368 CTF Stats: num_stalls_       =          136
+@368 CTF Stats: num_wavelets      =           10
+@368 CTF Stats: num_inst_dispatch =          447
+@368 CTF Stats: num_inst_pipe     =          897
+@368 CTF Stats: num_switch_pos    =            0

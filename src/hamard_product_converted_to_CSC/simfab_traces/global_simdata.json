@@ -2,10 +2,10 @@
 "xsize":10,
 "ysize":5,
 "traceFiles":1,
-"simtime":1675436446,
+"simtime":1675439034,
 "cwd":"/home/emir/Desktop/cerebras/src/hamard_product_example",
 "planfile":"",
-"ident":"simCF501DEC8DE726E516327E7072DEAB77",
+"ident":"sim59726E941DE1500A1F90C155BA658A99",
 "planKey":"plan0918C3AD538B57FAE1223931B4E879C0",
 "trace": {
   "stalls": true,

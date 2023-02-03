@@ -32,6 +32,7 @@ param last_pe: bool;
 param height: u16;
 
 param pe_length: u16;
+param x_max_size: u16;
 
 const sys_mod = @import_module("<memcpy/memcpy>", .{
      .MEMCPYH2D_1=MEMCPYH2D_DATA_1,
@@ -50,8 +51,11 @@ const sys_mod = @import_module("<memcpy/memcpy>", .{
 ////////////////////////////////////////////////////////////////////////////////
 
 const size : u16 = pe_length;
-var A = @zeros([size]f32);
-var B = @zeros([size]f32);
+// IP missing, handled by host
+var J = @zeros([size]f32); // y-indexes of A column
+var V = @zeros([size]f32); // non-zero values of A column
+var X = @zeros([x_max_size]f32); // slice of vector or matrix we wish to multiply with A
+var C_temp = @zeros([size]f32);
 
 var idxA : u16 = 0;
 var idxB : u16 = 0;
@@ -98,11 +102,12 @@ task f_user_comp() void {
   // Block MEMCPYH2D_DATA_2 for next batch
   @block(MEMCPYH2D_DATA_2);
 
-  // Computes Hadamard product
+
+  // Calcuate product of one column multiplied by X
   while (k < pe_length) : (k +=1) {
-    var reg_A : f32 = A[k];
-    var reg_B : f32 = B[k];
-    A[k] = reg_A * reg_B;
+    var y_index : u32 = A[k];
+    var value : f32 = B[k];
+    C_temp[y_index] = C_temp[y_index] + value * X;
   }
 
   // Performs additional computation reported back to host
@@ -122,7 +127,7 @@ task f_user_comp() void {
 //----
 }
 
-// Send A matrix to host
+// Send A matrix to host OUTPUT
 task f_user_send_1() void {
   @mov32(A_out_dsd, A_dsd, .{.async=true} );
 }

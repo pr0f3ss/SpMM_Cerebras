@@ -1,0 +1,23 @@
+{
+    "active_tile_cycles_per_second": 701248,
+    "active_tile_cycles_per_second_per_thread": 140250,
+    "cycle_count": 19515,
+    "cycles_per_second": 14025,
+    "fabric_x": 10,
+    "fabric_y": 5,
+    "hwtile_count": 50,
+    "init_time": 0.225167989730835,
+    "othertile_count": 0,
+    "real_time": 1.39144802093506,
+    "routetile_count": 0,
+    "spc_per_tile": 0.0,
+    "stall_count": 0,
+    "stalls_per_cycle": 0.0,
+    "sys_time": 2.803885,
+    "tile_cycles_per_second": 1121997,
+    "tile_cycles_per_second_per_thread": 224399,
+    "user_time": 1.642874,
+    "wavelet_count": 0,
+    "wavelets_per_cycle": 0.0,
+    "wpc_per_tile": 0.0
+}

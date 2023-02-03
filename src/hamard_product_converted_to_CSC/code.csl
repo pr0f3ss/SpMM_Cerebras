@@ -51,8 +51,8 @@ const sys_mod = @import_module("<memcpy/memcpy>", .{
 ////////////////////////////////////////////////////////////////////////////////
 
 const size : u16 = pe_length;
-// IP missing, handled by host
-var J = @zeros([size]f32); // y-indexes of A column
+var Column_pointer = @zeros([x_max_size]u32);
+var J = @zeros([size]u32); // y-indexes of A column
 var V = @zeros([size]f32); // non-zero values of A column
 var X = @zeros([x_max_size]f32); // slice of vector or matrix we wish to multiply with A
 var C_temp = @zeros([size]f32);

@@ -9,6 +9,7 @@ var tsc_start_buffer = @zeros([timestamp.tsc_size_words]u16);
 var tsc_end_buffer = @zeros([timestamp.tsc_size_words]u16);
 
 // Task colors
+const gatherparams_color = @get_color(14);
 const reduce_color = @get_color(12); // this one is activated as soon as main has finished
 const main_color = @get_color(13);
 const done_color = @get_color(8); // this color denotes whether C_final is done with the reduction
@@ -17,7 +18,9 @@ const done_color = @get_color(8); // this color denotes whether C_final is done 
 param Nt: u16;
 param Kt: u16;
 param Mt: u16;
-param nnz: u16;
+param val_size: u16;
+param col_size: u16;
+param row_size: u16;
 
 const P = @get_rectangle().width;
 
@@ -38,18 +41,14 @@ var py: u16;
 
 // ======== initialize helper arrays for A ======== 
 
+// holds values
+var A_val = @zeros([val_size]f32); 
+
 // holds row index
-var A_i = @zeros([nnz]f32); 
+var A_row_idx = @zeros([row_size]f32); 
 
-// holds col index
-var A_j = @zeros([nnz]f32); 
-
-// holds non-zero value and corresponds to A_i and A_j
-var A_val = @zeros([nnz]f32); 
-
-// holds grid pointer offset value, beginning at (0,0), (0,1), ...
-// Note: To get amount of non-zero values in a grid i we subtract A_grid_ptr[i+1] - A_grid_ptr[i]
-var A_grid_ptr = @zeros([P*P]f32); 
+// holds column pointer
+var A_col_ptr = @zeros([col_size]f32); 
 
 // ======== initialize helper arrays for B,C ======== 
 
@@ -67,31 +66,33 @@ task main() void {
     px = mpi_x.pe_id;
     py = mpi_y.pe_id;
 
-    // stores the number of elements in the grid
-    var n_elem_grid: u16; 
-    n_elem_grid = A_grid_ptr.*[P*px + py + 1] - A_grid_ptr.*[P*px + py];
 
-    // stores the grid pointer
-    var grid_ptr: u16;
-    grid_ptr = A_grid_ptr.*[P*px + py];
+    // iterate over column pointers
+    for (@range(u16, col_size-1)) |j| {
 
-    // iterate over non-zero elements in the grid
-    for (@range(u16, n_elem_grid)) |n| {
+        var row_elems = A_col_ptr[j+1] - A_col_ptr[j];
 
-        // get non-zero value
-        const a = A_val.*[grid_ptr + n];
+        // iterate over all non-zero rows in the column
+        for (@range(u16, row_elems)) |i| {
 
-        // get its coordinates
-        const a_i = A_i.*[grid_ptr + n];
-        const a_j = A_j.*[grid_ptr + n];
+            // get the reference element index
+            var ref_elem_idx = A_col_ptr[j+i];
 
-        // get B row
-        var B_dsd  = @get_dsd(mem1d_dsd, .{ .tensor_access = |i|{Mt} -> B_tile[a_j,i] });
+            // get non-zero value
+            const a = A_val[ref_elem_idx];
 
-        // get C_temp row
-        var C_temp = @get_dsd(mem1d_dsd, .{ .tensor_access = |i|{Mt} -> C_tile[a_i,i] });
+            // get its coordinates
+            const a_i = A_row_idx[ref_elem_idx]; // row
+            const a_j = A_col_ptr[i]; // col
 
-        @fmacs(C_temp, C_temp, B_dsd, a);
+            // get B row
+            var B_dsd  = @get_dsd(mem1d_dsd, .{ .tensor_access = |i|{Mt} -> B_tile[a_j,i] });
+
+            // get C_temp row
+            var C_temp = @get_dsd(mem1d_dsd, .{ .tensor_access = |i|{Mt} -> C_tile[a_i,i] });
+
+            @fmacs(C_temp, C_temp, B_dsd, a);
+        }
     }
 
 
@@ -105,8 +106,13 @@ task reduce() void {
     timestamp.get_timestamp(&tsc_end_buffer);
 }
 
+task gatherparams() void {
+    // todo
+}
+
 comptime {
     @bind_task(main, main_color);
     @bind_task(reduce, reduce_color);
+    @bind_task(gatherparams, gatherparams_color);
     @activate(main_color);
 }

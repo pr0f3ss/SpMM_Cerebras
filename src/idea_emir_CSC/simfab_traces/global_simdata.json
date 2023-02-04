@@ -2,10 +2,10 @@
 "xsize":6,
 "ysize":3,
 "traceFiles":1,
-"simtime":1675170316,
+"simtime":1675358393,
 "cwd":"/home/emir/Desktop/cerebras/src/idea_emir_CSC",
 "planfile":"",
-"ident":"sim4C2EA6B7D9BCACB8BE1FF1B537352A12",
+"ident":"sim9EF3A7D16214E71212B576CADF42CDC8",
 "planKey":"planE11E434D4248310B77CA73DA913DA1B3",
 "trace": {
   "stalls": true,

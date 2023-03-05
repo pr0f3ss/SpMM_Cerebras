@@ -1,2 +1,3 @@
 .vscode
 *.pyc
+./src/mpi_collectives/reduce/out

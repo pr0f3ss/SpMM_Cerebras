@@ -1,0 +1,126 @@
+param pe_id: u16;
+param id_x: u16;
+param id_y: u16;
+
+const reduce_x = @get_color(11);
+const reduce_y = @get_color(12);
+
+
+const rect_height = @get_rectangle().height;
+const rect_width = @get_rectangle().width;
+
+const x_color = @get_color(14);
+const Nx = 64; //Vector length
+
+var data = @constants([Nx]f32, 1.0);
+
+
+fn get_iter_count() u16 {
+  var i: u16 = 0;
+  var pow: u16 = 2;
+
+  while (pow <= rect_width) : (pow *= 2) {
+    if (id_x % pow != 0) break;
+    i+= 1;
+
+    if (id_y % pow != 0) break;
+    i+= 1;
+  }
+
+  return i;
+}
+
+const iterations = comptime get_iter_count();
+
+const reduce_color = if (iterations % 2 == 0) reduce_x else reduce_y;
+
+var memDsd = @get_dsd(mem1d_dsd, .{ .tensor_access = |i|{Nx} -> data[i]});
+var sendDsd = @get_dsd(fabout_dsd, .{.extent = Nx, .fabric_color = reduce_color});
+var recvDsdX = @get_dsd(fabin_dsd, .{.extent = Nx, .fabric_color = reduce_x});
+var recvDsdY = @get_dsd(fabin_dsd, .{.extent = Nx, .fabric_color = reduce_y});
+var ctrlDsd = @get_dsd(fabout_dsd, .{.extent = 1, .fabric_color = reduce_color, .control = true});
+
+// Opcodes for potentially updating switches
+const opcode_nop = 0;
+const opcode_switch_advance = 1;
+const opcode_switch_reset = 2;
+const opcode_teardown = 3;
+
+// Helper function to construct the payload of the control wavelet.
+// args:
+//    ceFilter: a filter bit to disable transmission from the destination
+//              router to the destination CE,
+//    opcode: switching opcode (see comment above), and
+//    data: 16-bit wavelet data
+fn ctrl(ce_filter: bool, opcode: i16, data: u16) u32 {
+  const six = @as(u32, 6);
+  const eight = @as(u32, 8);
+  const sixteen = @as(u32, 16);
+
+  const hi_word = @as(u32, 1) |
+                  @as(u32, opcode) << six |
+                  @as(u32, ce_filter) << eight;
+
+  const lo_word = @as(u32, data);
+  return hi_word << sixteen | lo_word;
+}
+
+
+// Reduction Task
+task task_x() void {
+
+  var count: u16 = 0;
+  while (count < iterations) : (count += 1) {
+    if (count % 2 == 0) {
+      @fadds(memDsd, memDsd, recvDsdX);
+    } else {
+      @fadds(memDsd, memDsd, recvDsdY);
+    }
+
+  }
+
+  if (iterations > 1) {
+    @mov32(ctrlDsd, comptime ctrl(true, opcode_switch_advance, 0x00));
+  }
+
+  if (pe_id != 0) {
+    @fmovs(sendDsd, memDsd);
+  }
+}
+
+const switches_x = .{
+  .pos1 = .{ .tx = WEST },
+  .current_switch_pos = 0,
+  .ring_mode = true,
+};
+
+const switches_y = .{
+  .pos1 = .{ .tx = NORTH },
+  .current_switch_pos = 0,
+  .ring_mode = true,
+};
+
+fn tx_x() comptime_struct {
+  if (iterations > 0) {
+    return .{RAMP};
+  } else {
+    return .{WEST};
+  }
+}
+
+fn tx_y() comptime_struct {
+  if (iterations > 1) {
+    return .{RAMP};
+  } else {
+    return .{NORTH};
+  }
+}
+
+comptime {
+  @bind_task(task_x, x_color);
+  @activate(x_color);
+  @block(reduce_x);
+  @block(reduce_y);
+  @set_local_color_config(reduce_x, .{.routes = .{.rx = .{RAMP, EAST }, .tx = comptime tx_x()}, .switches = switches_x});
+  @set_local_color_config(reduce_y, .{.routes = .{.rx = .{RAMP, SOUTH }, .tx = comptime tx_y()}, .switches = switches_y});
+}

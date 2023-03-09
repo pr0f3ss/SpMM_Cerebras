@@ -1,5 +1,5 @@
-const Pw: u16 = 8;
-const Ph: u16 = 8;
+const Pw: u16 = 17;
+const Ph: u16 = 16;
 
 layout {
   @set_rectangle(Pw, Ph);

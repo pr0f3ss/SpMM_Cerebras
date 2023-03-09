@@ -1,6 +1,6 @@
 # Reduce
 
-Low depth implementation of reduce on a 2d grid. Currently only works when grid side is power of 2.
+Low depth implementation of reduce on a 2d grid. Works for arbitrary grid size.
 
 ## Example
 An example with 4 PEs.

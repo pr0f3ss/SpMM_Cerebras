@@ -8,7 +8,7 @@ const rect_width = @get_rectangle().width;
 const x_color = @get_color(14);
 const Nx = 4; //Vector length
 
-const rev_id: u16 = rect_width - pe_id;
+const rev_id: u16 = rect_width - (pe_id + 1);
 
 var data = @constants([Nx]f32, 1.0);
 
@@ -18,7 +18,7 @@ fn get_iter_count() u16 {
   var pow: u16 = 1;
   
   if (pe_id > 0) {
-    while (rev_id & pow == 0 and pow <= rect_width) : (pow *= 2) {
+    while (rev_id & pow != 0 and pow <= rect_width) : (pow *= 2) {
       i += 1;
     }
   } else {

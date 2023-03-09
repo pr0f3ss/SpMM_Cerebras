@@ -9,25 +9,43 @@ const reduce_y = @get_color(12);
 const rect_height = @get_rectangle().height;
 const rect_width = @get_rectangle().width;
 
+const rev_x = rect_width - (id_x + 1);
+const rev_y = rect_height - (id_y + 1);
+
 const x_color = @get_color(14);
-const Nx = 64; //Vector length
+const Nx = 4; //Vector length
 
 var data = @constants([Nx]f32, 1.0);
 
 
 fn get_iter_count() u16 {
   var i: u16 = 0;
-  var pow: u16 = 2;
+  var pow: u16 = 1;
+  if (id_x == 0 and id_y == 0) return 2;
 
-  while (pow <= rect_width) : (pow *= 2) {
-    if (id_x % pow != 0) break;
-    i+= 1;
+  if (id_x > 0 and id_y > 0) {
 
-    if (id_y % pow != 0) break;
-    i+= 1;
+    while (pow <= rect_width and pow <= rect_height) : (pow *= 2) {
+      if (rev_x & pow == 0) break;
+      i += 1;
+
+      if (rev_y & pow == 0) break;
+      i += 1;
+    }
+
+    return i;
   }
 
-  return i;
+  // This is needed for setting the right reduce_color
+  if (id_y == 0) {
+    if (pow & rev_x == 0) return 0;
+
+    return 2;
+  }
+
+  if (pow & rev_y == 0) return 1;
+
+  return 3;
 }
 
 const iterations = comptime get_iter_count();
@@ -70,13 +88,47 @@ fn ctrl(ce_filter: bool, opcode: i16, data: u16) u32 {
 task task_x() void {
 
   var count: u16 = 0;
-  while (count < iterations) : (count += 1) {
-    if (count % 2 == 0) {
-      @fadds(memDsd, memDsd, recvDsdX);
-    } else {
+  var pow: u16 = 1;
+
+  if (id_x > 0 and id_y > 0) {
+    while (count < iterations) : (count += 1) {
+      if (count % 2 == 0) {
+        @fadds(memDsd, memDsd, recvDsdX);
+      } else {
+        @fadds(memDsd, memDsd, recvDsdY);
+      }
+
+    }
+  } else if (id_y > 0 and id_x == 0) {
+
+    while (pow <= rect_width or pow <= rect_height) : (pow *= 2) {
+      if (pow <= rect_width and rev_x & pow != 0) {
+        @fadds(memDsd, memDsd, recvDsdX);
+      }
+
+      if (pow > rect_height or rev_y & pow == 0) break;
       @fadds(memDsd, memDsd, recvDsdY);
     }
+  } else if (id_y == 0 and id_x > 0) {
 
+    while (pow <= rect_width or pow <= rect_height) : (pow *= 2) {
+      if (pow > rect_width or rev_x & pow == 0) break;
+      @fadds(memDsd, memDsd, recvDsdX);
+
+      if (pow <= rect_height and rev_y & pow != 0) {
+        @fadds(memDsd, memDsd, recvDsdY);
+      }
+    }
+  } else {
+    while (pow <= rect_width or pow <= rect_height) : (pow *= 2) {
+      if (pow <= rect_width and rev_x & pow != 0) {
+        @fadds(memDsd, memDsd, recvDsdX);
+      }
+
+      if (pow <= rect_height and rev_y & pow != 0) {
+        @fadds(memDsd, memDsd, recvDsdY);
+      }
+    }
   }
 
   if (iterations > 1) {

@@ -1170,3 +1170,874 @@
 @860 CTF Stats: num_inst_dispatch =        17184
 @860 CTF Stats: num_inst_pipe     =        35819
 @860 CTF Stats: num_switch_pos    =            0
+@0 GITREV=6fa1d2e77d85620a5a65599a2cbed8a986df5378, GITCLEAN=1
+@0 Create from size nx=243 ny=1
+@0 dimX=243, dimY=1
+@0 Invocation key is: sim4EDF55752C3303E4A3ECB5EBE5CC30B8
+@0 Plan key is: planDD75BFBC1B6557ADCDC62BEDFD87C12F
+@0 SimTraceCtf, flags:  wavelets=0 landing=1 inst=1 switch_positions=0 stalls=1
+@0 Architecture is: FYN
+@0 Simtile is: hwtile
+@860 No data movement in the last 50 cycles; stopping.
+@860 Thread  0
+@860 	internal: cur=376719214, tot=376719214, perCyc= 438045.60
+@860 	external: cur=323089789, tot=323089789, perCyc= 375685.80
+@860 Thread  1
+@860 	internal: cur=413096756, tot=413096756, perCyc= 480345.07
+@860 	external: cur=357498475, tot=357498475, perCyc= 415695.90
+@860 Thread  2
+@860 	internal: cur=387236524, tot=387236524, perCyc= 450275.03
+@860 	external: cur=334579861, tot=334579861, perCyc= 389046.35
+@860 Thread  3
+@860 	internal: cur=381144381, tot=381144381, perCyc= 443191.14
+@860 	external: cur=328517129, tot=328517129, perCyc= 381996.66
+@860 Thread  4
+@860 	internal: cur=389520915, tot=389520915, perCyc= 452931.30
+@860 	external: cur=335833972, tot=335833972, perCyc= 390504.62
+@860 Simulation used 0.47 real seconds, 0.58 user seconds, 0.47 system seconds, and ran at 1818.25 cyc/sec 1329141.69 tile-cyc/sec with 5 threads, at 265828.34 tile-cyc/sec/thread , 441835.06 activetile-cyc/sec and  88367.01 activetile-cyc/sec/thread is. Initialization took 0.38 sec.
+@860 CTF Stats: num_stalls_       =          844
+@860 CTF Stats: num_wavelets      =         4857
+@860 CTF Stats: num_inst_dispatch =        17184
+@860 CTF Stats: num_inst_pipe     =        35819
+@860 CTF Stats: num_switch_pos    =            0
+@0 GITREV=6fa1d2e77d85620a5a65599a2cbed8a986df5378, GITCLEAN=1
+@0 Create from size nx=244 ny=1
+@0 dimX=244, dimY=1
+@0 Invocation key is: simF8571A9A8A74D8BD6DF85C9563FFC5FD
+@0 Plan key is: planE978C9BBE352283204848A05B12B85CE
+@0 SimTraceCtf, flags:  wavelets=0 landing=1 inst=1 switch_positions=0 stalls=1
+@0 Architecture is: FYN
+@0 Simtile is: hwtile
+@821 No data movement in the last 50 cycles; stopping.
+@821 Thread  0
+@821 	internal: cur=365801095, tot=365801095, perCyc= 445555.54
+@821 	external: cur=312988744, tot=312988744, perCyc= 381228.68
+@821 Thread  1
+@821 	internal: cur=373212026, tot=373212026, perCyc= 454582.25
+@821 	external: cur=320516469, tot=320516469, perCyc= 390397.65
+@821 Thread  2
+@821 	internal: cur=368544833, tot=368544833, perCyc= 448897.48
+@821 	external: cur=316045275, tot=316045275, perCyc= 384951.61
+@821 Thread  3
+@821 	internal: cur=370308925, tot=370308925, perCyc= 451046.19
+@821 	external: cur=317855226, tot=317855226, perCyc= 387156.18
+@821 Thread  4
+@821 	internal: cur=367871783, tot=367871783, perCyc= 448077.69
+@821 	external: cur=316617931, tot=316617931, perCyc= 385649.12
+@821 Simulation used 0.33 real seconds, 0.67 user seconds, 0.24 system seconds, and ran at 2468.59 cyc/sec 1811942.98 tile-cyc/sec with 5 threads, at 362388.60 tile-cyc/sec/thread , 602335.27 activetile-cyc/sec and  120467.05 activetile-cyc/sec/thread is. Initialization took 0.32 sec.
+@821 CTF Stats: num_stalls_       =          852
+@821 CTF Stats: num_wavelets      =         4886
+@821 CTF Stats: num_inst_dispatch =        17203
+@821 CTF Stats: num_inst_pipe     =        35861
+@821 CTF Stats: num_switch_pos    =            0
+@0 GITREV=6fa1d2e77d85620a5a65599a2cbed8a986df5378, GITCLEAN=1
+@0 Create from size nx=244 ny=1
+@0 dimX=244, dimY=1
+@0 Invocation key is: simB6D1C9D5AA6A1788E503A5C6177CC968
+@0 Plan key is: planE978C9BBE352283204848A05B12B85CE
+@0 SimTraceCtf, flags:  wavelets=0 landing=1 inst=1 switch_positions=0 stalls=1
+@0 Architecture is: FYN
+@0 Simtile is: hwtile
+@125 ERROR: P16.0 (hwtile) wavelet C11 from Ramp: ctrl=0, idx=4000, data=0000 (+0.000(-15)), ident=0000100B00000003
+@125 ERROR: P2.0 (hwtile) wavelet C11 from Ramp: ctrl=0, idx=4000, data=0000 (+0.000(-15)), ident=0000020B00000003
+@125 ERROR: P32.0 (hwtile) wavelet C11 from Ramp: ctrl=0, idx=4000, data=0000 (+0.000(-15)), ident=0000200B00000003
+@125 ERROR: P16.0 (hwtile) wavelet C11 from East: ctrl=0, idx=4000, data=0000 (+0.000(-15)), ident=0000120B00000001
+@125 ERROR: P2.0 (hwtile) wavelet C11 from East: ctrl=0, idx=4000, data=0000 (+0.000(-15)), ident=0000040B00000001
+@125 ERROR: P16.0 (hwtile) C11 arrived from Ramp and East on the same cycle
+@125 ERROR: P2.0 (hwtile) C11 arrived from Ramp and East on the same cycle
+@125 FATAL: This violates architecture rules.  The most likely cause is a misconfigured router on an adjacent tile
+@125 FATAL: This violates architecture rules.  The most likely cause is a misconfigured router on an adjacent tile
+@125 ERROR: P32.0 (hwtile) wavelet C11 from East: ctrl=0, idx=4000, data=0000 (+0.000(-15)), ident=0000220B00000001
+@125 ERROR: P32.0 (hwtile) C11 arrived from Ramp and East on the same cycle
+@125 FATAL: This violates architecture rules.  The most likely cause is a misconfigured router on an adjacent tile
+@125 ERROR: P4.0 (hwtile) wavelet C11 from Ramp: ctrl=0, idx=4000, data=0000 (+0.000(-15)), ident=0000040B00000003
+@125 ERROR: P18.0 (hwtile) wavelet C11 from Ramp: ctrl=0, idx=4000, data=0000 (+0.000(-15)), ident=0000120B00000003
+@125 ERROR: P4.0 (hwtile) wavelet C11 from East: ctrl=0, idx=4000, data=0000 (+0.000(-15)), ident=0000060B00000001
+@125 ERROR: P4.0 (hwtile) C11 arrived from Ramp and East on the same cycle
+@125 ERROR: P18.0 (hwtile) wavelet C11 from East: ctrl=0, idx=4000, data=0000 (+0.000(-15)), ident=0000140B00000001
+@125 FATAL: This violates architecture rules.  The most likely cause is a misconfigured router on an adjacent tile
+@125 ERROR: P18.0 (hwtile) C11 arrived from Ramp and East on the same cycle
+@125 FATAL: This violates architecture rules.  The most likely cause is a misconfigured router on an adjacent tile
+@125 ERROR: P34.0 (hwtile) wavelet C11 from Ramp: ctrl=0, idx=4000, data=0000 (+0.000(-15)), ident=0000220B00000003
+@125 ERROR: P34.0 (hwtile) wavelet C11 from East: ctrl=0, idx=4000, data=0000 (+0.000(-15)), ident=0000240B00000001
+@125 ERROR: P34.0 (hwtile) C11 arrived from Ramp and East on the same cycle
+@125 FATAL: This violates architecture rules.  The most likely cause is a misconfigured router on an adjacent tile
+@125 ERROR: P20.0 (hwtile) wavelet C11 from Ramp: ctrl=0, idx=4000, data=0000 (+0.000(-15)), ident=0000140B00000003
+@125 ERROR: P6.0 (hwtile) wavelet C11 from Ramp: ctrl=0, idx=4000, data=0000 (+0.000(-15)), ident=0000060B00000003
+@125 ERROR: P48.0 (hwtile) wavelet C11 from Ramp: ctrl=0, idx=4000, data=0000 (+0.000(-15)), ident=0000300B00000003
+@125 ERROR: P6.0 (hwtile) wavelet C11 from East: ctrl=0, idx=4000, data=0000 (+0.000(-15)), ident=0000080B00000001
+@125 ERROR: P20.0 (hwtile) wavelet C11 from East: ctrl=0, idx=4000, data=0000 (+0.000(-15)), ident=0000160B00000001
+@125 ERROR: P6.0 (hwtile) C11 arrived from Ramp and East on the same cycle
+@125 FATAL: This violates architecture rules.  The most likely cause is a misconfigured router on an adjacent tile
+@125 ERROR: P20.0 (hwtile) C11 arrived from Ramp and East on the same cycle
+@125 ERROR: P36.0 (hwtile) wavelet C11 from Ramp: ctrl=0, idx=4000, data=0000 (+0.000(-15)), ident=0000240B00000003
+@125 FATAL: This violates architecture rules.  The most likely cause is a misconfigured router on an adjacent tile
+@125 ERROR: P48.0 (hwtile) wavelet C11 from East: ctrl=0, idx=4000, data=0000 (+0.000(-15)), ident=0000320B00000001
+@125 ERROR: P48.0 (hwtile) C11 arrived from Ramp and East on the same cycle
+@125 FATAL: This violates architecture rules.  The most likely cause is a misconfigured router on an adjacent tile
+@125 ERROR: P36.0 (hwtile) wavelet C11 from East: ctrl=0, idx=4000, data=0000 (+0.000(-15)), ident=0000260B00000001
+@125 ERROR: P36.0 (hwtile) C11 arrived from Ramp and East on the same cycle
+@125 FATAL: This violates architecture rules.  The most likely cause is a misconfigured router on an adjacent tile
+@125 ERROR: P8.0 (hwtile) wavelet C11 from Ramp: ctrl=0, idx=4000, data=0000 (+0.000(-15)), ident=0000080B00000003
+@125 ERROR: P22.0 (hwtile) wavelet C11 from Ramp: ctrl=0, idx=4000, data=0000 (+0.000(-15)), ident=0000160B00000003
+@125 ERROR: P8.0 (hwtile) wavelet C11 from East: ctrl=0, idx=4000, data=0000 (+0.000(-15)), ident=00000A0B00000001
+@125 ERROR: P8.0 (hwtile) C11 arrived from Ramp and East on the same cycle
+@125 FATAL: This violates architecture rules.  The most likely cause is a misconfigured router on an adjacent tile
+@125 ERROR: P22.0 (hwtile) wavelet C11 from East: ctrl=0, idx=4000, data=0000 (+0.000(-15)), ident=0000180B00000001
+@125 ERROR: P50.0 (hwtile) wavelet C11 from Ramp: ctrl=0, idx=4000, data=0000 (+0.000(-15)), ident=0000320B00000003
+@125 ERROR: P38.0 (hwtile) wavelet C11 from Ramp: ctrl=0, idx=4000, data=0000 (+0.000(-15)), ident=0000260B00000003
+@125 ERROR: P22.0 (hwtile) C11 arrived from Ramp and East on the same cycle
+@125 FATAL: This violates architecture rules.  The most likely cause is a misconfigured router on an adjacent tile
+@125 ERROR: P50.0 (hwtile) wavelet C11 from East: ctrl=0, idx=4000, data=0000 (+0.000(-15)), ident=0000340B00000001
+@125 ERROR: P38.0 (hwtile) wavelet C11 from East: ctrl=0, idx=4000, data=0000 (+0.000(-15)), ident=0000280B00000001
+@125 ERROR: P50.0 (hwtile) C11 arrived from Ramp and East on the same cycle
+@125 FATAL: This violates architecture rules.  The most likely cause is a misconfigured router on an adjacent tile
+@125 ERROR: P38.0 (hwtile) C11 arrived from Ramp and East on the same cycle
+@125 FATAL: This violates architecture rules.  The most likely cause is a misconfigured router on an adjacent tile
+@125 ERROR: P10.0 (hwtile) wavelet C11 from Ramp: ctrl=0, idx=4000, data=0000 (+0.000(-15)), ident=00000A0B00000003
+@125 ERROR: P24.0 (hwtile) wavelet C11 from Ramp: ctrl=0, idx=4000, data=0000 (+0.000(-15)), ident=0000180B00000003
+@125 ERROR: P10.0 (hwtile) wavelet C11 from East: ctrl=0, idx=4000, data=0000 (+0.000(-15)), ident=00000C0B00000001
+@125 ERROR: P10.0 (hwtile) C11 arrived from Ramp and East on the same cycle
+@125 FATAL: This violates architecture rules.  The most likely cause is a misconfigured router on an adjacent tile
+@125 ERROR: P24.0 (hwtile) wavelet C11 from East: ctrl=0, idx=4000, data=0000 (+0.000(-15)), ident=00001A0B00000001
+@125 ERROR: P40.0 (hwtile) wavelet C11 from Ramp: ctrl=0, idx=4000, data=0000 (+0.000(-15)), ident=0000280B00000003
+@125 ERROR: P52.0 (hwtile) wavelet C11 from Ramp: ctrl=0, idx=4000, data=0000 (+0.000(-15)), ident=0000340B00000003
+@125 ERROR: P24.0 (hwtile) C11 arrived from Ramp and East on the same cycle
+@125 FATAL: This violates architecture rules.  The most likely cause is a misconfigured router on an adjacent tile
+@125 ERROR: P40.0 (hwtile) wavelet C11 from East: ctrl=0, idx=4000, data=0000 (+0.000(-15)), ident=00002A0B00000001
+@125 ERROR: P52.0 (hwtile) wavelet C11 from East: ctrl=0, idx=4000, data=0000 (+0.000(-15)), ident=0000360B00000001
+@125 ERROR: P40.0 (hwtile) C11 arrived from Ramp and East on the same cycle
+@125 ERROR: P52.0 (hwtile) C11 arrived from Ramp and East on the same cycle
+@125 FATAL: This violates architecture rules.  The most likely cause is a misconfigured router on an adjacent tile
+@125 FATAL: This violates architecture rules.  The most likely cause is a misconfigured router on an adjacent tile
+@125 ERROR: P12.0 (hwtile) wavelet C11 from Ramp: ctrl=0, idx=4000, data=0000 (+0.000(-15)), ident=00000C0B00000003
+@125 ERROR: P26.0 (hwtile) wavelet C11 from Ramp: ctrl=0, idx=4000, data=0000 (+0.000(-15)), ident=00001A0B00000003
+@125 ERROR: P12.0 (hwtile) wavelet C11 from East: ctrl=0, idx=4000, data=0000 (+0.000(-15)), ident=00000E0B00000001
+@125 ERROR: P12.0 (hwtile) C11 arrived from Ramp and East on the same cycle
+@125 FATAL: This violates architecture rules.  The most likely cause is a misconfigured router on an adjacent tile
+@125 ERROR: P26.0 (hwtile) wavelet C11 from East: ctrl=0, idx=4000, data=0000 (+0.000(-15)), ident=00001C0B00000001
+@125 ERROR: P26.0 (hwtile) C11 arrived from Ramp and East on the same cycle
+@125 FATAL: This violates architecture rules.  The most likely cause is a misconfigured router on an adjacent tile
+@125 ERROR: P42.0 (hwtile) wavelet C11 from Ramp: ctrl=0, idx=4000, data=0000 (+0.000(-15)), ident=00002A0B00000003
+@125 ERROR: P54.0 (hwtile) wavelet C11 from Ramp: ctrl=0, idx=4000, data=0000 (+0.000(-15)), ident=0000360B00000003
+@125 ERROR: P42.0 (hwtile) wavelet C11 from East: ctrl=0, idx=4000, data=0000 (+0.000(-15)), ident=00002C0B00000001
+@125 ERROR: P54.0 (hwtile) wavelet C11 from East: ctrl=0, idx=4000, data=0000 (+0.000(-15)), ident=0000380B00000001
+@125 ERROR: P42.0 (hwtile) C11 arrived from Ramp and East on the same cycle
+@125 FATAL: This violates architecture rules.  The most likely cause is a misconfigured router on an adjacent tile
+@125 ERROR: P54.0 (hwtile) C11 arrived from Ramp and East on the same cycle
+@125 FATAL: This violates architecture rules.  The most likely cause is a misconfigured router on an adjacent tile
+@125 ERROR: P14.0 (hwtile) wavelet C11 from Ramp: ctrl=0, idx=4000, data=0000 (+0.000(-15)), ident=00000E0B00000003
+@125 ERROR: P28.0 (hwtile) wavelet C11 from Ramp: ctrl=0, idx=4000, data=0000 (+0.000(-15)), ident=00001C0B00000003
+@125 ERROR: P14.0 (hwtile) wavelet C11 from East: ctrl=0, idx=4000, data=0000 (+0.000(-15)), ident=0000100B00000001
+@125 ERROR: P14.0 (hwtile) C11 arrived from Ramp and East on the same cycle
+@125 ERROR: P28.0 (hwtile) wavelet C11 from East: ctrl=0, idx=4000, data=0000 (+0.000(-15)), ident=00001E0B00000001
+@125 FATAL: This violates architecture rules.  The most likely cause is a misconfigured router on an adjacent tile
+@125 ERROR: P44.0 (hwtile) wavelet C11 from Ramp: ctrl=0, idx=4000, data=0000 (+0.000(-15)), ident=00002C0B00000003
+@125 ERROR: P56.0 (hwtile) wavelet C11 from Ramp: ctrl=0, idx=4000, data=0000 (+0.000(-15)), ident=0000380B00000003
+@125 ERROR: P28.0 (hwtile) C11 arrived from Ramp and East on the same cycle
+@125 FATAL: This violates architecture rules.  The most likely cause is a misconfigured router on an adjacent tile
+@125 ERROR: P44.0 (hwtile) wavelet C11 from East: ctrl=0, idx=4000, data=0000 (+0.000(-15)), ident=00002E0B00000001
+@125 ERROR: P56.0 (hwtile) wavelet C11 from East: ctrl=0, idx=4000, data=0000 (+0.000(-15)), ident=00003A0B00000001
+@125 ERROR: P44.0 (hwtile) C11 arrived from Ramp and East on the same cycle
+@125 ERROR: P56.0 (hwtile) C11 arrived from Ramp and East on the same cycle
+@125 FATAL: This violates architecture rules.  The most likely cause is a misconfigured router on an adjacent tile
+@125 FATAL: This violates architecture rules.  The most likely cause is a misconfigured router on an adjacent tile
+@125 ERROR: P64.0 (hwtile) wavelet C11 from Ramp: ctrl=0, idx=4000, data=0000 (+0.000(-15)), ident=0000400B00000003
+@125 ERROR: P30.0 (hwtile) wavelet C11 from Ramp: ctrl=0, idx=4000, data=0000 (+0.000(-15)), ident=00001E0B00000003
+@125 ERROR: P64.0 (hwtile) wavelet C11 from East: ctrl=0, idx=4000, data=0000 (+0.000(-15)), ident=0000420B00000001
+@125 ERROR: P30.0 (hwtile) wavelet C11 from East: ctrl=0, idx=4000, data=0000 (+0.000(-15)), ident=0000200B00000001
+@125 ERROR: P64.0 (hwtile) C11 arrived from Ramp and East on the same cycle
+@125 FATAL: This violates architecture rules.  The most likely cause is a misconfigured router on an adjacent tile
+@125 ERROR: P30.0 (hwtile) C11 arrived from Ramp and East on the same cycle
+@125 FATAL: This violates architecture rules.  The most likely cause is a misconfigured router on an adjacent tile
+@125 ERROR: P58.0 (hwtile) wavelet C11 from Ramp: ctrl=0, idx=4000, data=0000 (+0.000(-15)), ident=00003A0B00000003
+@125 ERROR: P46.0 (hwtile) wavelet C11 from Ramp: ctrl=0, idx=4000, data=0000 (+0.000(-15)), ident=00002E0B00000003
+@125 ERROR: P46.0 (hwtile) wavelet C11 from East: ctrl=0, idx=4000, data=0000 (+0.000(-15)), ident=0000300B00000001
+@125 ERROR: P46.0 (hwtile) C11 arrived from Ramp and East on the same cycle
+@125 FATAL: This violates architecture rules.  The most likely cause is a misconfigured router on an adjacent tile
+@125 ERROR: P66.0 (hwtile) wavelet C11 from Ramp: ctrl=0, idx=4000, data=0000 (+0.000(-15)), ident=0000420B00000003
+@125 ERROR: P80.0 (hwtile) wavelet C11 from Ramp: ctrl=0, idx=4000, data=0000 (+0.000(-15)), ident=0000500B00000003
+@125 ERROR: P66.0 (hwtile) wavelet C11 from East: ctrl=0, idx=4000, data=0000 (+0.000(-15)), ident=0000440B00000001
+@125 ERROR: P80.0 (hwtile) wavelet C11 from East: ctrl=0, idx=4000, data=0000 (+0.000(-15)), ident=0000520B00000001
+@125 ERROR: P80.0 (hwtile) C11 arrived from Ramp and East on the same cycle
+@125 ERROR: P66.0 (hwtile) C11 arrived from Ramp and East on the same cycle
+@125 FATAL: This violates architecture rules.  The most likely cause is a misconfigured router on an adjacent tile
+@125 FATAL: This violates architecture rules.  The most likely cause is a misconfigured router on an adjacent tile
+@125 ERROR: P96.0 (hwtile) wavelet C11 from Ramp: ctrl=0, idx=4000, data=0000 (+0.000(-15)), ident=0000600B00000003
+@125 ERROR: P58.0 (hwtile) wavelet C11 from East: ctrl=0, idx=4000, data=0000 (+0.000(-15)), ident=00003C0B00000001
+@125 ERROR: P58.0 (hwtile) C11 arrived from Ramp and East on the same cycle
+@125 FATAL: This violates architecture rules.  The most likely cause is a misconfigured router on an adjacent tile
+@125 ERROR: P96.0 (hwtile) wavelet C11 from East: ctrl=0, idx=4000, data=0000 (+0.000(-15)), ident=0000620B00000001
+@125 ERROR: P96.0 (hwtile) C11 arrived from Ramp and East on the same cycle
+@125 FATAL: This violates architecture rules.  The most likely cause is a misconfigured router on an adjacent tile
+@125 ERROR: P82.0 (hwtile) wavelet C11 from Ramp: ctrl=0, idx=4000, data=0000 (+0.000(-15)), ident=0000520B00000003
+@125 ERROR: P82.0 (hwtile) wavelet C11 from East: ctrl=0, idx=4000, data=0000 (+0.000(-15)), ident=0000540B00000001
+@125 ERROR: P82.0 (hwtile) C11 arrived from Ramp and East on the same cycle
+@125 FATAL: This violates architecture rules.  The most likely cause is a misconfigured router on an adjacent tile
+@125 ERROR: P60.0 (hwtile) wavelet C11 from Ramp: ctrl=0, idx=4000, data=0000 (+0.000(-15)), ident=00003C0B00000003
+@125 ERROR: P98.0 (hwtile) wavelet C11 from Ramp: ctrl=0, idx=4000, data=0000 (+0.000(-15)), ident=0000620B00000003
+@125 ERROR: P60.0 (hwtile) wavelet C11 from East: ctrl=0, idx=4000, data=0000 (+0.000(-15)), ident=00003E0B00000001
+@125 ERROR: P98.0 (hwtile) wavelet C11 from East: ctrl=0, idx=4000, data=0000 (+0.000(-15)), ident=0000640B00000001
+@125 ERROR: P60.0 (hwtile) C11 arrived from Ramp and East on the same cycle
+@125 FATAL: This violates architecture rules.  The most likely cause is a misconfigured router on an adjacent tile
+@125 ERROR: P98.0 (hwtile) C11 arrived from Ramp and East on the same cycle
+@125 FATAL: This violates architecture rules.  The most likely cause is a misconfigured router on an adjacent tile
+@125 ERROR: P84.0 (hwtile) wavelet C11 from Ramp: ctrl=0, idx=4000, data=0000 (+0.000(-15)), ident=0000540B00000003
+@125 ERROR: P84.0 (hwtile) wavelet C11 from East: ctrl=0, idx=4000, data=0000 (+0.000(-15)), ident=0000560B00000001
+@125 ERROR: P84.0 (hwtile) C11 arrived from Ramp and East on the same cycle
+@125 FATAL: This violates architecture rules.  The most likely cause is a misconfigured router on an adjacent tile
+@125 ERROR: P62.0 (hwtile) wavelet C11 from Ramp: ctrl=0, idx=4000, data=0000 (+0.000(-15)), ident=00003E0B00000003
+@125 ERROR: P100.0 (hwtile) wavelet C11 from Ramp: ctrl=0, idx=4000, data=0000 (+0.000(-15)), ident=0000640B00000003
+@125 ERROR: P62.0 (hwtile) wavelet C11 from East: ctrl=0, idx=4000, data=0000 (+0.000(-15)), ident=0000400B00000001
+@125 ERROR: P62.0 (hwtile) C11 arrived from Ramp and East on the same cycle
+@125 FATAL: This violates architecture rules.  The most likely cause is a misconfigured router on an adjacent tile
+@125 ERROR: P100.0 (hwtile) wavelet C11 from East: ctrl=0, idx=4000, data=0000 (+0.000(-15)), ident=0000660B00000001
+@125 ERROR: P100.0 (hwtile) C11 arrived from Ramp and East on the same cycle
+@125 FATAL: This violates architecture rules.  The most likely cause is a misconfigured router on an adjacent tile
+@125 ERROR: P86.0 (hwtile) wavelet C11 from Ramp: ctrl=0, idx=4000, data=0000 (+0.000(-15)), ident=0000560B00000003
+@125 ERROR: P86.0 (hwtile) wavelet C11 from East: ctrl=0, idx=4000, data=0000 (+0.000(-15)), ident=0000580B00000001
+@125 ERROR: P86.0 (hwtile) C11 arrived from Ramp and East on the same cycle
+@125 FATAL: This violates architecture rules.  The most likely cause is a misconfigured router on an adjacent tile
+@125 ERROR: P112.0 (hwtile) wavelet C11 from Ramp: ctrl=0, idx=4000, data=0000 (+0.000(-15)), ident=0000700B00000003
+@125 ERROR: P102.0 (hwtile) wavelet C11 from Ramp: ctrl=0, idx=4000, data=0000 (+0.000(-15)), ident=0000660B00000003
+@125 ERROR: P112.0 (hwtile) wavelet C11 from East: ctrl=0, idx=4000, data=0000 (+0.000(-15)), ident=0000720B00000001
+@125 ERROR: P88.0 (hwtile) wavelet C11 from Ramp: ctrl=0, idx=4000, data=0000 (+0.000(-15)), ident=0000580B00000003
+@125 ERROR: P102.0 (hwtile) wavelet C11 from East: ctrl=0, idx=4000, data=0000 (+0.000(-15)), ident=0000680B00000001
+@125 ERROR: P112.0 (hwtile) C11 arrived from Ramp and East on the same cycle
+@125 FATAL: This violates architecture rules.  The most likely cause is a misconfigured router on an adjacent tile
+@125 ERROR: P102.0 (hwtile) C11 arrived from Ramp and East on the same cycle
+@125 FATAL: This violates architecture rules.  The most likely cause is a misconfigured router on an adjacent tile
+@125 ERROR: P88.0 (hwtile) wavelet C11 from East: ctrl=0, idx=4000, data=0000 (+0.000(-15)), ident=00005A0B00000001
+@125 ERROR: P88.0 (hwtile) C11 arrived from Ramp and East on the same cycle
+@125 FATAL: This violates architecture rules.  The most likely cause is a misconfigured router on an adjacent tile
+@125 ERROR: P114.0 (hwtile) wavelet C11 from Ramp: ctrl=0, idx=4000, data=0000 (+0.000(-15)), ident=0000720B00000003
+@125 ERROR: P104.0 (hwtile) wavelet C11 from Ramp: ctrl=0, idx=4000, data=0000 (+0.000(-15)), ident=0000680B00000003
+@125 ERROR: P90.0 (hwtile) wavelet C11 from Ramp: ctrl=0, idx=4000, data=0000 (+0.000(-15)), ident=00005A0B00000003
+@125 ERROR: P114.0 (hwtile) wavelet C11 from East: ctrl=0, idx=4000, data=0000 (+0.000(-15)), ident=0000740B00000001
+@125 ERROR: P90.0 (hwtile) wavelet C11 from East: ctrl=0, idx=4000, data=0000 (+0.000(-15)), ident=00005C0B00000001
+@125 ERROR: P104.0 (hwtile) wavelet C11 from East: ctrl=0, idx=4000, data=0000 (+0.000(-15)), ident=00006A0B00000001
+@125 ERROR: P114.0 (hwtile) C11 arrived from Ramp and East on the same cycle
+@125 ERROR: P90.0 (hwtile) C11 arrived from Ramp and East on the same cycle
+@125 FATAL: This violates architecture rules.  The most likely cause is a misconfigured router on an adjacent tile
+@125 FATAL: This violates architecture rules.  The most likely cause is a misconfigured router on an adjacent tile
+@125 ERROR: P104.0 (hwtile) C11 arrived from Ramp and East on the same cycle
+@125 FATAL: This violates architecture rules.  The most likely cause is a misconfigured router on an adjacent tile
+@125 ERROR: P92.0 (hwtile) wavelet C11 from Ramp: ctrl=0, idx=4000, data=0000 (+0.000(-15)), ident=00005C0B00000003
+@125 ERROR: P106.0 (hwtile) wavelet C11 from Ramp: ctrl=0, idx=4000, data=0000 (+0.000(-15)), ident=00006A0B00000003
+@125 ERROR: P116.0 (hwtile) wavelet C11 from Ramp: ctrl=0, idx=4000, data=0000 (+0.000(-15)), ident=0000740B00000003
+@125 ERROR: P92.0 (hwtile) wavelet C11 from East: ctrl=0, idx=4000, data=0000 (+0.000(-15)), ident=00005E0B00000001
+@125 ERROR: P92.0 (hwtile) C11 arrived from Ramp and East on the same cycle
+@125 ERROR: P106.0 (hwtile) wavelet C11 from East: ctrl=0, idx=4000, data=0000 (+0.000(-15)), ident=00006C0B00000001
+@125 FATAL: This violates architecture rules.  The most likely cause is a misconfigured router on an adjacent tile
+@125 ERROR: P106.0 (hwtile) C11 arrived from Ramp and East on the same cycle
+@125 FATAL: This violates architecture rules.  The most likely cause is a misconfigured router on an adjacent tile
+@125 ERROR: P116.0 (hwtile) wavelet C11 from East: ctrl=0, idx=4000, data=0000 (+0.000(-15)), ident=0000760B00000001
+@125 ERROR: P116.0 (hwtile) C11 arrived from Ramp and East on the same cycle
+@125 FATAL: This violates architecture rules.  The most likely cause is a misconfigured router on an adjacent tile
+@125 ERROR: P128.0 (hwtile) wavelet C11 from Ramp: ctrl=0, idx=4000, data=0000 (+0.000(-15)), ident=0000800B00000003
+@125 ERROR: P94.0 (hwtile) wavelet C11 from Ramp: ctrl=0, idx=4000, data=0000 (+0.000(-15)), ident=00005E0B00000003
+@125 ERROR: P128.0 (hwtile) wavelet C11 from East: ctrl=0, idx=4000, data=0000 (+0.000(-15)), ident=0000820B00000001
+@125 ERROR: P128.0 (hwtile) C11 arrived from Ramp and East on the same cycle
+@125 FATAL: This violates architecture rules.  The most likely cause is a misconfigured router on an adjacent tile
+@125 ERROR: P94.0 (hwtile) wavelet C11 from East: ctrl=0, idx=4000, data=0000 (+0.000(-15)), ident=0000600B00000001
+@125 ERROR: P94.0 (hwtile) C11 arrived from Ramp and East on the same cycle
+@125 FATAL: This violates architecture rules.  The most likely cause is a misconfigured router on an adjacent tile
+@125 ERROR: P108.0 (hwtile) wavelet C11 from Ramp: ctrl=0, idx=4000, data=0000 (+0.000(-15)), ident=00006C0B00000003
+@125 ERROR: P68.0 (hwtile) wavelet C11 from Ramp: ctrl=0, idx=4000, data=0000 (+0.000(-15)), ident=0000440B00000003
+@125 ERROR: P118.0 (hwtile) wavelet C11 from Ramp: ctrl=0, idx=4000, data=0000 (+0.000(-15)), ident=0000760B00000003
+@125 ERROR: P108.0 (hwtile) wavelet C11 from East: ctrl=0, idx=4000, data=0000 (+0.000(-15)), ident=00006E0B00000001
+@125 ERROR: P68.0 (hwtile) wavelet C11 from East: ctrl=0, idx=4000, data=0000 (+0.000(-15)), ident=0000460B00000001
+@125 ERROR: P108.0 (hwtile) C11 arrived from Ramp and East on the same cycle
+@125 FATAL: This violates architecture rules.  The most likely cause is a misconfigured router on an adjacent tile
+@125 ERROR: P118.0 (hwtile) wavelet C11 from East: ctrl=0, idx=4000, data=0000 (+0.000(-15)), ident=0000780B00000001
+@125 ERROR: P68.0 (hwtile) C11 arrived from Ramp and East on the same cycle
+@125 FATAL: This violates architecture rules.  The most likely cause is a misconfigured router on an adjacent tile
+@125 ERROR: P118.0 (hwtile) C11 arrived from Ramp and East on the same cycle
+@125 FATAL: This violates architecture rules.  The most likely cause is a misconfigured router on an adjacent tile
+@125 ERROR: P130.0 (hwtile) wavelet C11 from Ramp: ctrl=0, idx=4000, data=0000 (+0.000(-15)), ident=0000820B00000003
+@125 ERROR: P144.0 (hwtile) wavelet C11 from Ramp: ctrl=0, idx=4000, data=0000 (+0.000(-15)), ident=0000900B00000003
+@125 ERROR: P130.0 (hwtile) wavelet C11 from East: ctrl=0, idx=4000, data=0000 (+0.000(-15)), ident=0000840B00000001
+@125 ERROR: P110.0 (hwtile) wavelet C11 from Ramp: ctrl=0, idx=4000, data=0000 (+0.000(-15)), ident=00006E0B00000003
+@125 ERROR: P130.0 (hwtile) C11 arrived from Ramp and East on the same cycle
+@125 FATAL: This violates architecture rules.  The most likely cause is a misconfigured router on an adjacent tile
+@125 ERROR: P120.0 (hwtile) wavelet C11 from Ramp: ctrl=0, idx=4000, data=0000 (+0.000(-15)), ident=0000780B00000003
+@125 ERROR: P70.0 (hwtile) wavelet C11 from Ramp: ctrl=0, idx=4000, data=0000 (+0.000(-15)), ident=0000460B00000003
+@125 ERROR: P144.0 (hwtile) wavelet C11 from East: ctrl=0, idx=4000, data=0000 (+0.000(-15)), ident=0000920B00000001
+@125 ERROR: P144.0 (hwtile) C11 arrived from Ramp and East on the same cycle
+@125 FATAL: This violates architecture rules.  The most likely cause is a misconfigured router on an adjacent tile
+@125 ERROR: P110.0 (hwtile) wavelet C11 from East: ctrl=0, idx=4000, data=0000 (+0.000(-15)), ident=0000700B00000001
+@125 ERROR: P70.0 (hwtile) wavelet C11 from East: ctrl=0, idx=4000, data=0000 (+0.000(-15)), ident=0000480B00000001
+@125 ERROR: P120.0 (hwtile) wavelet C11 from East: ctrl=0, idx=4000, data=0000 (+0.000(-15)), ident=00007A0B00000001
+@125 ERROR: P110.0 (hwtile) C11 arrived from Ramp and East on the same cycle
+@125 ERROR: P70.0 (hwtile) C11 arrived from Ramp and East on the same cycle
+@125 ERROR: P120.0 (hwtile) C11 arrived from Ramp and East on the same cycle
+@125 FATAL: This violates architecture rules.  The most likely cause is a misconfigured router on an adjacent tile
+@125 FATAL: This violates architecture rules.  The most likely cause is a misconfigured router on an adjacent tile
+@125 FATAL: This violates architecture rules.  The most likely cause is a misconfigured router on an adjacent tile
+@125 ERROR: P132.0 (hwtile) wavelet C11 from Ramp: ctrl=0, idx=4000, data=0000 (+0.000(-15)), ident=0000840B00000003
+@125 ERROR: P132.0 (hwtile) wavelet C11 from East: ctrl=0, idx=4000, data=0000 (+0.000(-15)), ident=0000860B00000001
+@125 ERROR: P146.0 (hwtile) wavelet C11 from Ramp: ctrl=0, idx=4000, data=0000 (+0.000(-15)), ident=0000920B00000003
+@125 ERROR: P132.0 (hwtile) C11 arrived from Ramp and East on the same cycle
+@125 FATAL: This violates architecture rules.  The most likely cause is a misconfigured router on an adjacent tile
+@125 ERROR: P122.0 (hwtile) wavelet C11 from Ramp: ctrl=0, idx=4000, data=0000 (+0.000(-15)), ident=00007A0B00000003
+@125 ERROR: P72.0 (hwtile) wavelet C11 from Ramp: ctrl=0, idx=4000, data=0000 (+0.000(-15)), ident=0000480B00000003
+@125 ERROR: P160.0 (hwtile) wavelet C11 from Ramp: ctrl=0, idx=4000, data=0000 (+0.000(-15)), ident=0000A00B00000003
+@125 ERROR: P146.0 (hwtile) wavelet C11 from East: ctrl=0, idx=4000, data=0000 (+0.000(-15)), ident=0000940B00000001
+@125 ERROR: P146.0 (hwtile) C11 arrived from Ramp and East on the same cycle
+@125 FATAL: This violates architecture rules.  The most likely cause is a misconfigured router on an adjacent tile
+@125 ERROR: P122.0 (hwtile) wavelet C11 from East: ctrl=0, idx=4000, data=0000 (+0.000(-15)), ident=00007C0B00000001
+@125 ERROR: P72.0 (hwtile) wavelet C11 from East: ctrl=0, idx=4000, data=0000 (+0.000(-15)), ident=00004A0B00000001
+@125 ERROR: P160.0 (hwtile) wavelet C11 from East: ctrl=0, idx=4000, data=0000 (+0.000(-15)), ident=0000A20B00000001
+@125 ERROR: P122.0 (hwtile) C11 arrived from Ramp and East on the same cycle
+@125 ERROR: P72.0 (hwtile) C11 arrived from Ramp and East on the same cycle
+@125 ERROR: P160.0 (hwtile) C11 arrived from Ramp and East on the same cycle
+@125 FATAL: This violates architecture rules.  The most likely cause is a misconfigured router on an adjacent tile
+@125 FATAL: This violates architecture rules.  The most likely cause is a misconfigured router on an adjacent tile
+@125 FATAL: This violates architecture rules.  The most likely cause is a misconfigured router on an adjacent tile
+@125 ERROR: P134.0 (hwtile) wavelet C11 from Ramp: ctrl=0, idx=4000, data=0000 (+0.000(-15)), ident=0000860B00000003
+@125 ERROR: P134.0 (hwtile) wavelet C11 from East: ctrl=0, idx=4000, data=0000 (+0.000(-15)), ident=0000880B00000001
+@125 ERROR: P134.0 (hwtile) C11 arrived from Ramp and East on the same cycle
+@125 FATAL: This violates architecture rules.  The most likely cause is a misconfigured router on an adjacent tile
+@125 ERROR: P148.0 (hwtile) wavelet C11 from Ramp: ctrl=0, idx=4000, data=0000 (+0.000(-15)), ident=0000940B00000003
+@125 ERROR: P74.0 (hwtile) wavelet C11 from Ramp: ctrl=0, idx=4000, data=0000 (+0.000(-15)), ident=00004A0B00000003
+@125 ERROR: P162.0 (hwtile) wavelet C11 from Ramp: ctrl=0, idx=4000, data=0000 (+0.000(-15)), ident=0000A20B00000003
+@125 ERROR: P124.0 (hwtile) wavelet C11 from Ramp: ctrl=0, idx=4000, data=0000 (+0.000(-15)), ident=00007C0B00000003
+@125 ERROR: P148.0 (hwtile) wavelet C11 from East: ctrl=0, idx=4000, data=0000 (+0.000(-15)), ident=0000960B00000001
+@125 ERROR: P74.0 (hwtile) wavelet C11 from East: ctrl=0, idx=4000, data=0000 (+0.000(-15)), ident=00004C0B00000001
+@125 ERROR: P162.0 (hwtile) wavelet C11 from East: ctrl=0, idx=4000, data=0000 (+0.000(-15)), ident=0000A40B00000001
+@125 ERROR: P148.0 (hwtile) C11 arrived from Ramp and East on the same cycle
+@125 FATAL: This violates architecture rules.  The most likely cause is a misconfigured router on an adjacent tile
+@125 ERROR: P124.0 (hwtile) wavelet C11 from East: ctrl=0, idx=4000, data=0000 (+0.000(-15)), ident=00007E0B00000001
+@125 ERROR: P74.0 (hwtile) C11 arrived from Ramp and East on the same cycle
+@125 ERROR: P162.0 (hwtile) C11 arrived from Ramp and East on the same cycle
+@125 FATAL: This violates architecture rules.  The most likely cause is a misconfigured router on an adjacent tile
+@125 FATAL: This violates architecture rules.  The most likely cause is a misconfigured router on an adjacent tile
+@125 ERROR: P124.0 (hwtile) C11 arrived from Ramp and East on the same cycle
+@125 FATAL: This violates architecture rules.  The most likely cause is a misconfigured router on an adjacent tile
+@125 ERROR: P136.0 (hwtile) wavelet C11 from Ramp: ctrl=0, idx=4000, data=0000 (+0.000(-15)), ident=0000880B00000003
+@125 ERROR: P136.0 (hwtile) wavelet C11 from East: ctrl=0, idx=4000, data=0000 (+0.000(-15)), ident=00008A0B00000001
+@125 ERROR: P136.0 (hwtile) C11 arrived from Ramp and East on the same cycle
+@125 FATAL: This violates architecture rules.  The most likely cause is a misconfigured router on an adjacent tile
+@125 ERROR: P150.0 (hwtile) wavelet C11 from Ramp: ctrl=0, idx=4000, data=0000 (+0.000(-15)), ident=0000960B00000003
+@125 ERROR: P76.0 (hwtile) wavelet C11 from Ramp: ctrl=0, idx=4000, data=0000 (+0.000(-15)), ident=00004C0B00000003
+@125 ERROR: P164.0 (hwtile) wavelet C11 from Ramp: ctrl=0, idx=4000, data=0000 (+0.000(-15)), ident=0000A40B00000003
+@125 ERROR: P126.0 (hwtile) wavelet C11 from Ramp: ctrl=0, idx=4000, data=0000 (+0.000(-15)), ident=00007E0B00000003
+@125 ERROR: P150.0 (hwtile) wavelet C11 from East: ctrl=0, idx=4000, data=0000 (+0.000(-15)), ident=0000980B00000001
+@125 ERROR: P76.0 (hwtile) wavelet C11 from East: ctrl=0, idx=4000, data=0000 (+0.000(-15)), ident=00004E0B00000001
+@125 ERROR: P150.0 (hwtile) C11 arrived from Ramp and East on the same cycle
+@125 ERROR: P164.0 (hwtile) wavelet C11 from East: ctrl=0, idx=4000, data=0000 (+0.000(-15)), ident=0000A60B00000001
+@125 FATAL: This violates architecture rules.  The most likely cause is a misconfigured router on an adjacent tile
+@125 ERROR: P126.0 (hwtile) wavelet C11 from East: ctrl=0, idx=4000, data=0000 (+0.000(-15)), ident=0000800B00000001
+@125 ERROR: P76.0 (hwtile) C11 arrived from Ramp and East on the same cycle
+@125 FATAL: This violates architecture rules.  The most likely cause is a misconfigured router on an adjacent tile
+@125 ERROR: P164.0 (hwtile) C11 arrived from Ramp and East on the same cycle
+@125 FATAL: This violates architecture rules.  The most likely cause is a misconfigured router on an adjacent tile
+@125 ERROR: P126.0 (hwtile) C11 arrived from Ramp and East on the same cycle
+@125 FATAL: This violates architecture rules.  The most likely cause is a misconfigured router on an adjacent tile
+@125 ERROR: P138.0 (hwtile) wavelet C11 from Ramp: ctrl=0, idx=4000, data=0000 (+0.000(-15)), ident=00008A0B00000003
+@125 ERROR: P138.0 (hwtile) wavelet C11 from East: ctrl=0, idx=4000, data=0000 (+0.000(-15)), ident=00008C0B00000001
+@125 ERROR: P138.0 (hwtile) C11 arrived from Ramp and East on the same cycle
+@125 FATAL: This violates architecture rules.  The most likely cause is a misconfigured router on an adjacent tile
+@125 ERROR: P152.0 (hwtile) wavelet C11 from Ramp: ctrl=0, idx=4000, data=0000 (+0.000(-15)), ident=0000980B00000003
+@125 ERROR: P78.0 (hwtile) wavelet C11 from Ramp: ctrl=0, idx=4000, data=0000 (+0.000(-15)), ident=00004E0B00000003
+@125 ERROR: P166.0 (hwtile) wavelet C11 from Ramp: ctrl=0, idx=4000, data=0000 (+0.000(-15)), ident=0000A60B00000003
+@125 ERROR: P152.0 (hwtile) wavelet C11 from East: ctrl=0, idx=4000, data=0000 (+0.000(-15)), ident=00009A0B00000001
+@125 ERROR: P176.0 (hwtile) wavelet C11 from Ramp: ctrl=0, idx=4000, data=0000 (+0.000(-15)), ident=0000B00B00000003
+@125 ERROR: P140.0 (hwtile) wavelet C11 from Ramp: ctrl=0, idx=4000, data=0000 (+0.000(-15)), ident=00008C0B00000003
+@125 ERROR: P78.0 (hwtile) wavelet C11 from East: ctrl=0, idx=4000, data=0000 (+0.000(-15)), ident=0000500B00000001
+@125 ERROR: P152.0 (hwtile) C11 arrived from Ramp and East on the same cycle
+@125 FATAL: This violates architecture rules.  The most likely cause is a misconfigured router on an adjacent tile
+@125 ERROR: P166.0 (hwtile) wavelet C11 from East: ctrl=0, idx=4000, data=0000 (+0.000(-15)), ident=0000A80B00000001
+@125 ERROR: P78.0 (hwtile) C11 arrived from Ramp and East on the same cycle
+@125 FATAL: This violates architecture rules.  The most likely cause is a misconfigured router on an adjacent tile
+@125 ERROR: P176.0 (hwtile) wavelet C11 from East: ctrl=0, idx=4000, data=0000 (+0.000(-15)), ident=0000B20B00000001
+@125 ERROR: P166.0 (hwtile) C11 arrived from Ramp and East on the same cycle
+@125 ERROR: P140.0 (hwtile) wavelet C11 from East: ctrl=0, idx=4000, data=0000 (+0.000(-15)), ident=00008E0B00000001
+@125 FATAL: This violates architecture rules.  The most likely cause is a misconfigured router on an adjacent tile
+@125 ERROR: P176.0 (hwtile) C11 arrived from Ramp and East on the same cycle
+@125 FATAL: This violates architecture rules.  The most likely cause is a misconfigured router on an adjacent tile
+@125 ERROR: P140.0 (hwtile) C11 arrived from Ramp and East on the same cycle
+@125 FATAL: This violates architecture rules.  The most likely cause is a misconfigured router on an adjacent tile
+@125 ERROR: P154.0 (hwtile) wavelet C11 from Ramp: ctrl=0, idx=4000, data=0000 (+0.000(-15)), ident=00009A0B00000003
+@125 ERROR: P192.0 (hwtile) wavelet C11 from Ramp: ctrl=0, idx=4000, data=0000 (+0.000(-15)), ident=0000C00B00000003
+@125 ERROR: P168.0 (hwtile) wavelet C11 from Ramp: ctrl=0, idx=4000, data=0000 (+0.000(-15)), ident=0000A80B00000003
+@125 ERROR: P178.0 (hwtile) wavelet C11 from Ramp: ctrl=0, idx=4000, data=0000 (+0.000(-15)), ident=0000B20B00000003
+@125 ERROR: P142.0 (hwtile) wavelet C11 from Ramp: ctrl=0, idx=4000, data=0000 (+0.000(-15)), ident=00008E0B00000003
+@125 ERROR: P192.0 (hwtile) wavelet C11 from East: ctrl=0, idx=4000, data=0000 (+0.000(-15)), ident=0000C20B00000001
+@125 ERROR: P192.0 (hwtile) C11 arrived from Ramp and East on the same cycle
+@125 FATAL: This violates architecture rules.  The most likely cause is a misconfigured router on an adjacent tile
+@125 ERROR: P168.0 (hwtile) wavelet C11 from East: ctrl=0, idx=4000, data=0000 (+0.000(-15)), ident=0000AA0B00000001
+@125 ERROR: P142.0 (hwtile) wavelet C11 from East: ctrl=0, idx=4000, data=0000 (+0.000(-15)), ident=0000900B00000001
+@125 ERROR: P178.0 (hwtile) wavelet C11 from East: ctrl=0, idx=4000, data=0000 (+0.000(-15)), ident=0000B40B00000001
+@125 ERROR: P168.0 (hwtile) C11 arrived from Ramp and East on the same cycle
+@125 FATAL: This violates architecture rules.  The most likely cause is a misconfigured router on an adjacent tile
+@125 ERROR: P142.0 (hwtile) C11 arrived from Ramp and East on the same cycle
+@125 FATAL: This violates architecture rules.  The most likely cause is a misconfigured router on an adjacent tile
+@125 ERROR: P178.0 (hwtile) C11 arrived from Ramp and East on the same cycle
+@125 FATAL: This violates architecture rules.  The most likely cause is a misconfigured router on an adjacent tile
+@125 ERROR: P194.0 (hwtile) wavelet C11 from Ramp: ctrl=0, idx=4000, data=0000 (+0.000(-15)), ident=0000C20B00000003
+@125 ERROR: P154.0 (hwtile) wavelet C11 from East: ctrl=0, idx=4000, data=0000 (+0.000(-15)), ident=00009C0B00000001
+@125 ERROR: P194.0 (hwtile) wavelet C11 from East: ctrl=0, idx=4000, data=0000 (+0.000(-15)), ident=0000C40B00000001
+@125 ERROR: P208.0 (hwtile) wavelet C11 from Ramp: ctrl=0, idx=4000, data=0000 (+0.000(-15)), ident=0000D00B00000003
+@125 ERROR: P170.0 (hwtile) wavelet C11 from Ramp: ctrl=0, idx=4000, data=0000 (+0.000(-15)), ident=0000AA0B00000003
+@125 ERROR: P154.0 (hwtile) C11 arrived from Ramp and East on the same cycle
+@125 ERROR: P180.0 (hwtile) wavelet C11 from Ramp: ctrl=0, idx=4000, data=0000 (+0.000(-15)), ident=0000B40B00000003
+@125 FATAL: This violates architecture rules.  The most likely cause is a misconfigured router on an adjacent tile
+@125 ERROR: P194.0 (hwtile) C11 arrived from Ramp and East on the same cycle
+@125 FATAL: This violates architecture rules.  The most likely cause is a misconfigured router on an adjacent tile
+@125 ERROR: P208.0 (hwtile) wavelet C11 from East: ctrl=0, idx=4000, data=0000 (+0.000(-15)), ident=0000D20B00000001
+@125 ERROR: P170.0 (hwtile) wavelet C11 from East: ctrl=0, idx=4000, data=0000 (+0.000(-15)), ident=0000AC0B00000001
+@125 ERROR: P180.0 (hwtile) wavelet C11 from East: ctrl=0, idx=4000, data=0000 (+0.000(-15)), ident=0000B60B00000001
+@125 ERROR: P208.0 (hwtile) C11 arrived from Ramp and East on the same cycle
+@125 FATAL: This violates architecture rules.  The most likely cause is a misconfigured router on an adjacent tile
+@125 ERROR: P170.0 (hwtile) C11 arrived from Ramp and East on the same cycle
+@125 ERROR: P180.0 (hwtile) C11 arrived from Ramp and East on the same cycle
+@125 FATAL: This violates architecture rules.  The most likely cause is a misconfigured router on an adjacent tile
+@125 FATAL: This violates architecture rules.  The most likely cause is a misconfigured router on an adjacent tile
+@125 ERROR: P196.0 (hwtile) wavelet C11 from Ramp: ctrl=0, idx=4000, data=0000 (+0.000(-15)), ident=0000C40B00000003
+@125 ERROR: P156.0 (hwtile) wavelet C11 from Ramp: ctrl=0, idx=4000, data=0000 (+0.000(-15)), ident=00009C0B00000003
+@125 ERROR: P196.0 (hwtile) wavelet C11 from East: ctrl=0, idx=4000, data=0000 (+0.000(-15)), ident=0000C60B00000001
+@125 ERROR: P210.0 (hwtile) wavelet C11 from Ramp: ctrl=0, idx=4000, data=0000 (+0.000(-15)), ident=0000D20B00000003
+@125 ERROR: P182.0 (hwtile) wavelet C11 from Ramp: ctrl=0, idx=4000, data=0000 (+0.000(-15)), ident=0000B60B00000003
+@125 ERROR: P196.0 (hwtile) C11 arrived from Ramp and East on the same cycle
+@125 ERROR: P156.0 (hwtile) wavelet C11 from East: ctrl=0, idx=4000, data=0000 (+0.000(-15)), ident=00009E0B00000001
+@125 FATAL: This violates architecture rules.  The most likely cause is a misconfigured router on an adjacent tile
+@125 ERROR: P172.0 (hwtile) wavelet C11 from Ramp: ctrl=0, idx=4000, data=0000 (+0.000(-15)), ident=0000AC0B00000003
+@125 ERROR: P156.0 (hwtile) C11 arrived from Ramp and East on the same cycle
+@125 FATAL: This violates architecture rules.  The most likely cause is a misconfigured router on an adjacent tile
+@125 ERROR: P210.0 (hwtile) wavelet C11 from East: ctrl=0, idx=4000, data=0000 (+0.000(-15)), ident=0000D40B00000001
+@125 ERROR: P182.0 (hwtile) wavelet C11 from East: ctrl=0, idx=4000, data=0000 (+0.000(-15)), ident=0000B80B00000001
+@125 ERROR: P172.0 (hwtile) wavelet C11 from East: ctrl=0, idx=4000, data=0000 (+0.000(-15)), ident=0000AE0B00000001
+@125 ERROR: P210.0 (hwtile) C11 arrived from Ramp and East on the same cycle
+@125 FATAL: This violates architecture rules.  The most likely cause is a misconfigured router on an adjacent tile
+@125 ERROR: P182.0 (hwtile) C11 arrived from Ramp and East on the same cycle
+@125 FATAL: This violates architecture rules.  The most likely cause is a misconfigured router on an adjacent tile
+@125 ERROR: P172.0 (hwtile) C11 arrived from Ramp and East on the same cycle
+@125 FATAL: This violates architecture rules.  The most likely cause is a misconfigured router on an adjacent tile
+@125 ERROR: P198.0 (hwtile) wavelet C11 from Ramp: ctrl=0, idx=4000, data=0000 (+0.000(-15)), ident=0000C60B00000003
+@125 ERROR: P158.0 (hwtile) wavelet C11 from Ramp: ctrl=0, idx=4000, data=0000 (+0.000(-15)), ident=00009E0B00000003
+@125 ERROR: P212.0 (hwtile) wavelet C11 from Ramp: ctrl=0, idx=4000, data=0000 (+0.000(-15)), ident=0000D40B00000003
+@125 ERROR: P198.0 (hwtile) wavelet C11 from East: ctrl=0, idx=4000, data=0000 (+0.000(-15)), ident=0000C80B00000001
+@125 ERROR: P158.0 (hwtile) wavelet C11 from East: ctrl=0, idx=4000, data=0000 (+0.000(-15)), ident=0000A00B00000001
+@125 ERROR: P198.0 (hwtile) C11 arrived from Ramp and East on the same cycle
+@125 FATAL: This violates architecture rules.  The most likely cause is a misconfigured router on an adjacent tile
+@125 ERROR: P184.0 (hwtile) wavelet C11 from Ramp: ctrl=0, idx=4000, data=0000 (+0.000(-15)), ident=0000B80B00000003
+@125 ERROR: P174.0 (hwtile) wavelet C11 from Ramp: ctrl=0, idx=4000, data=0000 (+0.000(-15)), ident=0000AE0B00000003
+@125 ERROR: P212.0 (hwtile) wavelet C11 from East: ctrl=0, idx=4000, data=0000 (+0.000(-15)), ident=0000D60B00000001
+@125 ERROR: P158.0 (hwtile) C11 arrived from Ramp and East on the same cycle
+@125 FATAL: This violates architecture rules.  The most likely cause is a misconfigured router on an adjacent tile
+@125 ERROR: P212.0 (hwtile) C11 arrived from Ramp and East on the same cycle
+@125 FATAL: This violates architecture rules.  The most likely cause is a misconfigured router on an adjacent tile
+@125 ERROR: P184.0 (hwtile) wavelet C11 from East: ctrl=0, idx=4000, data=0000 (+0.000(-15)), ident=0000BA0B00000001
+@125 ERROR: P174.0 (hwtile) wavelet C11 from East: ctrl=0, idx=4000, data=0000 (+0.000(-15)), ident=0000B00B00000001
+@125 ERROR: P184.0 (hwtile) C11 arrived from Ramp and East on the same cycle
+@125 FATAL: This violates architecture rules.  The most likely cause is a misconfigured router on an adjacent tile
+@125 ERROR: P174.0 (hwtile) C11 arrived from Ramp and East on the same cycle
+@125 FATAL: This violates architecture rules.  The most likely cause is a misconfigured router on an adjacent tile
+@125 ERROR: P200.0 (hwtile) wavelet C11 from Ramp: ctrl=0, idx=4000, data=0000 (+0.000(-15)), ident=0000C80B00000003
+@125 ERROR: P224.0 (hwtile) wavelet C11 from Ramp: ctrl=0, idx=4000, data=0000 (+0.000(-15)), ident=0000E00B00000003
+@125 ERROR: P214.0 (hwtile) wavelet C11 from Ramp: ctrl=0, idx=4000, data=0000 (+0.000(-15)), ident=0000D60B00000003
+@125 ERROR: P200.0 (hwtile) wavelet C11 from East: ctrl=0, idx=4000, data=0000 (+0.000(-15)), ident=0000CA0B00000001
+@125 ERROR: P186.0 (hwtile) wavelet C11 from Ramp: ctrl=0, idx=4000, data=0000 (+0.000(-15)), ident=0000BA0B00000003
+@125 ERROR: P200.0 (hwtile) C11 arrived from Ramp and East on the same cycle
+@125 ERROR: P214.0 (hwtile) wavelet C11 from East: ctrl=0, idx=4000, data=0000 (+0.000(-15)), ident=0000D80B00000001
+@125 FATAL: This violates architecture rules.  The most likely cause is a misconfigured router on an adjacent tile
+@125 ERROR: P224.0 (hwtile) wavelet C11 from East: ctrl=0, idx=4000, data=0000 (+0.000(-15)), ident=0000E20B00000001
+@125 ERROR: P214.0 (hwtile) C11 arrived from Ramp and East on the same cycle
+@125 FATAL: This violates architecture rules.  The most likely cause is a misconfigured router on an adjacent tile
+@125 ERROR: P224.0 (hwtile) C11 arrived from Ramp and East on the same cycle
+@125 FATAL: This violates architecture rules.  The most likely cause is a misconfigured router on an adjacent tile
+@125 ERROR: P240.0 (hwtile) wavelet C11 from Ramp: ctrl=0, idx=4000, data=0000 (+0.000(-15)), ident=0000F00B00000003
+@125 ERROR: P186.0 (hwtile) wavelet C11 from East: ctrl=0, idx=4000, data=0000 (+0.000(-15)), ident=0000BC0B00000001
+@125 ERROR: P186.0 (hwtile) C11 arrived from Ramp and East on the same cycle
+@125 FATAL: This violates architecture rules.  The most likely cause is a misconfigured router on an adjacent tile
+@125 ERROR: P240.0 (hwtile) wavelet C11 from East: ctrl=0, idx=4000, data=0000 (+0.000(-15)), ident=0000F20B00000001
+@125 ERROR: P240.0 (hwtile) C11 arrived from Ramp and East on the same cycle
+@125 FATAL: This violates architecture rules.  The most likely cause is a misconfigured router on an adjacent tile
+@125 ERROR: P216.0 (hwtile) wavelet C11 from Ramp: ctrl=0, idx=4000, data=0000 (+0.000(-15)), ident=0000D80B00000003
+@125 ERROR: P202.0 (hwtile) wavelet C11 from Ramp: ctrl=0, idx=4000, data=0000 (+0.000(-15)), ident=0000CA0B00000003
+@125 ERROR: P226.0 (hwtile) wavelet C11 from Ramp: ctrl=0, idx=4000, data=0000 (+0.000(-15)), ident=0000E20B00000003
+@125 ERROR: P216.0 (hwtile) wavelet C11 from East: ctrl=0, idx=4000, data=0000 (+0.000(-15)), ident=0000DA0B00000001
+@125 ERROR: P202.0 (hwtile) wavelet C11 from East: ctrl=0, idx=4000, data=0000 (+0.000(-15)), ident=0000CC0B00000001
+@125 ERROR: P216.0 (hwtile) C11 arrived from Ramp and East on the same cycle
+@125 ERROR: P188.0 (hwtile) wavelet C11 from Ramp: ctrl=0, idx=4000, data=0000 (+0.000(-15)), ident=0000BC0B00000003
+@125 ERROR: P226.0 (hwtile) wavelet C11 from East: ctrl=0, idx=4000, data=0000 (+0.000(-15)), ident=0000E40B00000001
+@125 FATAL: This violates architecture rules.  The most likely cause is a misconfigured router on an adjacent tile
+@125 ERROR: P202.0 (hwtile) C11 arrived from Ramp and East on the same cycle
+@125 FATAL: This violates architecture rules.  The most likely cause is a misconfigured router on an adjacent tile
+@125 ERROR: P188.0 (hwtile) wavelet C11 from East: ctrl=0, idx=4000, data=0000 (+0.000(-15)), ident=0000BE0B00000001
+@125 ERROR: P188.0 (hwtile) C11 arrived from Ramp and East on the same cycle
+@125 ERROR: P226.0 (hwtile) C11 arrived from Ramp and East on the same cycle
+@125 FATAL: This violates architecture rules.  The most likely cause is a misconfigured router on an adjacent tile
+@125 FATAL: This violates architecture rules.  The most likely cause is a misconfigured router on an adjacent tile
+@125 ERROR: P218.0 (hwtile) wavelet C11 from Ramp: ctrl=0, idx=4000, data=0000 (+0.000(-15)), ident=0000DA0B00000003
+@125 ERROR: P204.0 (hwtile) wavelet C11 from Ramp: ctrl=0, idx=4000, data=0000 (+0.000(-15)), ident=0000CC0B00000003
+@125 ERROR: P218.0 (hwtile) wavelet C11 from East: ctrl=0, idx=4000, data=0000 (+0.000(-15)), ident=0000DC0B00000001
+@125 ERROR: P228.0 (hwtile) wavelet C11 from Ramp: ctrl=0, idx=4000, data=0000 (+0.000(-15)), ident=0000E40B00000003
+@125 ERROR: P218.0 (hwtile) C11 arrived from Ramp and East on the same cycle
+@125 FATAL: This violates architecture rules.  The most likely cause is a misconfigured router on an adjacent tile
+@125 ERROR: P204.0 (hwtile) wavelet C11 from East: ctrl=0, idx=4000, data=0000 (+0.000(-15)), ident=0000CE0B00000001
+@125 ERROR: P190.0 (hwtile) wavelet C11 from Ramp: ctrl=0, idx=4000, data=0000 (+0.000(-15)), ident=0000BE0B00000003
+@125 ERROR: P204.0 (hwtile) C11 arrived from Ramp and East on the same cycle
+@125 FATAL: This violates architecture rules.  The most likely cause is a misconfigured router on an adjacent tile
+@125 ERROR: P228.0 (hwtile) wavelet C11 from East: ctrl=0, idx=4000, data=0000 (+0.000(-15)), ident=0000E60B00000001
+@125 ERROR: P190.0 (hwtile) wavelet C11 from East: ctrl=0, idx=4000, data=0000 (+0.000(-15)), ident=0000C00B00000001
+@125 ERROR: P228.0 (hwtile) C11 arrived from Ramp and East on the same cycle
+@125 FATAL: This violates architecture rules.  The most likely cause is a misconfigured router on an adjacent tile
+@125 ERROR: P190.0 (hwtile) C11 arrived from Ramp and East on the same cycle
+@125 FATAL: This violates architecture rules.  The most likely cause is a misconfigured router on an adjacent tile
+@125 ERROR: P220.0 (hwtile) wavelet C11 from Ramp: ctrl=0, idx=4000, data=0000 (+0.000(-15)), ident=0000DC0B00000003
+@125 ERROR: P220.0 (hwtile) wavelet C11 from East: ctrl=0, idx=4000, data=0000 (+0.000(-15)), ident=0000DE0B00000001
+@125 ERROR: P206.0 (hwtile) wavelet C11 from Ramp: ctrl=0, idx=4000, data=0000 (+0.000(-15)), ident=0000CE0B00000003
+@125 ERROR: P220.0 (hwtile) C11 arrived from Ramp and East on the same cycle
+@125 FATAL: This violates architecture rules.  The most likely cause is a misconfigured router on an adjacent tile
+@125 ERROR: P230.0 (hwtile) wavelet C11 from Ramp: ctrl=0, idx=4000, data=0000 (+0.000(-15)), ident=0000E60B00000003
+@125 ERROR: P206.0 (hwtile) wavelet C11 from East: ctrl=0, idx=4000, data=0000 (+0.000(-15)), ident=0000D00B00000001
+@125 ERROR: P206.0 (hwtile) C11 arrived from Ramp and East on the same cycle
+@125 FATAL: This violates architecture rules.  The most likely cause is a misconfigured router on an adjacent tile
+@125 ERROR: P230.0 (hwtile) wavelet C11 from East: ctrl=0, idx=4000, data=0000 (+0.000(-15)), ident=0000E80B00000001
+@125 ERROR: P230.0 (hwtile) C11 arrived from Ramp and East on the same cycle
+@125 FATAL: This violates architecture rules.  The most likely cause is a misconfigured router on an adjacent tile
+@125 ERROR: P222.0 (hwtile) wavelet C11 from Ramp: ctrl=0, idx=4000, data=0000 (+0.000(-15)), ident=0000DE0B00000003
+@125 ERROR: P222.0 (hwtile) wavelet C11 from East: ctrl=0, idx=4000, data=0000 (+0.000(-15)), ident=0000E00B00000001
+@125 ERROR: P222.0 (hwtile) C11 arrived from Ramp and East on the same cycle
+@125 FATAL: This violates architecture rules.  The most likely cause is a misconfigured router on an adjacent tile
+@125 ERROR: P232.0 (hwtile) wavelet C11 from Ramp: ctrl=0, idx=4000, data=0000 (+0.000(-15)), ident=0000E80B00000003
+@125 ERROR: P232.0 (hwtile) wavelet C11 from East: ctrl=0, idx=4000, data=0000 (+0.000(-15)), ident=0000EA0B00000001
+@125 ERROR: P232.0 (hwtile) C11 arrived from Ramp and East on the same cycle
+@125 FATAL: This violates architecture rules.  The most likely cause is a misconfigured router on an adjacent tile
+@125 ERROR: P234.0 (hwtile) wavelet C11 from Ramp: ctrl=0, idx=4000, data=0000 (+0.000(-15)), ident=0000EA0B00000003
+@125 ERROR: P234.0 (hwtile) wavelet C11 from East: ctrl=0, idx=4000, data=0000 (+0.000(-15)), ident=0000EC0B00000001
+@125 ERROR: P234.0 (hwtile) C11 arrived from Ramp and East on the same cycle
+@125 FATAL: This violates architecture rules.  The most likely cause is a misconfigured router on an adjacent tile
+@125 ERROR: P236.0 (hwtile) wavelet C11 from Ramp: ctrl=0, idx=4000, data=0000 (+0.000(-15)), ident=0000EC0B00000003
+@125 ERROR: P236.0 (hwtile) wavelet C11 from East: ctrl=0, idx=4000, data=0000 (+0.000(-15)), ident=0000EE0B00000001
+@125 ERROR: P236.0 (hwtile) C11 arrived from Ramp and East on the same cycle
+@125 FATAL: This violates architecture rules.  The most likely cause is a misconfigured router on an adjacent tile
+@125 ERROR: P238.0 (hwtile) wavelet C11 from Ramp: ctrl=0, idx=4000, data=0000 (+0.000(-15)), ident=0000EE0B00000003
+@125 ERROR: P238.0 (hwtile) wavelet C11 from East: ctrl=0, idx=4000, data=0000 (+0.000(-15)), ident=0000F00B00000001
+@125 ERROR: P238.0 (hwtile) C11 arrived from Ramp and East on the same cycle
+@125 FATAL: This violates architecture rules.  The most likely cause is a misconfigured router on an adjacent tile
+@128 ERROR: P2.0 (hwtile) wavelet C11 from Ramp: ctrl=0, idx=4000, data=0000 (+0.000(-15)), ident=0000020B00000004
+@128 ERROR: P2.0 (hwtile) wavelet C11 from East: ctrl=0, idx=4000, data=0000 (+0.000(-15)), ident=0000060B00000001
+@128 ERROR: P2.0 (hwtile) C11 arrived from Ramp and East on the same cycle
+@128 FATAL: This violates architecture rules.  The most likely cause is a misconfigured router on an adjacent tile
+@130 ERROR: P4.0 (hwtile) wavelet C11 from Ramp: ctrl=0, idx=4000, data=0000 (+0.000(-15)), ident=0000040B00000004
+@130 ERROR: P4.0 (hwtile) wavelet C11 from East: ctrl=0, idx=4000, data=0000 (+0.000(-15)), ident=0000060B00000003
+@130 ERROR: P4.0 (hwtile) C11 arrived from Ramp and East on the same cycle
+@130 FATAL: This violates architecture rules.  The most likely cause is a misconfigured router on an adjacent tile
+@130 FATAL: P4.0 (hwtile) C11: updateBaseBP: internal error: unexpected real_num_free_slots (-1) = free_slots(0) - num_cycles_no_bp(1)
+@130 FATAL: Tile: P4.0 (hwtile)
+@130 FATAL: Condition: real_num_free_slots < 0
+@130 FATAL: Location: /spare/jenkins/workspace/release/cbcore-rel-sdk-0.6.0/src/fabricmodel/frame/fnet.cc:3307 (void updateBaseBp(fnet*))
+@130 FATAL: Stack Trace:
+@130 FATAL: 	# 0 0x00007fd76e8c96fe fnet_cycle(fnet*, int*) libfscore.so+0x14e6fe
+@130 FATAL: 	# 1 0x00007fd76e902618 runTile(int) libfscore.so+0x187618
+@130 FATAL: 	# 2 0x00007fd76e902765 sim_computationCycle(int) libfscore.so+0x187765
+@130 FATAL: 	# 3 0x00007fd76e902a2f sim_performOneCycle(int) libfscore.so+0x187a2f
+@130 FATAL: 	# 4 0x00007fd76e902ad7 sim_computationWorker(void*) libfscore.so+0x187ad7
+@131 Stopping due to fatal error: P4.0 (hwtile) P4.0 (hwtile) C11: updateBaseBP: internal error: unexpected real_num_free_slots (-1) = free_slots(0) - num_cycles_no_bp(1)
+@131 CTF Stats: num_stalls_       =         1331
+@131 CTF Stats: num_wavelets      =         2556
+@131 CTF Stats: num_inst_dispatch =        13775
+@131 CTF Stats: num_inst_pipe     =        28646
+@131 CTF Stats: num_switch_pos    =            0
+@131 FATAL: Stopping due to fatal error: P4.0 (hwtile) P4.0 (hwtile) C11: updateBaseBP: internal error: unexpected real_num_free_slots (-1) = free_slots(0) - num_cycles_no_bp(1)
+@131 FATAL: Location: :1310735917 ()
+@131 Simulation used 0.37 real seconds, 0.24 user seconds, 0.15 system seconds, and ran at 355.67 cyc/sec 261063.75 tile-cyc/sec with 5 threads, at 52212.75 tile-cyc/sec/thread , 86784.13 activetile-cyc/sec and  17356.83 activetile-cyc/sec/thread is. Initialization took 0.41 sec.
+@0 GITREV=6fa1d2e77d85620a5a65599a2cbed8a986df5378, GITCLEAN=1
+@0 Create from size nx=8 ny=1
+@0 dimX=8, dimY=1
+@0 Invocation key is: simF10F768242080671FE9C8A2137B0C3E1
+@0 Plan key is: planD770705AC93E4982A1ADAB7A360D6FE5
+@0 SimTraceCtf, flags:  wavelets=0 landing=1 inst=1 switch_positions=0 stalls=1
+@0 Architecture is: FYN
+@0 Simtile is: hwtile
+@125 ERROR: P2.0 (hwtile) wavelet C11 from Ramp: ctrl=0, idx=4000, data=0000 (+0.000(-15)), ident=0000020B00000003
+@125 ERROR: P2.0 (hwtile) wavelet C11 from East: ctrl=0, idx=4000, data=0000 (+0.000(-15)), ident=0000040B00000001
+@125 ERROR: P2.0 (hwtile) C11 arrived from Ramp and East on the same cycle
+@125 FATAL: This violates architecture rules.  The most likely cause is a misconfigured router on an adjacent tile
+@125 ERROR: P4.0 (hwtile) wavelet C11 from Ramp: ctrl=0, idx=4000, data=0000 (+0.000(-15)), ident=0000040B00000003
+@125 ERROR: P4.0 (hwtile) wavelet C11 from East: ctrl=0, idx=4000, data=0000 (+0.000(-15)), ident=0000060B00000001
+@125 ERROR: P4.0 (hwtile) C11 arrived from Ramp and East on the same cycle
+@125 FATAL: This violates architecture rules.  The most likely cause is a misconfigured router on an adjacent tile
+@128 ERROR: P2.0 (hwtile) wavelet C11 from Ramp: ctrl=0, idx=4000, data=0000 (+0.000(-15)), ident=0000020B00000004
+@128 ERROR: P2.0 (hwtile) wavelet C11 from East: ctrl=0, idx=4000, data=0000 (+0.000(-15)), ident=0000060B00000001
+@128 ERROR: P2.0 (hwtile) C11 arrived from Ramp and East on the same cycle
+@128 FATAL: This violates architecture rules.  The most likely cause is a misconfigured router on an adjacent tile
+@130 ERROR: P4.0 (hwtile) wavelet C11 from Ramp: ctrl=0, idx=4000, data=0000 (+0.000(-15)), ident=0000040B00000004
+@130 ERROR: P4.0 (hwtile) wavelet C11 from East: ctrl=0, idx=4000, data=0000 (+0.000(-15)), ident=0000060B00000004
+@130 ERROR: P4.0 (hwtile) C11 arrived from Ramp and East on the same cycle
+@130 FATAL: This violates architecture rules.  The most likely cause is a misconfigured router on an adjacent tile
+@130 FATAL: P4.0 (hwtile) C11: updateBaseBP: internal error: unexpected real_num_free_slots (-1) = free_slots(0) - num_cycles_no_bp(1)
+@130 FATAL: Tile: P4.0 (hwtile)
+@130 FATAL: Condition: real_num_free_slots < 0
+@130 FATAL: Location: /spare/jenkins/workspace/release/cbcore-rel-sdk-0.6.0/src/fabricmodel/frame/fnet.cc:3307 (void updateBaseBp(fnet*))
+@130 FATAL: Stack Trace:
+@130 FATAL: 	# 0 0x00007fa5ca6cf6fe fnet_cycle(fnet*, int*) libfscore.so+0x14e6fe
+@130 FATAL: 	# 1 0x00007fa5ca708618 runTile(int) libfscore.so+0x187618
+@130 FATAL: 	# 2 0x00007fa5ca708765 sim_computationCycle(int) libfscore.so+0x187765
+@130 FATAL: 	# 3 0x00007fa5ca708a2f sim_performOneCycle(int) libfscore.so+0x187a2f
+@130 FATAL: 	# 4 0x00007fa5ca708ad7 sim_computationWorker(void*) libfscore.so+0x187ad7
+@131 Stopping due to fatal error: P4.0 (hwtile) P4.0 (hwtile) C11: updateBaseBP: internal error: unexpected real_num_free_slots (-1) = free_slots(0) - num_cycles_no_bp(1)
+@131 CTF Stats: num_stalls_       =           33
+@131 CTF Stats: num_wavelets      =           78
+@131 CTF Stats: num_inst_dispatch =          440
+@131 CTF Stats: num_inst_pipe     =          915
+@131 CTF Stats: num_switch_pos    =            0
+@131 FATAL: Stopping due to fatal error: P4.0 (hwtile) P4.0 (hwtile) C11: updateBaseBP: internal error: unexpected real_num_free_slots (-1) = free_slots(0) - num_cycles_no_bp(1)
+@131 FATAL: Location: :1310735917 ()
+@131 Simulation used 0.24 real seconds, 0.03 user seconds, 0.04 system seconds, and ran at 547.47 cyc/sec 14234.31 tile-cyc/sec with 5 threads, at 2846.86 tile-cyc/sec/thread , 4379.79 activetile-cyc/sec and  875.96 activetile-cyc/sec/thread is. Initialization took 0.04 sec.
+@0 GITREV=6fa1d2e77d85620a5a65599a2cbed8a986df5378, GITCLEAN=1
+@0 Create from size nx=8 ny=1
+@0 dimX=8, dimY=1
+@0 Invocation key is: simECC040D77E7D6329F3FC87FC46298235
+@0 Plan key is: planD770705AC93E4982A1ADAB7A360D6FE5
+@0 SimTraceCtf, flags:  wavelets=0 landing=1 inst=1 switch_positions=0 stalls=1
+@0 Architecture is: FYN
+@0 Simtile is: hwtile
+@125 ERROR: P2.0 (hwtile) wavelet C11 from Ramp: ctrl=0, idx=4000, data=0000 (+0.000(-15)), ident=0000020B00000003
+@125 ERROR: P2.0 (hwtile) wavelet C11 from East: ctrl=0, idx=4000, data=0000 (+0.000(-15)), ident=0000040B00000001
+@125 ERROR: P2.0 (hwtile) C11 arrived from Ramp and East on the same cycle
+@125 FATAL: This violates architecture rules.  The most likely cause is a misconfigured router on an adjacent tile
+@125 ERROR: P4.0 (hwtile) wavelet C11 from Ramp: ctrl=0, idx=4000, data=0000 (+0.000(-15)), ident=0000040B00000003
+@125 ERROR: P4.0 (hwtile) wavelet C11 from East: ctrl=0, idx=4000, data=0000 (+0.000(-15)), ident=0000060B00000001
+@125 ERROR: P4.0 (hwtile) C11 arrived from Ramp and East on the same cycle
+@125 FATAL: This violates architecture rules.  The most likely cause is a misconfigured router on an adjacent tile
+@128 ERROR: P2.0 (hwtile) wavelet C11 from Ramp: ctrl=0, idx=4000, data=0000 (+0.000(-15)), ident=0000020B00000004
+@128 ERROR: P2.0 (hwtile) wavelet C11 from East: ctrl=0, idx=4000, data=0000 (+0.000(-15)), ident=0000060B00000001
+@128 ERROR: P2.0 (hwtile) C11 arrived from Ramp and East on the same cycle
+@128 FATAL: This violates architecture rules.  The most likely cause is a misconfigured router on an adjacent tile
+@130 ERROR: P4.0 (hwtile) wavelet C11 from Ramp: ctrl=0, idx=4000, data=0000 (+0.000(-15)), ident=0000040B00000004
+@130 ERROR: P4.0 (hwtile) wavelet C11 from East: ctrl=0, idx=4000, data=0000 (+0.000(-15)), ident=0000060B00000004
+@130 ERROR: P4.0 (hwtile) C11 arrived from Ramp and East on the same cycle
+@130 FATAL: This violates architecture rules.  The most likely cause is a misconfigured router on an adjacent tile
+@130 FATAL: P4.0 (hwtile) C11: updateBaseBP: internal error: unexpected real_num_free_slots (-1) = free_slots(0) - num_cycles_no_bp(1)
+@130 FATAL: Tile: P4.0 (hwtile)
+@130 FATAL: Condition: real_num_free_slots < 0
+@130 FATAL: Location: /spare/jenkins/workspace/release/cbcore-rel-sdk-0.6.0/src/fabricmodel/frame/fnet.cc:3307 (void updateBaseBp(fnet*))
+@130 FATAL: Stack Trace:
+@130 FATAL: 	# 0 0x00007fadadbc96fe fnet_cycle(fnet*, int*) libfscore.so+0x14e6fe
+@130 FATAL: 	# 1 0x00007fadadc02618 runTile(int) libfscore.so+0x187618
+@130 FATAL: 	# 2 0x00007fadadc02765 sim_computationCycle(int) libfscore.so+0x187765
+@130 FATAL: 	# 3 0x00007fadadc02a2f sim_performOneCycle(int) libfscore.so+0x187a2f
+@130 FATAL: 	# 4 0x00007fadadc02ad7 sim_computationWorker(void*) libfscore.so+0x187ad7
+@131 Stopping due to fatal error: P4.0 (hwtile) P4.0 (hwtile) C11: updateBaseBP: internal error: unexpected real_num_free_slots (-1) = free_slots(0) - num_cycles_no_bp(1)
+@131 CTF Stats: num_stalls_       =           33
+@131 CTF Stats: num_wavelets      =           78
+@131 CTF Stats: num_inst_dispatch =          440
+@131 CTF Stats: num_inst_pipe     =          915
+@131 CTF Stats: num_switch_pos    =            0
+@131 FATAL: Stopping due to fatal error: P4.0 (hwtile) P4.0 (hwtile) C11: updateBaseBP: internal error: unexpected real_num_free_slots (-1) = free_slots(0) - num_cycles_no_bp(1)
+@131 FATAL: Location: :1310735917 ()
+@131 Simulation used 0.24 real seconds, 0.03 user seconds, 0.03 system seconds, and ran at 542.95 cyc/sec 14116.78 tile-cyc/sec with 5 threads, at 2823.36 tile-cyc/sec/thread , 4343.62 activetile-cyc/sec and  868.72 activetile-cyc/sec/thread is. Initialization took 0.03 sec.
+@0 GITREV=6fa1d2e77d85620a5a65599a2cbed8a986df5378, GITCLEAN=1
+@0 Create from size nx=8 ny=1
+@0 dimX=8, dimY=1
+@0 Invocation key is: simAEE6A9A50998C33A36E259ACABACACCB
+@0 Plan key is: planD770705AC93E4982A1ADAB7A360D6FE5
+@0 SimTraceCtf, flags:  wavelets=0 landing=1 inst=1 switch_positions=0 stalls=1
+@0 Architecture is: FYN
+@0 Simtile is: hwtile
+@272 No data movement in the last 50 cycles; stopping.
+@272 Thread  0
+@272 	internal: cur=6604025, tot=6604025, perCyc=  24279.50
+@272 	external: cur=6235841, tot=6235841, perCyc=  22925.89
+@272 Thread  1
+@272 	internal: cur=9683896, tot=9683896, perCyc=  35602.56
+@272 	external: cur=9231467, tot=9231467, perCyc=  33939.22
+@272 Thread  2
+@272 	internal: cur=12929304, tot=12929304, perCyc=  47534.21
+@272 	external: cur=12334889, tot=12334889, perCyc=  45348.86
+@272 Thread  3
+@272 	internal: cur=9203237, tot=9203237, perCyc=  33835.43
+@272 	external: cur=8635649, tot=8635649, perCyc=  31748.71
+@272 Thread  4
+@272 	internal: cur=11346482, tot=11346482, perCyc=  41715.01
+@272 	external: cur=10594744, tot=10594744, perCyc=  38951.26
+@272 Simulation used 0.06 real seconds, 0.01 user seconds, 0.08 system seconds, and ran at 4264.05 cyc/sec 110865.29 tile-cyc/sec with 5 threads, at 22173.06 tile-cyc/sec/thread , 34112.40 activetile-cyc/sec and  6822.48 activetile-cyc/sec/thread is. Initialization took 0.03 sec.
+@272 CTF Stats: num_stalls_       =           26
+@272 CTF Stats: num_wavelets      =           80
+@272 CTF Stats: num_inst_dispatch =          513
+@272 CTF Stats: num_inst_pipe     =         1068
+@272 CTF Stats: num_switch_pos    =            0
+@0 GITREV=6fa1d2e77d85620a5a65599a2cbed8a986df5378, GITCLEAN=1
+@0 Create from size nx=243 ny=1
+@0 dimX=243, dimY=1
+@0 Invocation key is: sim5F84588D1121F81B66E0A8C56F31F847
+@0 Plan key is: planDD75BFBC1B6557ADCDC62BEDFD87C12F
+@0 SimTraceCtf, flags:  wavelets=0 landing=1 inst=1 switch_positions=0 stalls=1
+@0 Architecture is: FYN
+@0 Simtile is: hwtile
+@842 No data movement in the last 50 cycles; stopping.
+@842 Thread  0
+@842 	internal: cur=558729116, tot=558729116, perCyc= 663573.77
+@842 	external: cur=482060372, tot=482060372, perCyc= 572518.26
+@842 Thread  1
+@842 	internal: cur=536737659, tot=536737659, perCyc= 637455.65
+@842 	external: cur=457375740, tot=457375740, perCyc= 543201.59
+@842 Thread  2
+@842 	internal: cur=565897350, tot=565897350, perCyc= 672087.11
+@842 	external: cur=486388713, tot=486388713, perCyc= 577658.80
+@842 Thread  3
+@842 	internal: cur=528070409, tot=528070409, perCyc= 627162.01
+@842 	external: cur=450797353, tot=450797353, perCyc= 535388.78
+@842 Thread  4
+@842 	internal: cur=550248835, tot=550248835, perCyc= 653502.18
+@842 	external: cur=471126569, tot=471126569, perCyc= 559532.74
+@842 Simulation used 0.45 real seconds, 1.06 user seconds, 0.21 system seconds, and ran at 1890.55 cyc/sec 1381995.69 tile-cyc/sec with 5 threads, at 276399.14 tile-cyc/sec/thread , 459404.86 activetile-cyc/sec and  91880.97 activetile-cyc/sec/thread is. Initialization took 0.36 sec.
+@842 CTF Stats: num_stalls_       =          844
+@842 CTF Stats: num_wavelets      =         4858
+@842 CTF Stats: num_inst_dispatch =        17172
+@842 CTF Stats: num_inst_pipe     =        35796
+@842 CTF Stats: num_switch_pos    =            0
+@0 GITREV=6fa1d2e77d85620a5a65599a2cbed8a986df5378, GITCLEAN=1
+@0 Create from size nx=244 ny=1
+@0 dimX=244, dimY=1
+@0 Invocation key is: simB03D06B8565E6EC129F25EAB8CFD34E5
+@0 Plan key is: planE978C9BBE352283204848A05B12B85CE
+@0 SimTraceCtf, flags:  wavelets=0 landing=1 inst=1 switch_positions=0 stalls=1
+@0 Architecture is: FYN
+@0 Simtile is: hwtile
+@843 No data movement in the last 50 cycles; stopping.
+@843 Thread  0
+@843 	internal: cur=356650793, tot=356650793, perCyc= 423073.30
+@843 	external: cur=307081279, tot=307081279, perCyc= 364271.98
+@843 Thread  1
+@843 	internal: cur=353521053, tot=353521053, perCyc= 419360.68
+@843 	external: cur=300763700, tot=300763700, perCyc= 356777.82
+@843 Thread  2
+@843 	internal: cur=354033005, tot=354033005, perCyc= 419967.98
+@843 	external: cur=303300214, tot=303300214, perCyc= 359786.73
+@843 Thread  3
+@843 	internal: cur=351362928, tot=351362928, perCyc= 416800.63
+@843 	external: cur=301256578, tot=301256578, perCyc= 357362.49
+@843 Thread  4
+@843 	internal: cur=348374327, tot=348374327, perCyc= 413255.43
+@843 	external: cur=299144256, tot=299144256, perCyc= 354856.77
+@843 Simulation used 0.31 real seconds, 0.65 user seconds, 0.21 system seconds, and ran at 2679.12 cyc/sec 1966477.16 tile-cyc/sec with 5 threads, at 393295.43 tile-cyc/sec/thread , 653706.30 activetile-cyc/sec and  130741.26 activetile-cyc/sec/thread is. Initialization took 0.41 sec.
+@843 CTF Stats: num_stalls_       =          852
+@843 CTF Stats: num_wavelets      =         4886
+@843 CTF Stats: num_inst_dispatch =        17230
+@843 CTF Stats: num_inst_pipe     =        35918
+@843 CTF Stats: num_switch_pos    =            0
+@0 GITREV=6fa1d2e77d85620a5a65599a2cbed8a986df5378, GITCLEAN=1
+@0 Create from size nx=244 ny=1
+@0 dimX=244, dimY=1
+@0 Invocation key is: sim4B17132B7A1D0464A6E7C86C5466B332
+@0 Plan key is: planE978C9BBE352283204848A05B12B85CE
+@0 SimTraceCtf, flags:  wavelets=0 landing=1 inst=1 switch_positions=0 stalls=1
+@0 Architecture is: FYN
+@0 Simtile is: hwtile
+@2411 No data movement in the last 50 cycles; stopping.
+@2411 Thread  0
+@2411 	internal: cur=1508279765, tot=1508279765, perCyc= 625582.65
+@2411 	external: cur=1236779462, tot=1236779462, perCyc= 512973.65
+@2411 Thread  1
+@2411 	internal: cur=1505612901, tot=1505612901, perCyc= 624476.52
+@2411 	external: cur=1232767639, tot=1232767639, perCyc= 511309.68
+@2411 Thread  2
+@2411 	internal: cur=1497822117, tot=1497822117, perCyc= 621245.18
+@2411 	external: cur=1227113359, tot=1227113359, perCyc= 508964.48
+@2411 Thread  3
+@2411 	internal: cur=1504471088, tot=1504471088, perCyc= 624002.94
+@2411 	external: cur=1233265001, tot=1233265001, perCyc= 511515.97
+@2411 Thread  4
+@2411 	internal: cur=1491742226, tot=1491742226, perCyc= 618723.45
+@2411 	external: cur=1221603955, tot=1221603955, perCyc= 506679.37
+@2411 Simulation used 1.13 real seconds, 2.80 user seconds, 0.65 system seconds, and ran at 2136.06 cyc/sec 1567870.37 tile-cyc/sec with 5 threads, at 313574.07 tile-cyc/sec/thread , 521199.41 activetile-cyc/sec and  104239.88 activetile-cyc/sec/thread is. Initialization took 0.37 sec.
+@2411 CTF Stats: num_stalls_       =          852
+@2411 CTF Stats: num_wavelets      =       238322
+@2411 CTF Stats: num_inst_dispatch =        17230
+@2411 CTF Stats: num_inst_pipe     =       131174
+@2411 CTF Stats: num_switch_pos    =            0
+@0 GITREV=6fa1d2e77d85620a5a65599a2cbed8a986df5378, GITCLEAN=1
+@0 Create from size nx=244 ny=1
+@0 dimX=244, dimY=1
+@0 Invocation key is: sim17B6308913AB37D75C64DA12874E42C4
+@0 Plan key is: planE978C9BBE352283204848A05B12B85CE
+@0 SimTraceCtf, flags:  wavelets=0 landing=1 inst=1 switch_positions=0 stalls=1
+@0 Architecture is: FYN
+@0 Simtile is: hwtile
+@891 No data movement in the last 50 cycles; stopping.
+@891 Thread  0
+@891 	internal: cur=549281616, tot=549281616, perCyc= 616477.68
+@891 	external: cur=461194635, tot=461194635, perCyc= 517614.63
+@891 Thread  1
+@891 	internal: cur=542821769, tot=542821769, perCyc= 609227.57
+@891 	external: cur=455011290, tot=455011290, perCyc= 510674.85
+@891 Thread  2
+@891 	internal: cur=548755785, tot=548755785, perCyc= 615887.53
+@891 	external: cur=458673405, tot=458673405, perCyc= 514784.97
+@891 Thread  3
+@891 	internal: cur=555407407, tot=555407407, perCyc= 623352.87
+@891 	external: cur=464200699, tot=464200699, perCyc= 520988.44
+@891 Thread  4
+@891 	internal: cur=558287133, tot=558287133, perCyc= 626584.89
+@891 	external: cur=469481017, tot=469481017, perCyc= 526914.72
+@891 Simulation used 0.44 real seconds, 0.93 user seconds, 0.36 system seconds, and ran at 2010.63 cyc/sec 1475805.22 tile-cyc/sec with 5 threads, at 295161.04 tile-cyc/sec/thread , 490594.65 activetile-cyc/sec and  98118.93 activetile-cyc/sec/thread is. Initialization took 0.31 sec.
+@891 CTF Stats: num_stalls_       =          852
+@891 CTF Stats: num_wavelets      =        12032
+@891 CTF Stats: num_inst_dispatch =        17230
+@891 CTF Stats: num_inst_pipe     =        38834
+@891 CTF Stats: num_switch_pos    =            0
+@0 GITREV=6fa1d2e77d85620a5a65599a2cbed8a986df5378, GITCLEAN=1
+@0 Create from size nx=272 ny=1
+@0 dimX=272, dimY=1
+@0 Invocation key is: simE53A47E2C07E179D7479664A9EEF838D
+@0 Plan key is: plan38C6F1CD07D948BFC80AAB49A7FF73FB
+@0 SimTraceCtf, flags:  wavelets=0 landing=1 inst=1 switch_positions=0 stalls=1
+@0 Architecture is: FYN
+@0 Simtile is: hwtile
+@938 No data movement in the last 50 cycles; stopping.
+@938 Thread  0
+@938 	internal: cur=452525684, tot=452525684, perCyc= 482436.76
+@938 	external: cur=381726738, tot=381726738, perCyc= 406958.14
+@938 Thread  1
+@938 	internal: cur=447653718, tot=447653718, perCyc= 477242.77
+@938 	external: cur=382779349, tot=382779349, perCyc= 408080.33
+@938 Thread  2
+@938 	internal: cur=465213495, tot=465213495, perCyc= 495963.21
+@938 	external: cur=399026983, tot=399026983, perCyc= 425401.90
+@938 Thread  3
+@938 	internal: cur=464173955, tot=464173955, perCyc= 494854.96
+@938 	external: cur=396090764, tot=396090764, perCyc= 422271.60
+@938 Thread  4
+@938 	internal: cur=456051647, tot=456051647, perCyc= 486195.79
+@938 	external: cur=389277120, tot=389277120, perCyc= 415007.59
+@938 Simulation used 0.47 real seconds, 0.82 user seconds, 0.32 system seconds, and ran at 1998.65 cyc/sec 1634898.43 tile-cyc/sec with 5 threads, at 326979.69 tile-cyc/sec/thread , 543633.71 activetile-cyc/sec and  108726.74 activetile-cyc/sec/thread is. Initialization took 0.39 sec.
+@938 CTF Stats: num_stalls_       =          950
+@938 CTF Stats: num_wavelets      =         5508
+@938 CTF Stats: num_inst_dispatch =        19211
+@938 CTF Stats: num_inst_pipe     =        40048
+@938 CTF Stats: num_switch_pos    =            0
+@0 GITREV=6fa1d2e77d85620a5a65599a2cbed8a986df5378, GITCLEAN=1
+@0 Create from size nx=272 ny=1
+@0 dimX=272, dimY=1
+@0 Invocation key is: simD90708153D65A582B122D449BCF9F3B1
+@0 Plan key is: plan38C6F1CD07D948BFC80AAB49A7FF73FB
+@0 SimTraceCtf, flags:  wavelets=0 landing=1 inst=1 switch_positions=0 stalls=1
+@0 Architecture is: FYN
+@0 Simtile is: hwtile
+@938 No data movement in the last 50 cycles; stopping.
+@938 Thread  0
+@938 	internal: cur=528489004, tot=528489004, perCyc= 563421.11
+@938 	external: cur=438078066, tot=438078066, perCyc= 467034.19
+@938 Thread  1
+@938 	internal: cur=533033552, tot=533033552, perCyc= 568266.05
+@938 	external: cur=443220308, tot=443220308, perCyc= 472516.32
+@938 Thread  2
+@938 	internal: cur=530051133, tot=530051133, perCyc= 565086.50
+@938 	external: cur=438353672, tot=438353672, perCyc= 467328.01
+@938 Thread  3
+@938 	internal: cur=516417824, tot=516417824, perCyc= 550552.05
+@938 	external: cur=426157855, tot=426157855, perCyc= 454326.07
+@938 Thread  4
+@938 	internal: cur=522408925, tot=522408925, perCyc= 556939.15
+@938 	external: cur=433226191, tot=433226191, perCyc= 461861.61
+@938 Simulation used 0.45 real seconds, 1.08 user seconds, 0.18 system seconds, and ran at 2085.94 cyc/sec 1706300.34 tile-cyc/sec with 5 threads, at 341260.07 tile-cyc/sec/thread , 567376.15 activetile-cyc/sec and  113475.23 activetile-cyc/sec/thread is. Initialization took 0.42 sec.
+@938 CTF Stats: num_stalls_       =          950
+@938 CTF Stats: num_wavelets      =         5508
+@938 CTF Stats: num_inst_dispatch =        19211
+@938 CTF Stats: num_inst_pipe     =        40048
+@938 CTF Stats: num_switch_pos    =            0

@@ -1,4 +1,4 @@
-const Pw: u16 = 243;
+const Pw: u16 = 272;
 
 layout {
   @set_rectangle(Pw, 1);

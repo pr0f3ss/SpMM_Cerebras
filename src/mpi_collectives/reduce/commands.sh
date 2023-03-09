@@ -2,6 +2,6 @@
 
 set -e
 
-cslc ./layout.csl --fabric-dims=243,1 \
+cslc ./layout.csl --fabric-dims=272,1 \
 --fabric-offsets=0,0 -o out
 cs_python run.py --name out

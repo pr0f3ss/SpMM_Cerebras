@@ -247,14 +247,14 @@ int main()
 
 
     // Generate matrix (Density in percent)
-    gen = generate_sparse_matrix(10, 5, 6);
+    gen = generate_sparse_matrix(20, 6, 6);
     
     
     // Write matrix
-    write_csv_matrix(gen, 5, 6, "test.csv");
+    write_csv_matrix(gen, 6, 6, "test.csv");
 
     // Convert to grid CSC
-    convert_to_grid_csc_grid(m, 4, 5, 3, 2, "test_val.csv", "test_row_idx.csv", "test_col_ptr.csv");
+    convert_to_grid_csc_grid(gen, 6, 6, 2, 2, "test_val.csv", "test_row_idx.csv", "test_col_ptr.csv");
 
     return 0;
  }

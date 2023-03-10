@@ -317,7 +317,7 @@ def main():
   simulator.load()
   simulator.run()
 
-  num_PE = width*length
+  num_PE = width*height
 
   # TODO: redo iport and oport maps
   iportmap_A_val = f"{{ A_val[i=0:{num_PE-1}][j=0:{A_val_len-1}] -> [PE[i//{height}, j//{width}] -> \

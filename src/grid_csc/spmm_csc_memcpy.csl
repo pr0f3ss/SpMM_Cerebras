@@ -43,16 +43,15 @@ param EXIT: color;     // entrypoint to leave RPC
 // A uses grid CSC format and predetermined (padded) size 
 // A_val_len, A_rowidx_len and A_colptr_len
 
-param Nt:i16;         
-param Kt:i16; 
-param M:i16;  
+param Nt:i32;         
+param Kt:i32; 
+param M:i32;  
 
-param A_val_len:i16;
-param A_rowidx_len:i16;
-param A_colptr_len:i16;
+param A_val_len:i32;
+param A_rowidx_len:i32;
+param A_colptr_len:i32;
 
 
-// todo: check whether this works? should be layout_memcpy.csl I think
 const fabric = @import_module("<layout>");
 
 fn get_x_coord() u16 {
@@ -84,11 +83,11 @@ var A_val  = @zeros([A_val_len]f32);
 var A_row_idx  = @zeros([A_rowidx_len]i32);
 var A_col_ptr  = @zeros([A_colptr_len]i32);
 
-var B  = @zeros([Kt,M]f32);
-var C_final  = @zeros([Nt,M]f32);
+var B  = @zeros([Kt*M]f32);
+var C_final  = @zeros([Nt*M]f32);
 
 // workspace for A*B
-var C_temp = @zeros([Nt,M]f32);
+var C_temp = @zeros([Nt*M]f32);
 
 // (_px, _py) is the coordinate of region of interest, set by the function bcast_x
 // which starts the computation
@@ -100,9 +99,9 @@ var ptr_A_val : [*]f32 = &A_val;
 var ptr_A_row_idx  : [*]i32 = &A_row_idx;
 var ptr_A_col_ptr : [*]i32 = &A_col_ptr;
 // todo: check whether this works because they are arrays, or if we just use normal [*]
-var ptr_B : [*,*]f32 = &B;
-var ptr_C_final : [*,*]f32 = &C_final;
-var ptr_C_temp : [*,*]f32 = &C_temp;
+var ptr_B : [*]f32 = &B;
+var ptr_C_final : [*]f32 = &C_final;
+var ptr_C_temp : [*]f32 = &C_temp;
 
 ////////////////////////////////////////////////////////////////////////////////
 // DSDs
@@ -116,7 +115,7 @@ var ptr_C_temp : [*,*]f32 = &C_temp;
 ////////////////////////////////////////////////////////////////////////////////
 
 // Have to use multi-dimensional memory vector -> mem4d_dsd
-const mem_B_buf_dsd = @get_dsd(mem4d_dsd, .{ .tensor_access = |i,j|{Kt,M} -> B[i,j] });
+const mem_B_buf_dsd = @get_dsd(mem1d_dsd, .{ .tensor_access = |i|{Kt*M} -> B[i] });
 
 // Receiving B
 const fab_recv_B_wdsd = @get_dsd(fabin_dsd, .{
@@ -133,7 +132,7 @@ const fab_trans_B_wdsd = @get_dsd(fabout_dsd, .{
 });
 
 // C_temp buffer
-const mem_C_temp_buf_dsd = @get_dsd(mem4d_dsd, .{ .tensor_access = |i,j|{Nt,M} -> C_temp[i,j] });
+const mem_C_temp_buf_dsd = @get_dsd(mem1d_dsd, .{ .tensor_access = |i|{Nt*M} -> C_temp[i] });
 
 // Receiving C_temp (in last column)
 const fab_recv_C_temp_wdsd = @get_dsd(fabin_dsd, .{
@@ -150,7 +149,7 @@ const fab_trans_C_temp_wdsd = @get_dsd(fabout_dsd, .{
 });
 
 // C_final buffer
-const mem_C_final_buf_dsd = @get_dsd(mem4d_dsd, .{ .tensor_access = |i,j|{Nt,M} -> C_final[i,j] });
+const mem_C_final_buf_dsd = @get_dsd(mem1d_dsd, .{ .tensor_access = |i|{Nt*M} -> C_final[i] });
 
 
 ////////////////////////////////////////////////////////////////////////////////

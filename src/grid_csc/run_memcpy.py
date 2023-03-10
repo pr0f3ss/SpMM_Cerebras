@@ -72,12 +72,8 @@ def parse_args():
                       help="number of columns of the  A and number of rows of B")
   parser.add_argument("-M", type=int,
                       help="number of columns of the matrix B and C.")
-  parser.add_argument("-A_val_len", type=int,
-                      help="Length of the submatrix A value array")
-  parser.add_argument("-A_rowidx_len", type=int,
-                      help="Length of the submatrix A row index array")
-  parser.add_argument("-A_colptr_len", type=int,
-                      help="Length of the submatrix A column pointer array")
+  parser.add_argument("-A_prefix", type=str,
+                      help="prefix of all three grid csc files")
   parser.add_argument(
       "--cslc",
       required=False,
@@ -134,12 +130,12 @@ def csl_compile(
     compile_flag: bool,
     arch: Optional[str],
     LAUNCH: int,
-    N: int,
-    K: int,
-    M: int,
     A_val_len: int,
     A_rowidx_len: int,
     A_colptr_len: int,
+    M: int,
+    Nt: int,
+    Kt: int,
     n_channels: int,
     width_west_buf: int,
     width_east_buf: int
@@ -155,7 +151,7 @@ def csl_compile(
     args.append(f"--fabric-dims={fabric_width},{fabric_height}") # options
     args.append(f"--fabric-offsets={core_fabric_offset_x},{core_fabric_offset_y}") # options
     args.append(f"--params=width:{width},height:{height}") # options
-    args.append(f"--params=N:{N},K:{K}, M:{M}, A_val_len:{A_val_len}, A_rowidx_len:{A_rowidx_len}, A_colptr_len:{A_colptr_len}") # options
+    args.append(f"--params=Nt:{Nt}, Kt:{Kt}, M:{M}, A_val_len:{A_val_len}, A_rowidx_len:{A_rowidx_len}, A_colptr_len:{A_colptr_len}") # options
 
     args.append(f"--params=LAUNCH_ID:{LAUNCH}") # options
 
@@ -197,33 +193,53 @@ def main():
   else:
     M = 8
 
+  if args.A_prefix is not None:
+    A_prefix = args.A_prefix
+  else:
+    A_prefix = "test"
+
   Nt = N // height
   Kt= K // width
 
   assert N == (Nt*height), "N must be multiple of Nt"
   assert K == (Kt*width), "K must be multiple of Kt"
 
+  Nt = int(Nt)
+  Kt = int(Kt)
+
   print(f"N = {N}, K = {K}, M = {M}, width = {width}, height = {height}")
 
   # prepare host data and reference solution
+  file_dir = "test_vectors/"
 
-  # Todo: Import A_val, A_row_idx, A_col_ptr from csv
-  # and define A_val_len, A_rowidx_len, A_colptr_len (which represents the final padded length)
-  A = np.arange(M*N).reshape(M, N).astype(np.float32)
+  A_val_file = file_dir+A_prefix+"_val_pad.csv"
+  A_colptr_file = file_dir+A_prefix+"_col_ptr_pad.csv"
+  A_rowidx_file = file_dir+A_prefix+"_row_idx_pad.csv"
 
+  # Read in
+  A_val = np.genfromtxt(A_val_file, delimiter=",")
+  print(A_val)
+  A_row_idx = np.genfromtxt(A_rowidx_file, delimiter=",")
+  A_col_ptr = np.genfromtxt(A_colptr_file, delimiter=",")
+
+  # Get lengths
+  A_val_len = A_val.shape[1]
+  A_rowidx_len = A_row_idx.shape[1]
+  A_colptr_len = A_col_ptr.shape[1]
 
   np.random.seed(2)
   B = np.arange(K*M).reshape(K, M).astype(np.float32) + 100
 
-  C_ref = np.matmul(A,B)
-
-  print(f"C_ref = {C_ref}")
+  # TODO: implement CSC matmul
+  C_ref = B
+  # TODO: print C_reference
+  print(f"B = {C_ref}")
 
   # prepare the simulation
 
   # core dump after execution is complete
   # layout of a rectangle
-  code_csl = "layout_memcpy.csl"
+  code_csl = "layout.csl"
 
   # text file containing the simulator logs
   sim_log = os.path.join(args.name, "sim.log")
@@ -269,12 +285,12 @@ def main():
       args.compile,
       args.arch,
       LAUNCH,
-      N,
-      K,
-      M,
       A_val_len,
       A_rowidx_len,
       A_colptr_len,
+      M,
+      Nt,
+      Kt,
       n_channels,
       width_west_buf,
       width_east_buf)
@@ -301,16 +317,18 @@ def main():
   simulator.load()
   simulator.run()
 
-  # A is M-by-N
-  iportmap_A_val = f"{{ A[j=0:{A_val_len-1}] -> [PE[i//{Nt}, j//{Kt}] -> \
+  num_PE = width*length
+
+  # TODO: redo iport and oport maps
+  iportmap_A_val = f"{{ A_val[i=0:{num_PE-1}][j=0:{A_val_len-1}] -> [PE[i%{height}, i%{width}] -> \
         index[i%{Nt}, j%{Kt}]] }}"
   print(f"iportmap_A_val = {iportmap_A_val}")
 
-  iportmap_A_row_idx = f"{{ A[j=0:{A_rowidx_len-1}] -> [PE[i//{Nt}, j//{Kt}] -> \
+  iportmap_A_row_idx = f"{{ A_row_idx[j=0:{A_rowidx_len-1}] -> [PE[i//{Nt}, j//{Kt}] -> \
         index[i%{Nt}, j%{Kt}]] }}"
   print(f"iportmap_A_row_idx = {iportmap_A_row_idx}")
 
-  iportmap_A_col_ptr = f"{{ A[j=0:{A_colptr_len-1}] -> [PE[i//{Nt}, j//{Kt}] -> \
+  iportmap_A_col_ptr = f"{{ A_col_ptr[j=0:{A_colptr_len-1}] -> [PE[i//{Nt}, j//{Kt}] -> \
         index[i%{Nt}, j%{Kt}]] }}"
   print(f"iportmap_A_col_ptr = {iportmap_A_col_ptr}")
 
@@ -319,7 +337,7 @@ def main():
   print(f"iportmap_B = {iportmap_B}")
 
   # C_final is gathered from P1.0 and P1.1
-  oportmap_C_final = "{ C_final[i=0:{Nt}][j=0:{M}] -> [PE[1, 0:1] -> index[i%{N}, j%{M}]] }"
+  oportmap_C_final = f"{{ C_final[i=0:{Nt}][j=0:{M}] -> [PE[1, 0:1] -> index[i%{N}, j%{M}]] }}"
   print(f"oportmap_C_final = {oportmap_C_final}")
 
   # prepare all of A and B via memcpy

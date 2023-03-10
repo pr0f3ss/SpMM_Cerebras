@@ -110,7 +110,7 @@ layout{
     @set_tile_code(1, 0, "spmm_csc_memcpy.csl", @concat_structs(route_10, comm_params) );
 
     const route_11 = @concat_structs(
-        .{ .RXACT_B = RXACT_B, .TXACT_B=NONE, .RXACT_Y = C_TEMP_REDUCE , .TXACT_C = NONE},
+        .{ .RXACT_B = RXACT_B, .TXACT_B=NONE, .RXACT_C = C_TEMP_REDUCE , .TXACT_C = NONE},
         .{ .memcpyParams = memcpyParams1 } );
     @set_tile_code(1, 1, "spmm_csc_memcpy.csl", @concat_structs(route_11, comm_params) );
 
@@ -141,7 +141,7 @@ layout{
     @export_name("A_val", [*]f32, true);
     @export_name("A_row_idx", [*]i32, true);
     @export_name("A_col_ptr", [*]i32, true);
-    @export_name("B", [*,*]f32, true);
-    @export_name("C_temp", [*,*]f32, true);
-    @export_name("C_final", [*,*]f32, true);
+    @export_name("B", [*]f32, true);
+    @export_name("C_temp", [*]f32, true);
+    @export_name("C_final", [*]f32, true);
 }

@@ -5,3 +5,7 @@
 
 /src/mpi_collectives/reduce_2d/simfab_traces/*
 /src/mpi_collectives/reduce_2d/out/*
+
+
+/src/grid_csc/simfab_traces/*
+/src/grid_csc/out/*

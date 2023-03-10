@@ -18,7 +18,7 @@ def col_is_nan(s):
     a = s.to_numpy()
     return np.isnan(a).all()
 
-def pad_file(input_filename, output_filename, replace=-1):
+def pad_file(input_filename, output_filename, replace=-1, dtype=int):
     """Pads the input file with replace characters at NaN positions and writes it to a new file 'output_filename'
 
     Parameters
@@ -26,6 +26,7 @@ def pad_file(input_filename, output_filename, replace=-1):
     input_filename: filename of the input matrix
     output_filename: filename of the output matrix
     replace (optional): number to replace it with
+    dtype (optional): data type of output matrix
 
     Returns
     -------
@@ -38,7 +39,7 @@ def pad_file(input_filename, output_filename, replace=-1):
     length = max(col_count)
     column_names = [i for i in range(0, max(col_count))]
 
-    df = pd.read_csv(input_filename, delimiter=',', header=None, names=column_names)
+    df = pd.read_csv(input_filename, delimiter=',', header=None, names=column_names, skip_blank_lines=False)
     
     if(col_is_nan(df[length-1])):
         length = length - 1
@@ -47,6 +48,8 @@ def pad_file(input_filename, output_filename, replace=-1):
     print(length)
         
     df = df.replace(np.nan,replace)
+
+    df = df.astype(dtype)
 
     df.to_csv(output_filename, index=False, header=False)
 
@@ -64,11 +67,13 @@ def pad_csc_grid(prefix, replace=-1):
     Three files that have the padded grid CSV format
     """
     print("Value length:")
-    pad_file(prefix+"_val.csv", prefix+"_val_pad.csv")
+    pad_file(prefix+"_val.csv", prefix+"_val_pad.csv", dtype=float)
 
     print("Row index length:")
-    pad_file(prefix+"_row_idx.csv", prefix+"_row_idx_pad.csv")
+    pad_file(prefix+"_row_idx.csv", prefix+"_row_idx_pad.csv", dtype=int)
 
     print("Column pointer length:")
-    pad_file(prefix+"_col_ptr.csv", prefix+"_col_ptr_pad.csv")
+    pad_file(prefix+"_col_ptr.csv", prefix+"_col_ptr_pad.csv", dtype=int)
     
+
+pad_csc_grid("test")

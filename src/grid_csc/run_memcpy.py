@@ -320,24 +320,24 @@ def main():
   num_PE = width*length
 
   # TODO: redo iport and oport maps
-  iportmap_A_val = f"{{ A_val[i=0:{num_PE-1}][j=0:{A_val_len-1}] -> [PE[i%{height}, i%{width}] -> \
-        index[i%{Nt}, j%{Kt}]] }}"
+  iportmap_A_val = f"{{ A_val[i=0:{num_PE-1}][j=0:{A_val_len-1}] -> [PE[i//{height}, j//{width}] -> \
+        index[i%{A_val_len}]] }}"
   print(f"iportmap_A_val = {iportmap_A_val}")
 
-  iportmap_A_row_idx = f"{{ A_row_idx[j=0:{A_rowidx_len-1}] -> [PE[i//{Nt}, j//{Kt}] -> \
-        index[i%{Nt}, j%{Kt}]] }}"
+  iportmap_A_row_idx = f"{{ A_row_idx[i=0:{num_PE-1}][j=0:{A_rowidx_len-1}] -> [PE[i//{Nt}, j//{Kt}] -> \
+        index[i%{A_rowidx_len}]] }}"
   print(f"iportmap_A_row_idx = {iportmap_A_row_idx}")
 
-  iportmap_A_col_ptr = f"{{ A_col_ptr[j=0:{A_colptr_len-1}] -> [PE[i//{Nt}, j//{Kt}] -> \
-        index[i%{Nt}, j%{Kt}]] }}"
+  iportmap_A_col_ptr = f"{{ A_col_ptr[i=0:{num_PE-1}][j=0:{A_colptr_len-1}] -> [PE[i//{Nt}, j//{Kt}] -> \
+        index[i%{A_colptr_len}]] }}"
   print(f"iportmap_A_col_ptr = {iportmap_A_col_ptr}")
 
   # B distributes to {py = 0}
-  iportmap_B = f"{{ x[i=0:{K-1}][j=0:{M}] -> [PE[i//{Kt}, 0] ->  index[i%{Kt}, j%{M}]] }}"
+  iportmap_B = f"{{ B[i=0:{K-1}][j=0:{M-1}] -> [PE[i//{Kt}, 0] ->  index[i%{Kt}, j%{M}]] }}"
   print(f"iportmap_B = {iportmap_B}")
 
   # C_final is gathered from P1.0 and P1.1
-  oportmap_C_final = f"{{ C_final[i=0:{Nt}][j=0:{M}] -> [PE[1, 0:1] -> index[i%{N}, j%{M}]] }}"
+  oportmap_C_final = f"{{ C_final[i=0:{Nt-1}][j=0:{M-1}] -> [PE[1, 0:1] -> index[i%{N}, j%{M}]] }}"
   print(f"oportmap_C_final = {oportmap_C_final}")
 
   # prepare all of A and B via memcpy

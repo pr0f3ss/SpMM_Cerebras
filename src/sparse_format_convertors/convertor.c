@@ -172,9 +172,6 @@ void convert_to_grid_csc_grid(double* matrix, int n, int m, int Px, int Py, char
     int grid_height = n % Py == 0 ? n / Py : n/Py + 1;
     int grid_width = m % Px == 0 ? m / Px : m/Px + 1;
 
-    printf("%d", grid_width);
-
-
     // Traverse gridwise (from left to right)
     for(int i=0; i<Py; i++){
         for(int j=0; j<Px; j++){
@@ -199,7 +196,6 @@ void convert_to_grid_csc_grid(double* matrix, int n, int m, int Px, int Py, char
                     // check row bounds
                     int global_row = grid_height*i + grid_row_idx;
                     if(global_row >= n){
-                        
                         break;
                     }
 
@@ -233,6 +229,109 @@ void convert_to_grid_csc_grid(double* matrix, int n, int m, int Px, int Py, char
 }
 
 
+/**
+ * Converts a matrix containing doubles to local csr grid format and writes it into three files in row-wise grid traversal.
+ * Each line for the file encodes the CSR format specifier for the grid (going from left to right).
+ * If a grid is empty, it will print an empty line in 'filename_val' and 'filename_col_idx' and it will print '0,0' in 'filename_row_ptr'. 
+ * @param mat double matrix
+ * @param n row dimension of matrix 
+ * @param m column dimension of matrix 
+ * @param Px grid dimension column
+ * @param Py grid dimension row
+ * @param filename_val filename to write the CSR values array into
+ * @param filename_col_idx filename to write the CSR col index array into
+ * @param filename_row_ptr filename to write the CSR column pointer array into
+ */
+void convert_to_grid_csr_grid(double* matrix, int n, int m, int Px, int Py, char* filename_val, char* filename_col_idx, char* filename_row_ptr){
+    // open files
+    FILE* fp_val;
+    fp_val = fopen(filename_val, "w");
+    if (fp_val == NULL) {
+        printf("Error opening file!\n");
+        exit(1);
+    }
+
+    FILE* fp_col_idx;
+    fp_col_idx = fopen(filename_col_idx, "w");
+    if (fp_col_idx == NULL) {
+        printf("Error opening file!\n");
+        exit(1);
+    }
+
+    FILE* fp_row_ptr;
+    fp_row_ptr = fopen(filename_row_ptr, "w");
+    if (fp_row_ptr == NULL) {
+        printf("Error opening file!\n");
+        exit(1);
+    }
+
+    int grid_col_idx;
+    int grid_row_idx;
+
+
+    // If grid dimension do not align, extend by one
+    int grid_height = n % Py == 0 ? n / Py : n/Py + 1;
+    int grid_width = m % Px == 0 ? m / Px : m/Px + 1;
+
+
+    // Traverse gridwise (from left to right)
+    for(int i=0; i<Py; i++){
+        for(int j=0; j<Px; j++){
+
+
+            // Here, we traverse inside the grid
+            int num_elems = 0;
+            for(grid_row_idx = 0; grid_row_idx < grid_height; grid_row_idx++){
+                
+                // check row bounds
+                int global_row = grid_height*i + grid_row_idx;
+                if(global_row >= n){
+                    break;
+                }
+
+
+                // write row pointer
+                fprintf(fp_row_ptr, "%d,", num_elems);
+                
+
+                for(grid_col_idx = 0; grid_col_idx < grid_width; grid_col_idx++){
+
+                    // check column bounds
+                    int global_col = grid_width*j + grid_col_idx;
+                    if(global_col >= m){
+                        break;
+                    }
+                        
+                    // check if we have a non-zero value
+                    int index = global_row*m + global_col;
+                    
+                    if(matrix[index] != 0){
+
+                        num_elems++;
+
+                        fprintf(fp_val, "%f,", matrix[index]);
+                        fprintf(fp_col_idx, "%d,", grid_col_idx);
+                    }
+
+                }
+                
+            }
+
+            // write final amt
+            fprintf(fp_row_ptr, "%d", num_elems);
+
+            fprintf(fp_val, "\n");
+            fprintf(fp_col_idx, "\n");
+            fprintf(fp_row_ptr, "\n");
+        }
+    }
+
+    fclose(fp_val);
+    fclose(fp_col_idx);
+    fclose(fp_row_ptr);
+}
+
+
 int main()
 {   
     double* m;
@@ -245,16 +344,17 @@ int main()
     // Print matrix
     print_matrix(m, 4, 5);
 
-
     // Generate matrix (Density in percent)
-    gen = generate_sparse_matrix(20, 6, 6);
-    
+    gen = generate_sparse_matrix(20, 6, 6);    
     
     // Write matrix
     write_csv_matrix(gen, 6, 6, "test.csv");
 
     // Convert to grid CSC
     convert_to_grid_csc_grid(gen, 6, 6, 2, 2, "test_val.csv", "test_row_idx.csv", "test_col_ptr.csv");
+
+    // Convert to grid CSR
+    //convert_to_grid_csr_grid(gen, 6, 6, 2, 2, "test_val.csv", "test_col_idx.csv", "test_row_ptr.csv");
 
     return 0;
  }

@@ -217,10 +217,10 @@ def main():
   A_rowidx_file = file_dir+A_prefix+"_row_idx_pad.csv"
 
   # Read in
-  A_val = np.genfromtxt(A_val_file, delimiter=",")
+  A_val = np.genfromtxt(A_val_file, delimiter=",", dtype=np.float32)
   print(A_val)
-  A_row_idx = np.genfromtxt(A_rowidx_file, delimiter=",")
-  A_col_ptr = np.genfromtxt(A_colptr_file, delimiter=",")
+  A_row_idx = np.genfromtxt(A_rowidx_file, delimiter=",", dtype=np.int32)
+  A_col_ptr = np.genfromtxt(A_colptr_file, delimiter=",", dtype=np.int32)
 
   # Get lengths
   A_val_len = A_val.shape[1]
@@ -319,8 +319,6 @@ def main():
 
   num_PE = width*height
 
-  # TODO: redo iport and oport maps
-
   # iport maps for A arrays are derived from Leighton's advice
   iportmap_A_val = f"{{ A_val[i=0:{num_PE-1}][j=0:{A_val_len-1}] -> [PE[i % {width}, i // {width}] -> index[j]] }}"
   print(f"iportmap_A_val = {iportmap_A_val}")
@@ -333,7 +331,7 @@ def main():
 
   # B distributes to {py = 0}
   # derived from Residual example code
-  iportmap_B = f"{{ B[i=0:{K-1}][j=0:{M-1}] -> [PE[i//{Kt*M}, 0] ->  index[i%{Kt*M}]] }}"
+  iportmap_B = f"{{ B[i=0:{K-1}][j=0:{M-1}] -> [PE[i//{Kt}, 0] ->  index[i%{Kt}, j]] }}"
   print(f"iportmap_B = {iportmap_B}")
 
   # C_final is gathered from P1.0 and P1.1
@@ -341,21 +339,20 @@ def main():
   # C_final's size in each PE is Nt*M
   # (Remember: Nt = N // height)
   # Total size: height * Nt * M = N * M 
-  oportmap_C_final = f"{{ C_final[n = 0:{N*M-1}] -> [PE[{width-1}, n // {Nt*M}] -> index[n % {Nt*M}] }}"
+  oportmap_C_final = f"{{ C_final[n = 0:{N*M-1}] -> [PE[{width-1}, n // {Nt*M}] -> index[n % {Nt*M}]] }}"
   print(f"oportmap_C_final = {oportmap_C_final}")
 
   # prepare all of A and B via memcpy
   # use the runtime_utils library to calculate memcpy args and shuffle data
   (px, py, w, h, l, data) = runtime_utils.convert_input_tensor(iportmap_A_val, A_val)
   simulator.memcpy_h2d(symbol_A_val, data, False, px, py, w, h, l, 0, False)
-  (px, py, w, h, l, data) = runtime_utils.convert_input_tensor(iportmap_A_val, A_row_idx)
+  (px, py, w, h, l, data) = runtime_utils.convert_input_tensor(iportmap_A_row_idx, A_row_idx)
   simulator.memcpy_h2d(symbol_A_row_idx, data, False, px, py, w, h, l, 0, False)
-  (px, py, w, h, l, data) = runtime_utils.convert_input_tensor(iportmap_A_val, A_col_ptr)
+  (px, py, w, h, l, data) = runtime_utils.convert_input_tensor(iportmap_A_col_ptr, A_col_ptr)
   simulator.memcpy_h2d(symbol_A_col_ptr, data, False, px, py, w, h, l, 0, False)
 
   (px, py, w, h, l, data) = runtime_utils.convert_input_tensor(iportmap_B, B)
   simulator.memcpy_h2d(symbol_B, data, False, px, py, w, h, l, 0, False)
-
   # trigger the computation
   h_params = np.zeros(2).astype(np.uint32)
   # format of h_params
@@ -380,7 +377,10 @@ def main():
   # receive C_final from P1.1 and P1.0
   # use the runtime_utils library to calculate memcpy args and manage output data
   (px, py, w, h, l, data) = runtime_utils.prepare_output_tensor(oportmap_C_final, np.float32)
-  simulator.memcpy_d2h(data, symbol_C_final, False, px, py, w, h, l, 0, False)
+
+  # Todo: figure out halt and fire exception in this line
+  #simulator.memcpy_d2h(data, symbol_C_final, False, px, py, w, h, l, 0, False)
+
   C_cs = runtime_utils.format_output_tensor(oportmap_C_final, np.float32, data)
 
   # todo: Reshape C_cs such that we have it in our original shape

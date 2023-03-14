@@ -320,24 +320,28 @@ def main():
   num_PE = width*height
 
   # TODO: redo iport and oport maps
-  iportmap_A_val = f"{{ A_val[i=0:{num_PE-1}][j=0:{A_val_len-1}] -> [PE[i//{height}, j//{width}] -> \
-        index[i%{A_val_len}]] }}"
+
+  # iport maps for A arrays are derived from Leighton's advice
+  iportmap_A_val = f"{{ A_val[i=0:{num_PE-1}][j=0:{A_val_len-1}] -> [PE[i % {width}, i // {width}] -> index[j]] }}"
   print(f"iportmap_A_val = {iportmap_A_val}")
 
-  iportmap_A_row_idx = f"{{ A_row_idx[i=0:{num_PE-1}][j=0:{A_rowidx_len-1}] -> [PE[i//{Nt}, j//{Kt}] -> \
-        index[i%{A_rowidx_len}]] }}"
+  iportmap_A_row_idx = f"{{ A_row_idx[i=0:{num_PE-1}][j=0:{A_rowidx_len-1}] -> [PE[i % {width}, i // {width}] -> index[j]] }}"
   print(f"iportmap_A_row_idx = {iportmap_A_row_idx}")
 
-  iportmap_A_col_ptr = f"{{ A_col_ptr[i=0:{num_PE-1}][j=0:{A_colptr_len-1}] -> [PE[i//{Nt}, j//{Kt}] -> \
-        index[i%{A_colptr_len}]] }}"
+  iportmap_A_col_ptr = f"{{ A_col_ptr[i=0:{num_PE-1}][j=0:{A_colptr_len-1}] -> [PE[i % {width}, i // {width}] -> index[j]] }}"
   print(f"iportmap_A_col_ptr = {iportmap_A_col_ptr}")
 
   # B distributes to {py = 0}
-  iportmap_B = f"{{ B[i=0:{K-1}][j=0:{M-1}] -> [PE[i//{Kt}, 0] ->  index[i%{Kt}, j%{M}]] }}"
+  # derived from Residual example code
+  iportmap_B = f"{{ B[i=0:{K-1}][j=0:{M-1}] -> [PE[i//{Kt*M}, 0] ->  index[i%{Kt*M}]] }}"
   print(f"iportmap_B = {iportmap_B}")
 
   # C_final is gathered from P1.0 and P1.1
-  oportmap_C_final = f"{{ C_final[i=0:{Nt-1}][j=0:{M-1}] -> [PE[1, 0:1] -> index[i%{N}, j%{M}]] }}"
+  # oport maps for C_final array is dervied from Leighton's advice
+  # C_final's size in each PE is Nt*M
+  # (Remember: Nt = N // height)
+  # Total size: height * Nt * M = N * M 
+  oportmap_C_final = f"{{ C_final[n = 0:{N*M-1}] -> [PE[{width-1}, n // {Nt*M}] -> index[n % {Nt*M}] }}"
   print(f"oportmap_C_final = {oportmap_C_final}")
 
   # prepare all of A and B via memcpy
@@ -378,6 +382,9 @@ def main():
   (px, py, w, h, l, data) = runtime_utils.prepare_output_tensor(oportmap_C_final, np.float32)
   simulator.memcpy_d2h(data, symbol_C_final, False, px, py, w, h, l, 0, False)
   C_cs = runtime_utils.format_output_tensor(oportmap_C_final, np.float32, data)
+
+  # todo: Reshape C_cs such that we have it in our original shape
+
 
   simulator.stop()
 

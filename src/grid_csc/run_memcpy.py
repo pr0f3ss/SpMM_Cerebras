@@ -219,8 +219,8 @@ def main():
   # Read in
   A_val = np.genfromtxt(A_val_file, delimiter=",", dtype=np.float32)
   print(A_val)
-  A_row_idx = np.genfromtxt(A_rowidx_file, delimiter=",", dtype=np.int32)
-  A_col_ptr = np.genfromtxt(A_colptr_file, delimiter=",", dtype=np.int32)
+  A_row_idx = np.genfromtxt(A_rowidx_file, delimiter=",", dtype=np.float32)
+  A_col_ptr = np.genfromtxt(A_colptr_file, delimiter=",", dtype=np.float32)
 
   # Get lengths
   A_val_len = A_val.shape[1]

@@ -15,25 +15,27 @@ param Nt : i32 ;            // row dimension of C_temp
 param Kt : i32 ;            // row dimension of local B
 param M  : i32 ;            // column dimension of local B and C_temp
 
-fn spmm_csc_f32(A_val: *[A_val_len]f32, A_row_idx: *[A_rowidx_len]i32, A_col_ptr: *[A_colptr_len]i32, B: *[Kt*M]f32, C_temp: *[Nt*M]f32) void { 
+fn spmm_csc_f32(A_val: *[A_val_len]f32, A_row_idx: *[A_rowidx_len]f32, A_col_ptr: *[A_colptr_len]f32, B: *[Kt*M]f32, C_temp: *[Nt*M]f32) void { 
 
     // iterate over column pointers
     for (@range(i32, A_colptr_len-1)) |j| {
 
         // get number of non-zero rows in the current column
-        var row_elems = (A_col_ptr.*)[j+1] - (A_col_ptr.*)[j];
+        // cast from f32 to i32
+        var row_elems = @as(i32, (A_col_ptr.*)[j+1] - (A_col_ptr.*)[j]);
 
-        var row_idx_start = (A_col_ptr.*)[j];
+        var row_idx_start = @as(i32, (A_col_ptr.*)[j]);
 
-        if((A_col_ptr.*)[j+1] == -1){
+        if(@as(i32, (A_col_ptr.*)[j+1]) == -1){
             // todo: exit if we reach padded end
+            break;
         }
 
         // iterate over all non-zero rows in the current column
         for (@range(i32, row_elems)) |i| {
 
             // get the reference element row index
-            var ref_elem_row_idx = (A_row_idx.*)[row_idx_start+i];
+            var ref_elem_row_idx = @as(i32, (A_row_idx.*)[row_idx_start+i]);
 
             // extract the referenced non-zero value
             var a = (A_val.*)[row_idx_start+i];

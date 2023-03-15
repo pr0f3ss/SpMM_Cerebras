@@ -28,13 +28,13 @@ param LAUNCH_ID: i16;
 //    C_global is N x M
 
 
-param Nt:i16;         
-param Kt:i16; 
-param M:i16;  
+param Nt:i32;         
+param Kt:i32; 
+param M:i32;  
 
-param A_val_len:i16;
-param A_rowidx_len:i16;
-param A_colptr_len:i16;
+param A_val_len:i32;
+param A_rowidx_len:i32;
+param A_colptr_len:i32;
 
 param width: i16;
 param height: i16;
@@ -139,8 +139,8 @@ layout{
     // export symbol name
     // todo: check if [*,*] or [*] for multidimensional arrays
     @export_name("A_val", [*]f32, true);
-    @export_name("A_row_idx", [*]i32, true);
-    @export_name("A_col_ptr", [*]i32, true);
+    @export_name("A_row_idx", [*]f32, true);
+    @export_name("A_col_ptr", [*]f32, true);
     @export_name("B", [*]f32, true);
     @export_name("C_temp", [*]f32, true);
     @export_name("C_final", [*]f32, true);

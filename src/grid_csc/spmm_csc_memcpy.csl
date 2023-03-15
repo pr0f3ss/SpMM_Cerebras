@@ -80,8 +80,9 @@ const  _SIZE_B = Kt*M;
 const  _SIZE_C = Nt*M;
 
 var A_val  = @zeros([A_val_len]f32);
-var A_row_idx  = @zeros([A_rowidx_len]i32);
-var A_col_ptr  = @zeros([A_colptr_len]i32);
+// Memcpy limitation: Have to be copied in as f32 as sys_mod requires us to have the same datatype
+var A_row_idx  = @zeros([A_rowidx_len]f32);
+var A_col_ptr  = @zeros([A_colptr_len]f32);
 
 var B  = @zeros([Kt*M]f32);
 var C_final  = @zeros([Nt*M]f32);
@@ -96,8 +97,8 @@ var _py : i16 ;
 
 // WARNING: export pointers, not arrays
 var ptr_A_val : [*]f32 = &A_val;
-var ptr_A_row_idx  : [*]i32 = &A_row_idx;
-var ptr_A_col_ptr : [*]i32 = &A_col_ptr;
+var ptr_A_row_idx  : [*]f32 = &A_row_idx;
+var ptr_A_col_ptr : [*]f32 = &A_col_ptr;
 // todo: check whether this works because they are arrays, or if we just use normal [*]
 var ptr_B : [*]f32 = &B;
 var ptr_C_final : [*]f32 = &C_final;

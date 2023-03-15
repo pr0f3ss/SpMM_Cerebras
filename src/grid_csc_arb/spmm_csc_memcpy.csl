@@ -1,7 +1,8 @@
-// This example computes A*B on a 2-by-2 rectangle which has P0.0, P0.1, P1.0 and P1.1
-// The matrix A is distributed to every PE via memcpy
+// This program computes A*B on a height-by-width PE rectangle
+// The matrix A in CSC format is distributed to every PE via memcpy
 // The matrix B is distributed to first row PEs via memcpy
-// P1.0 and P1.1 send out the local result of the row A*B via memcpy
+// Pw.0, ..., Pw.h send out the result C_final via memcpy, where h = height-1 and w = width-1.
+// Note that this is the right-hand side column of PEs
 //
 // The host sends matrix A, matrix B into the core rectangle, launches a RPC (remote procedure call) to
 // broadcast vector x from 1st row to other rows, computes A*B locally, then performs a row

@@ -1,10 +1,11 @@
-// This program computes A*B on a 2-by-2 rectangle which has P0.0, P0.1, P1.0 and P1.1
+// This program computes A*B on a height-by-width PE rectangle
 // The matrix A in CSC format is distributed to every PE via memcpy
 // The matrix B is distributed to first row PEs via memcpy
-// P1.0 and P1.1 sends out the result C_final via memcpy
+// Pw.0, ..., Pw.h send out the result C_final via memcpy, where h = height-1 and w = width-1.
+// Note that this is the right-hand side column of PEs
 //
-// Each PE receives the local matrices representing A and B and computes A*B locally, then performs a row reduction to finish C_final = C_temp (west) + C_temp (east)
-// The last column contains the C_final and sends its result back to the host
+// Each PE receives the local matrices representing A and B and computes A*B locally, then performs a row reduction
+// The last column of PEs finally contains C_final and sends its result back to the host
 //
 
 // global routing colors
@@ -63,9 +64,6 @@ const memcpy = @import_module( "<memcpy_multi/get_params>", .{
 
 layout{
 
-    @comptime_assert(2 == width);
-    @comptime_assert(2 == height);
-
     // step 1: configure the rectangle which does not include halo
     @set_rectangle(width, height);
 
@@ -87,6 +85,28 @@ layout{
         .LAUNCH = LAUNCH,
         .EXIT = EXIT
     };
+
+    // TODO: Get Leighton's response on memcpy.get_params(..) and set up tile code + color config programmatically with a for loop.
+    // It would basically work as follows:
+    //
+    // ====== C_temp routing ======
+    // First column of PEs:         Only send out C via C_TEMP_REDUCE color
+    // Intermediate columns of PEs: Receive and send out C via C_TEMP_REDUCE color
+    // Last column of PEs:          Only receive C via C_TEMP_REDUCE color
+    // ====== C_temp colors ======
+    // First column of PEs:         .{ .rx = .{RAMP},  .tx = .{EAST} }    
+    // Intermediate columns of PEs: .{ .rx = .{WEST}, .tx = .{RAMP, EAST} }
+    // Last column of PEs:          .{ .rx = .{WEST}, .tx = .{RAMP} }
+    //
+    // ====== B routing ======
+    // First row of PEs:            Only send B via RXACT_B color
+    // Intermediate columns of PEs: Receive and send B via RXACT_B color
+    // Last row of PEs:             Only receive B via RXACT_B color
+    // ====== B colors ======
+    // First row of PEs:            .{ .rx = .{RAMP},  .tx = .{SOUTH} }    
+    // Intermediate row of PEs:     .{ .rx = .{NORTH}, .tx = .{RAMP, SOUTH} }
+    // Last row of PEs:             .{ .rx = .{NORTH}, .tx = .{RAMP} }        
+
 
     // first column: sends out C via C_TEMP_REDUCE color
     // last row receives B, first row sends B

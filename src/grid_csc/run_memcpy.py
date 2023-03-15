@@ -212,13 +212,16 @@ def main():
   # prepare host data and reference solution
   file_dir = "test_vectors/"
 
+  # Use this for reference solution
+  A_dense_format = file_dir+A_prefix+".csv"
+  A_dense = np.genfromtxt(A_dense_format, delimiter=",", dtype=np.float32)
+
   A_val_file = file_dir+A_prefix+"_val_pad.csv"
   A_colptr_file = file_dir+A_prefix+"_col_ptr_pad.csv"
   A_rowidx_file = file_dir+A_prefix+"_row_idx_pad.csv"
 
   # Read in
   A_val = np.genfromtxt(A_val_file, delimiter=",", dtype=np.float32)
-  print(A_val)
   A_row_idx = np.genfromtxt(A_rowidx_file, delimiter=",", dtype=np.float32)
   A_col_ptr = np.genfromtxt(A_colptr_file, delimiter=",", dtype=np.float32)
 
@@ -231,9 +234,9 @@ def main():
   B = np.arange(K*M).reshape(K, M).astype(np.float32) + 100
 
   # TODO: implement CSC matmul
-  C_ref = B
+  C_ref = np.matmul(A_dense, B)
   # TODO: print C_reference
-  print(f"B = {C_ref}")
+  print(f"C_ref = {C_ref}")
 
   # prepare the simulation
 
@@ -377,13 +380,12 @@ def main():
   # receive C_final from P1.1 and P1.0
   # use the runtime_utils library to calculate memcpy args and manage output data
   (px, py, w, h, l, data) = runtime_utils.prepare_output_tensor(oportmap_C_final, np.float32)
-
-  # Todo: figure out halt and fire exception in this line
-  #simulator.memcpy_d2h(data, symbol_C_final, False, px, py, w, h, l, 0, False)
+  simulator.memcpy_d2h(data, symbol_C_final, False, px, py, w, h, l, 0, False)
 
   C_cs = runtime_utils.format_output_tensor(oportmap_C_final, np.float32, data)
 
-  # todo: Reshape C_cs such that we have it in our original shape
+  # Reshape back to original state
+  C_cs = np.reshape(C_cs, (N, M))
 
 
   simulator.stop()
@@ -400,7 +402,8 @@ def main():
   print(f"`C_ref`     from CPU:\n{C_ref}")
   print(f"`C_cs`  from CS1 (1-by-1 matrix):\n{C_cs}")
 
-  # todo: Compare results
+  assert np.allclose(C_ref, C_cs, 1.e-5)
+
   
   print("\nSUCCESS!")
 

@@ -11,7 +11,7 @@ grid_width=2
 
 # Generate A matrix
 cd test_vectors
-./a.out 8 8 20 2 2
+./a.out $A_height $A_width $A_density $grid_height $grid_width
 OUTPUT=($(python3 add_padding.py | tr -d '[],'))
 
 val_len=${OUTPUT[0]} 

@@ -332,26 +332,39 @@ void convert_to_grid_csr_grid(double* matrix, int n, int m, int Px, int Py, char
 }
 
 
-int main()
+int main(int argc, char **argv)
 {   
     double* m;
     double *gen;
 
+    printf("A matrix:\n");
+    printf("Height: %s\n", argv[1]);
+    printf("Width: %s\n", argv[2]);
+    printf("Density: %s\n", argv[3]);
+    int height = atoi(argv[1]);
+    int width = atoi(argv[2]);
+    int density = atoi(argv[3]);
+
+    printf("Grid size:\n");
+    printf("Height: %s\n", argv[4]);
+    printf("Width: %s\n", argv[5]);
+    int grid_height = atoi(argv[4]);
+    int grid_width = atoi(argv[5]);
 
     // Read matrix
-    m = read_csv_matrix("test_array.csv", 4, 5);
+    //m = read_csv_matrix("test_array.csv", 4, 5);
 
     // Print matrix
-    print_matrix(m, 4, 5);
+    //print_matrix(m, 4, 5);
 
     // Generate matrix (Density in percent)
-    gen = generate_sparse_matrix(20, 8, 8);    
+    gen = generate_sparse_matrix(density, height, width);    
     
     // Write matrix
-    write_csv_matrix(gen, 8, 8, "test.csv");
+    write_csv_matrix(gen, height, width, "test.csv");
 
     // Convert to grid CSC
-    convert_to_grid_csc_grid(gen, 8, 8, 2, 2, "test_val.csv", "test_row_idx.csv", "test_col_ptr.csv");
+    convert_to_grid_csc_grid(gen, height, width, grid_height, grid_width, "test_val.csv", "test_row_idx.csv", "test_col_ptr.csv");
 
     // Convert to grid CSR
     //convert_to_grid_csr_grid(gen, 6, 6, 2, 2, "test_val.csv", "test_col_idx.csv", "test_row_ptr.csv");

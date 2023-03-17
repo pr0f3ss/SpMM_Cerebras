@@ -53,6 +53,8 @@ def pad_file(input_filename, output_filename, replace=-1, dtype=int):
 
     df.to_csv(output_filename, index=False, header=False)
 
+    return length
+
 
 def pad_csc_grid(prefix, replace=-1):
     """Takes the prefix of a grid CSC formatted matrix and pads NaN entries with replace
@@ -66,14 +68,11 @@ def pad_csc_grid(prefix, replace=-1):
     -------
     Three files that have the padded grid CSV format
     """
-    print("Value length:")
-    pad_file(prefix+"_val.csv", prefix+"_val_pad.csv", dtype=float)
+    val_len = pad_file(prefix+"_val.csv", prefix+"_val_pad.csv", dtype=float)
+    row_idx_len = pad_file(prefix+"_row_idx.csv", prefix+"_row_idx_pad.csv", dtype=int)
+    col_ptr_len = pad_file(prefix+"_col_ptr.csv", prefix+"_col_ptr_pad.csv", dtype=int)
+    print("( " + str(val_len) + " " + str(row_idx_len) + " " + str(col_ptr_len) + " )")
 
-    print("Row index length:")
-    pad_file(prefix+"_row_idx.csv", prefix+"_row_idx_pad.csv", dtype=int)
-
-    print("Column pointer length:")
-    pad_file(prefix+"_col_ptr.csv", prefix+"_col_ptr_pad.csv", dtype=int)
 
 def pad_csr_grid(prefix, replace=-1):
     """Takes the prefix of a grid CSR formatted matrix and pads NaN entries with replace
@@ -88,13 +87,15 @@ def pad_csr_grid(prefix, replace=-1):
     Three files that have the padded grid CSV format
     """
     print("Value length:")
-    pad_file(prefix+"_val.csv", prefix+"_val_pad.csv", dtype=float)
+    val_len = pad_file(prefix+"_val.csv", prefix+"_val_pad.csv", dtype=float)
 
     print("Column index length:")
-    pad_file(prefix+"_col_idx.csv", prefix+"_col_idx_pad.csv", dtype=int)
+    col_len = pad_file(prefix+"_col_idx.csv", prefix+"_col_idx_pad.csv", dtype=int)
 
     print("Row pointer length:")
-    pad_file(prefix+"_row_ptr.csv", prefix+"_row_ptr_pad.csv", dtype=int)
+    row_ptr_len = pad_file(prefix+"_row_ptr.csv", prefix+"_row_ptr_pad.csv", dtype=int)
+
+    print("( " + str(val_len) + " " + str(col_len) + " " + str(row_ptr_len) + " )")
     
 
 pad_csc_grid("test")

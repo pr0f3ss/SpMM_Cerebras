@@ -1,10 +1,18 @@
 .vscode
 *.pyc
-/src/mpi_collectives/reduce/simfab_traces/*
-/src/mpi_collectives/reduce/out/*
+/src/mpi_collectives/reduce/simfab_traces/
+/src/mpi_collectives/reduce/out/
 
-/src/mpi_collectives/reduce_2d/simfab_traces/*
-/src/mpi_collectives/reduce_2d/out/*
+/src/mpi_collectives/reduce_2d/simfab_traces/
+/src/mpi_collectives/reduce_2d/out/
+/src/mpi_collectives/prefix_sum_1d/out/
+/src/mpi_collectives/prefix_sum_1d/simfab_traces/
+/src/mpi_collectives/switches/
+/src/mpi_collectives/allreduce_1d/
+/src/mpi_collectives/reduce_1d_2colors/
+
+
+
 
 
 /src/grid_csc/simfab_traces/*

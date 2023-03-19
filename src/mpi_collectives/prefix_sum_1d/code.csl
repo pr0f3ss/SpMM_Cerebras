@@ -1,3 +1,5 @@
+const switches = @import_module("switches.csl");
+
 param pe_id: u16;
 
 const reduce_color = @get_color(11);
@@ -6,11 +8,13 @@ const rect_height = @get_rectangle().height;
 const rect_width = @get_rectangle().width;
 
 const x_color = @get_color(14);
-const Nx = 32; //Vector length
+const Nx = 4; //Vector length
 
 const rev_id: u16 = rect_width - (pe_id + 1);
 
 var data = @constants([Nx]f32, 1.0);
+
+var ctrl1 = [1]u32 { switches.ctrl(switches.secondSwitchCommands()) };
 
 
 fn get_iter_count() u16 {
@@ -34,10 +38,29 @@ fn get_iter_count() u16 {
 
 const iterations = comptime get_iter_count();
 
+fn get_recv_count() u16 {
+  var i: u16 = 0;
+  var pow: u16 = 1;
+
+  while (pow <= rect_width) : (pow *= 2) {
+    if (rev_id & pow != 0) {
+      i += 1;
+    }
+  }
+
+  return i - get_iter_count();
+}
+
+const recv = comptime get_recv_count();
+
 var memDsd = @get_dsd(mem1d_dsd, .{ .tensor_access = |i|{Nx} -> data[i]});
 var sendDsd = @get_dsd(fabout_dsd, .{.extent = Nx, .fabric_color = reduce_color});
 var recvDsd = @get_dsd(fabin_dsd, .{.extent = Nx, .fabric_color = reduce_color});
-var ctrlDsd = @get_dsd(fabout_dsd, .{.extent = 1, .fabric_color = reduce_color, .control = true});
+const ctrlDsd = @get_dsd(mem1d_dsd, .{ .tensor_access = |i|{1} -> ctrl1[i] });
+const faboutCtrlDsd = @get_dsd(fabout_dsd, .{
+    .extent = 1,
+    .control = true,
+    .fabric_color = reduce_color });
 
 // Opcodes for potentially updating switches
 const opcode_nop = 0;
@@ -74,31 +97,39 @@ task task_x() void {
   }
 
   if (iterations > 0) {
-    @mov32(ctrlDsd, comptime ctrl(true, opcode_switch_advance, 0x00));
+    @mov32(faboutCtrlDsd, ctrlDsd);
   }
 
   if (pe_id != 0) {
     @fmovs(sendDsd, memDsd);
   }
-}
 
-const switches = .{
-  .pos1 = .{ .tx = WEST },
-  .current_switch_pos = 0,
-  .ring_mode = true,
-};
+  @mov32(faboutCtrlDsd, ctrlDsd);
 
-fn tx() comptime_struct {
-  if (iterations > 0) {
-    return .{RAMP};
-  } else {
-    return .{WEST};
+  count = 0;
+
+  while (count < recv) : (count += 1) {
+    @fadds(memDsd, memDsd, recvDsd);
   }
 }
+
+fn curr_pos() u16 {
+  if (iterations > 0) return 1;
+
+  return 2;
+}
+
+const switchs = .{
+  .pos1 = .{ .tx = RAMP },
+  .pos2 = .{ .tx = WEST },
+  .pos3 = .{ .invalid = true},
+  .current_switch_pos = if (iterations > 0) 1 else 2,
+  .ring_mode = true,
+};
 
 comptime {
   @bind_task(task_x, x_color);
   @activate(x_color);
   @block(reduce_color);
-  @set_local_color_config(reduce_color, .{.routes = .{.rx = .{RAMP, EAST}, .tx = comptime tx()}, .switches = switches});
+  @set_local_color_config(reduce_color, .{.routes = .{.rx = .{RAMP, EAST}, .tx = .{RAMP, WEST}, .pop_mode = .{.always_pop = true}}, .switches = switchs});
 }

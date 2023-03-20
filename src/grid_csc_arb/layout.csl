@@ -61,15 +61,19 @@ const memcpy = @import_module( "<memcpy_multi/get_params>", .{
     .height = height
     });
 
+// We use a named struct type to be able to assign PE's its route efficiently
+const s_route = struct {
+  RXACT_B: color,
+  TXACT_B: color,
+  RXACT_C: color,
+  TXACT_C: color
+};
+
 
 layout{
 
     // step 1: configure the rectangle which does not include halo
     @set_rectangle(width, height);
-
-    // step 2: compile csl code for a set of PEx.y and generate out_x_y.elf
-    //   format: @set_tile_code(x, y, code.csl, param_binding);
-
 
     // set common parameters that are shared across every PE
     const comm_params = .{
@@ -82,12 +86,13 @@ layout{
         .A_val_len=A_val_len,
         .A_rowidx_len=A_rowidx_len,
         .A_colptr_len=A_colptr_len,
+        .height = height,
+        .width = width,
         .LAUNCH = LAUNCH,
         .EXIT = EXIT
     };
 
-    // TODO: Get Leighton's response on memcpy.get_params(..) and set up tile code + color config programmatically with a for loop.
-    // It would basically work as follows:
+    // The routing and coloring works as follows
     //
     // ====== C_temp routing ======
     // First column of PEs:         Only send out C via C_TEMP_REDUCE color
@@ -105,56 +110,163 @@ layout{
     // ====== B colors ======
     // First row of PEs:            .{ .rx = .{RAMP},  .tx = .{SOUTH} }    
     // Intermediate row of PEs:     .{ .rx = .{NORTH}, .tx = .{RAMP, SOUTH} }
-    // Last row of PEs:             .{ .rx = .{NORTH}, .tx = .{RAMP} }        
+    // Last row of PEs:             .{ .rx = .{NORTH}, .tx = .{RAMP} }   
+
+    const height_1 = height - 1;
+    const width_1 = width - 1;  
+
+    for (@range(i16, width)) |pe_x| {
+
+        // Params are retrieved for the whole PE column
+        const memcpyParams_col = memcpy.get_params(pe_x);
+
+        for (@range(i16, height)) |pe_y| {
+            
+            // step 2: compile csl code for a set of PEx.y and generate out_x_y.elf
+            //   format: @set_tile_code(x, y, code.csl, param_binding);
+            
+            // Since every variable has to be known at compile time, this gets really messy.
+            // Could be generated on a PE basis by a separate program (in Python) and pasted into this
+            // for better readability
+            // Refer to comments above for specific routing data
+            if(pe_x == 0){
+                const pe_color_config_route_C = .{ .rx = .{RAMP},  .tx = .{EAST} };
+
+                if(pe_y == 0){
+                    // px = 0, pe_y = 0
+
+                    const pe_color_config_route_B = .{ .rx = .{RAMP},  .tx = .{SOUTH} };
+
+                    const route = @concat_structs(
+                        .{ .RXACT_B = NONE, .TXACT_B=RXACT_B, .RXACT_C = NONE, .TXACT_C = C_TEMP_REDUCE},
+                        .{ .memcpyParams = memcpyParams_col } );
+                    
+                    @set_tile_code(pe_x, pe_y, "spmm_csc_memcpy.csl", @concat_structs(route, comm_params) );
+                    @set_color_config(pe_x, pe_y, C_TEMP_REDUCE, .{ .routes = pe_color_config_route_C });
+                    @set_color_config(pe_x, pe_y, RXACT_B, .{ .routes = pe_color_config_route_B });
 
 
-    // first column: sends out C via C_TEMP_REDUCE color
-    // last row receives B, first row sends B
-    const memcpyParams0 = memcpy.get_params(0);
-    const route_00 = @concat_structs(
-        .{ .RXACT_B = NONE, .TXACT_B=RXACT_B, .RXACT_C = NONE, .TXACT_C = C_TEMP_REDUCE},
-        .{ .memcpyParams = memcpyParams0 } );
-    @set_tile_code(0, 0, "spmm_csc_memcpy.csl", @concat_structs(route_00, comm_params) );
+                }else if(pe_y == height-1){
+                    // px = 0, pe_y = height-1
 
-    const route_01 = @concat_structs(
-        .{ .RXACT_B = RXACT_B, .TXACT_B=NONE, .RXACT_C = NONE, .TXACT_C = C_TEMP_REDUCE},
-        .{ .memcpyParams = memcpyParams0 } );
-    @set_tile_code(0, 1, "spmm_csc_memcpy.csl", @concat_structs(route_01, comm_params) );
+                    const pe_color_config_route_B = .{ .rx = .{NORTH}, .tx = .{RAMP} };
 
-    // second column: receive C via C_TEMP_REDUCE color
-    // last row receives B, first row sends B
-    const memcpyParams1 = memcpy.get_params(1);
-    const route_10 = @concat_structs(
-        .{ .RXACT_B = NONE, .TXACT_B=RXACT_B, .RXACT_C = C_TEMP_REDUCE , .TXACT_C = NONE},
-        .{ .memcpyParams = memcpyParams1 } );
-    @set_tile_code(1, 0, "spmm_csc_memcpy.csl", @concat_structs(route_10, comm_params) );
+                    const route = @concat_structs(
+                        .{ .RXACT_B = RXACT_B, .TXACT_B=NONE, .RXACT_C = NONE, .TXACT_C = C_TEMP_REDUCE},
+                        .{ .memcpyParams = memcpyParams_col } );
+                    
+                    @set_tile_code(pe_x, pe_y, "spmm_csc_memcpy.csl", @concat_structs(route, comm_params) );
+                    @set_color_config(pe_x, pe_y, C_TEMP_REDUCE, .{ .routes = pe_color_config_route_C });
+                    @set_color_config(pe_x, pe_y, RXACT_B, .{ .routes = pe_color_config_route_B });
 
-    const route_11 = @concat_structs(
-        .{ .RXACT_B = RXACT_B, .TXACT_B=NONE, .RXACT_C = C_TEMP_REDUCE , .TXACT_C = NONE},
-        .{ .memcpyParams = memcpyParams1 } );
-    @set_tile_code(1, 1, "spmm_csc_memcpy.csl", @concat_structs(route_11, comm_params) );
 
-    // step 3: global and internal routing
-    //  format: @set_color_config(x, y, color, route);
+                }else{
+                    // px = 0, pe_y = between
 
-    // routing of RXACT_B
-    // - B is distributed along columns (size Kt x M)
-    // - then broadcast from the north to the south
-    // py = 0 receives B via H2D_2, and forwards B to south
-    // py = 1 receives B from north
-    @set_color_config(0, 0, RXACT_B, .{ .routes = .{ .rx = .{RAMP},  .tx = .{SOUTH} } });
-    @set_color_config(0, 1, RXACT_B, .{ .routes = .{ .rx = .{NORTH}, .tx = .{RAMP} } });
+                    const pe_color_config_route_B = .{ .rx = .{NORTH}, .tx = .{RAMP, SOUTH} };
 
-    @set_color_config(1, 0, RXACT_B, .{ .routes = .{ .rx = .{RAMP}, .tx = .{SOUTH} } });
-    @set_color_config(1, 1, RXACT_B, .{ .routes = .{ .rx = .{NORTH}, .tx = .{RAMP} } });
+                    const route = @concat_structs(
+                        .{ .RXACT_B = RXACT_B, .TXACT_B=RXACT_B, .RXACT_C = NONE, .TXACT_C = C_TEMP_REDUCE},
+                        .{ .memcpyParams = memcpyParams_col } );
+                    
+                    @set_tile_code(pe_x, pe_y, "spmm_csc_memcpy.csl", @concat_structs(route, comm_params) );
+                    @set_color_config(pe_x, pe_y, C_TEMP_REDUCE, .{ .routes = pe_color_config_route_C });
+                    @set_color_config(pe_x, pe_y, RXACT_B, .{ .routes = pe_color_config_route_B });
+                }
 
-    // routing of C_temp (for row reduction)
-    // P0.0, P0.1: send local A*B (C_temp)
-    // P1.0, P1.1: receive local A*B (C_temp) of west PE
-    @set_color_config(0, 0, C_TEMP_REDUCE, .{ .routes = .{ .rx = .{RAMP}, .tx = .{EAST} } });
-    @set_color_config(0, 1, C_TEMP_REDUCE, .{ .routes = .{ .rx = .{RAMP}, .tx = .{EAST} } });
-    @set_color_config(1, 0, C_TEMP_REDUCE, .{ .routes = .{ .rx = .{WEST}, .tx = .{RAMP} } });
-    @set_color_config(1, 1, C_TEMP_REDUCE, .{ .routes = .{ .rx = .{WEST}, .tx = .{RAMP} } });
+            }else if(pe_x == width-1){
+                const pe_color_config_route_C = .{ .rx = .{WEST}, .tx = .{RAMP} };
+
+                if(pe_y == 0){
+                    // px = width-1, pe_y = 0
+
+                    const pe_color_config_route_B = .{ .rx = .{RAMP},  .tx = .{SOUTH} };
+
+                    const route = @concat_structs(
+                        .{ .RXACT_B = NONE, .TXACT_B=RXACT_B, .RXACT_C = C_TEMP_REDUCE, .TXACT_C = NONE},
+                        .{ .memcpyParams = memcpyParams_col } );
+                    
+                    @set_tile_code(pe_x, pe_y, "spmm_csc_memcpy.csl", @concat_structs(route, comm_params) );
+                    @set_color_config(pe_x, pe_y, C_TEMP_REDUCE, .{ .routes = pe_color_config_route_C });
+                    @set_color_config(pe_x, pe_y, RXACT_B, .{ .routes = pe_color_config_route_B });
+
+
+                }else if(pe_y == height-1){
+                    // px = width-1, pe_y = height-1
+
+                    const pe_color_config_route_B = .{ .rx = .{NORTH}, .tx = .{RAMP} };
+
+                    const route = @concat_structs(
+                        .{ .RXACT_B = RXACT_B, .TXACT_B=NONE, .RXACT_C = C_TEMP_REDUCE, .TXACT_C = NONE},
+                        .{ .memcpyParams = memcpyParams_col } );
+                    
+                    @set_tile_code(pe_x, pe_y, "spmm_csc_memcpy.csl", @concat_structs(route, comm_params) );
+                    @set_color_config(pe_x, pe_y, C_TEMP_REDUCE, .{ .routes = pe_color_config_route_C });
+                    @set_color_config(pe_x, pe_y, RXACT_B, .{ .routes = pe_color_config_route_B });
+
+
+                }else{
+                    // px = width-1, pe_y = between
+
+                    const pe_color_config_route_B = .{ .rx = .{NORTH}, .tx = .{RAMP, SOUTH} };
+
+                    const route = @concat_structs(
+                        .{ .RXACT_B = RXACT_B, .TXACT_B=RXACT_B, .RXACT_C = C_TEMP_REDUCE, .TXACT_C = NONE},
+                        .{ .memcpyParams = memcpyParams_col } );
+                    
+                    @set_tile_code(pe_x, pe_y, "spmm_csc_memcpy.csl", @concat_structs(route, comm_params) );
+                    @set_color_config(pe_x, pe_y, C_TEMP_REDUCE, .{ .routes = pe_color_config_route_C });
+                    @set_color_config(pe_x, pe_y, RXACT_B, .{ .routes = pe_color_config_route_B });
+                }       
+            }else{
+                const pe_color_config_route_C = .{ .rx = .{WEST}, .tx = .{RAMP, EAST} };
+
+
+                if(pe_y == 0){
+                    // px = between, pe_y = 0
+
+                    const pe_color_config_route_B = .{ .rx = .{RAMP},  .tx = .{SOUTH} };
+
+                    const route = @concat_structs(
+                        .{ .RXACT_B = NONE, .TXACT_B=RXACT_B, .RXACT_C = C_TEMP_REDUCE, .TXACT_C = C_TEMP_REDUCE},
+                        .{ .memcpyParams = memcpyParams_col } );
+                    
+                    @set_tile_code(pe_x, pe_y, "spmm_csc_memcpy.csl", @concat_structs(route, comm_params) );
+                    @set_color_config(pe_x, pe_y, C_TEMP_REDUCE, .{ .routes = pe_color_config_route_C });
+                    @set_color_config(pe_x, pe_y, RXACT_B, .{ .routes = pe_color_config_route_B });
+
+
+                }else if(pe_y == height-1){
+                    // px = between, pe_y = height-1
+
+                    const pe_color_config_route_B = .{ .rx = .{NORTH}, .tx = .{RAMP} };
+
+                    const route = @concat_structs(
+                        .{ .RXACT_B = RXACT_B, .TXACT_B=NONE, .RXACT_C = C_TEMP_REDUCE, .TXACT_C = C_TEMP_REDUCE},
+                        .{ .memcpyParams = memcpyParams_col } );
+                    
+                    @set_tile_code(pe_x, pe_y, "spmm_csc_memcpy.csl", @concat_structs(route, comm_params) );
+                    @set_color_config(pe_x, pe_y, C_TEMP_REDUCE, .{ .routes = pe_color_config_route_C });
+                    @set_color_config(pe_x, pe_y, RXACT_B, .{ .routes = pe_color_config_route_B });
+
+
+                }else{
+                    // px = between, pe_y = between
+
+                    const pe_color_config_route_B = .{ .rx = .{NORTH}, .tx = .{RAMP, SOUTH} };
+
+                    const route = @concat_structs(
+                        .{ .RXACT_B = RXACT_B, .TXACT_B=RXACT_B, .RXACT_C = C_TEMP_REDUCE, .TXACT_C = C_TEMP_REDUCE},
+                        .{ .memcpyParams = memcpyParams_col } );
+                    
+                    @set_tile_code(pe_x, pe_y, "spmm_csc_memcpy.csl", @concat_structs(route, comm_params) );
+                    @set_color_config(pe_x, pe_y, C_TEMP_REDUCE, .{ .routes = pe_color_config_route_C });
+                    @set_color_config(pe_x, pe_y, RXACT_B, .{ .routes = pe_color_config_route_B });
+                }          
+            }
+            
+        }
+    }
 
     // export symbol name
     @export_name("A_val", [*]f32, true);
@@ -162,5 +274,4 @@ layout{
     @export_name("A_col_ptr", [*]f32, true);
     @export_name("B", [*]f32, true);
     @export_name("C_temp", [*]f32, true);
-    @export_name("C_final", [*]f32, true);
 }

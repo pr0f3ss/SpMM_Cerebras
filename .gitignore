@@ -17,3 +17,5 @@
 
 /src/grid_csc/simfab_traces/*
 /src/grid_csc/out/*
+/src/grid_csc_arb/out/*
+/src/grid_csc_arb/simfab_traces/*

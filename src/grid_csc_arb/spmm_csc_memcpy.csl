@@ -1,7 +1,7 @@
 // This program computes A*B on a height-by-width PE rectangle
 // The matrix A in CSC format is distributed to every PE via memcpy
 // The matrix B is distributed to first row PEs via memcpy
-// Pw.0, ..., Pw.h send out the result C_final via memcpy, where h = height-1 and w = width-1.
+// Pw.0, ..., Pw.h send out the result C_temp via memcpy, where h = height-1 and w = width-1.
 // Note that this is the right-hand side column of PEs
 //
 // The host sends matrix A, matrix B into the core rectangle, launches a RPC (remote procedure call) to
@@ -17,17 +17,19 @@ param LAUNCH: color; // a routable color for RPC
 // local colors
 param RXACT_B: color; // py = 0: don't care
                       // py > 0: receive submatrix B from the north
-param TXACT_B: color; // py = 0: send submatrix B to the south
 
-param RXACT_C: color; // px = 0: forward local A*B to the east
-                      // px = 1: receive partial sum A*B from px = 0
-param TXACT_C: color;   // px = 0: send parital sum to all px = 1
+param TXACT_B: color; // py = height-1: don't care
+                      // py < height-1: send submatrix B to the south
 
-param TXACT_C_FINAL: color; // used in last column of PEs to send C_final to host
+param RXACT_C: color; // px = 0: don't care
+                      // px > 0: receive partial sum A*B from px = 0
+
+param TXACT_C: color; // px = width-1: don't care
+                      // px < width-1: send partial sum to east
 
 // local tasks
 param COMP: color;     // compute local C = A*B
-param REDUCE: color;   // compute A*B
+param REDUCE: color;   // reduce local C = A*B
 param DONE: color;     // Send out the result of the submatrix C
 param EXIT: color;     // entrypoint to leave RPC
 
@@ -52,6 +54,8 @@ param A_val_len:i32;
 param A_rowidx_len:i32;
 param A_colptr_len:i32;
 
+param width: i16;
+param height: i16;
 
 const fabric = @import_module("<layout>");
 
@@ -86,12 +90,14 @@ var A_row_idx  = @zeros([A_rowidx_len]f32);
 var A_col_ptr  = @zeros([A_colptr_len]f32);
 
 var B  = @zeros([Kt*M]f32);
-var C_final  = @zeros([Nt*M]f32);
 
 // workspace for A*B
 var C_temp = @zeros([Nt*M]f32);
 
-// (_px, _py) is the coordinate of region of interest, set by the function bcast_x
+// hold incoming results of A*B
+var C_buffer = @zeros([Nt*M]f32);
+
+// (_px, _py) is the coordinate of region of interest, set by the function bcast_B
 // which starts the computation
 var _px : i16 ;
 var _py : i16 ;
@@ -100,10 +106,9 @@ var _py : i16 ;
 var ptr_A_val : [*]f32 = &A_val;
 var ptr_A_row_idx  : [*]f32 = &A_row_idx;
 var ptr_A_col_ptr : [*]f32 = &A_col_ptr;
-// todo: check whether this works because they are arrays, or if we just use normal [*]
 var ptr_B : [*]f32 = &B;
-var ptr_C_final : [*]f32 = &C_final;
 var ptr_C_temp : [*]f32 = &C_temp;
+
 
 ////////////////////////////////////////////////////////////////////////////////
 // DSDs
@@ -133,6 +138,9 @@ const fab_trans_B_wdsd = @get_dsd(fabout_dsd, .{
     .output_queue = 1
 });
 
+// C_buffer dsd
+const mem_C_buffer_dsd = @get_dsd(mem1d_dsd, .{ .tensor_access = |i|{Nt*M} -> C_buffer[i] });
+
 // C_temp buffer
 const mem_C_temp_buf_dsd = @get_dsd(mem1d_dsd, .{ .tensor_access = |i|{Nt*M} -> C_temp[i] });
 
@@ -150,8 +158,6 @@ const fab_trans_C_temp_wdsd = @get_dsd(fabout_dsd, .{
     .output_queue = 2
 });
 
-// C_final buffer
-const mem_C_final_buf_dsd = @get_dsd(mem1d_dsd, .{ .tensor_access = |i|{Nt*M} -> C_final[i] });
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -165,6 +171,11 @@ const spmm_csc_mod = @import_module( "spmm_csc.csl" , .{  .A_val_len = A_val_len
 // All PEs compute local A*B after A and B are received
 task f_comp() void {
 
+    // if we are in row inbetween, send over B to south
+    if(0 < _py and _py < height-1 ){
+        @fmovs(fab_trans_B_wdsd, mem_B_buf_dsd, .{.async=true});
+    }
+
     // C_temp = A * B 
     spmm_csc_mod.spmm_csc_f32(&A_val, &A_row_idx, &A_col_ptr, &B, &C_temp);
 
@@ -174,23 +185,24 @@ task f_comp() void {
 
 
 // px = 0: forward local A*B = C_temp to the east
-// px = 1: recive C_temp from west and trigger f_done task to compute C_final = C_temp (from east) + C_temp (from local PE)
+// px = 1 .. width - 2: receive C_temp from west, compute new C_temp and send result to east
+// px = width-1: receive C_temp from west and compute new C_temp
 task f_reduce() void {
 
-    if (0 == _px){
+    if (_px == 0){
         // send partial sum to the east and finish (every PE must call f_exit)
         @fmovs(fab_trans_C_temp_wdsd, mem_C_temp_buf_dsd, .{.async=true, .activate = f_exit});
+    }else if(_px == width-1){
+        // P_width.0, ... , P_width.height: Receive C_temp from west and activate done task
+        @fadds(mem_C_temp_buf_dsd, fab_recv_C_temp_wdsd, mem_C_temp_buf_dsd, .{.async=true, .activate = f_done});
     }else{
-        // P1.1 and P1.0: Receive C_temp from west and activate done task to compute C_final = C_temp (from east) + C_temp (from local PE)
-        @fmovs(mem_C_final_buf_dsd, fab_recv_C_temp_wdsd, .{.async=true, .activate = f_done});
+        // Receive result from west, add local + west C and send to result to east
+        @fadds(fab_trans_C_temp_wdsd, fab_recv_C_temp_wdsd, mem_C_temp_buf_dsd, .{.async=true, .activate = f_exit});
     }
 }
 
-// This task computes C_final = C_temp (from east) + C_temp (from local PE)
+// Reserved for computations at the final PEs
 task f_done() void {
-
-    // add mem_C_final_buf_dsd (east C_temp) and mem_C_temp_buf_dsd (local C_temp) into output mem_C_final_buf_dsd (which will be copied back to device)
-    @fadds(mem_C_final_buf_dsd, mem_C_final_buf_dsd, mem_C_temp_buf_dsd);
 
     @activate(EXIT); // every PE must call f_exit
 }
@@ -201,30 +213,28 @@ var params = @zeros([32]i32);
 var index :i32 =  -1;
 var num_wavelets: i32 = 0;
 
-// the calling sequence
-// px: cols, py: rows
-// py = 0/1, px = 0: bcast_x --> f_comp --> f_reduce --> f_exit
-// py = 0/1, px = 1: bcast_x --> f_comp --> f_reduce --> f_done --> f_exit
-// We add the local results in the last column (px = 1), hence why we need an additional 'done' task in the last column
 
 // f_launch: reads h_params and sets up the execution
-// bcast_x: broadcasts local B to south PEs
+// bcast_B: broadcasts local B to south PEs
 // f_comp: computes local A*B
-// f_reduce: sends local A*B to east or receives local A*B from west
+// f_reduce: receives local A*B from west, does computation and sends local A*B to east 
 // f_done: computes the addition of the local A*B results
-// f_exit: unblock cmd color for every PE such that C_final dsds can be read on host
+// f_exit: unblock cmd color for every PE such that C_temp dsds can be read on host
 
-fn bcast_x() void {
+fn bcast_B() void {
 
     _px = @as(i16, get_x_coord());
     _py = @as(i16, get_y_coord());
 
-    if (0 == _py){
-        // broadcast B to south PEs when we are in the first row
+    if (_py == 0){
+        // Broadcast B to south PEs when we are in the first row
         @fmovs(fab_trans_B_wdsd, mem_B_buf_dsd, .{.async=true, .activate = f_comp});
-    }else{
-        // 0 < _py: receive B from north if we aren't in the first row
+    }else if(_py == height-1){
+        // Only receive B from north if we are in the last row
         @fmovs(mem_B_buf_dsd, fab_recv_B_wdsd, .{.async=true, .activate = f_comp});
+    }else{
+        // Receive B from north PE, send B to south in f_comp!
+        @fmovs(mem_B_buf_dsd, fab_recv_B_wdsd, .{.async=true, .activate= f_comp});
     }
 }
 
@@ -264,7 +274,7 @@ task f_launch( data : i32 ) void {
             // data is the ID of the function
             if (0 == data){
                 // WARNING: all PEs must call f_exit()
-                bcast_x();
+                bcast_B();
             }
         }
     }
@@ -291,6 +301,5 @@ comptime {
     @export_symbol(ptr_A_row_idx, "A_row_idx");
     @export_symbol(ptr_A_col_ptr, "A_col_ptr");
     @export_symbol(ptr_B, "B");
-    @export_symbol(ptr_C_final, "C_final");
     @export_symbol(ptr_C_temp, "C_temp");
 }

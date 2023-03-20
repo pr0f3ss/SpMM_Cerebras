@@ -97,5 +97,5 @@ def pad_csr_grid(prefix, replace=-1):
     pad_file(prefix+"_row_ptr.csv", prefix+"_row_ptr_pad.csv", dtype=int)
     
 
-#pad_csc_grid("test")
-pad_csr_grid("test")
+pad_csc_grid("PE3x3")
+#pad_csr_grid("test")

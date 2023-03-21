@@ -77,3 +77,103 @@
 @829169 CTF Stats: num_inst_dispatch =        36698
 @829169 CTF Stats: num_inst_pipe     =        72651
 @829169 CTF Stats: num_switch_pos    =            0
+@0 GITREV=6fa1d2e77d85620a5a65599a2cbed8a986df5378, GITCLEAN=1
+@0 Create from size nx=9 ny=4
+@0 dimX=9, dimY=4
+@0 Invocation key is: simA91859172767DA9C8C493991D8000D8A
+@0 Plan key is: plan751CA0A40C0AE5E6545924AB8DBAA4E1
+@0 SimTraceCtf, flags:  wavelets=0 landing=1 inst=1 switch_positions=0 stalls=1
+@0 Architecture is: FYN
+@0 Simtile is: hwtile
+@9496 Stopping.
+@0 GITREV=6fa1d2e77d85620a5a65599a2cbed8a986df5378, GITCLEAN=1
+@0 Create from size nx=10 ny=4
+@0 dimX=10, dimY=4
+@0 Invocation key is: sim25C2B82A7E83F2A2BDB9FDAECECAFFEB
+@0 Plan key is: planA7855BE7F75B7388C17B3BC169A50850
+@0 SimTraceCtf, flags:  wavelets=0 landing=1 inst=1 switch_positions=0 stalls=1
+@0 Architecture is: FYN
+@0 Simtile is: hwtile
+@109815 Stopping due to signal 2 (Interrupt)
+@0 GITREV=6fa1d2e77d85620a5a65599a2cbed8a986df5378, GITCLEAN=1
+@0 Create from size nx=10 ny=4
+@0 dimX=10, dimY=4
+@0 Invocation key is: sim8BC4A0F661D5C1A87611ABDC8CC69729
+@0 Plan key is: planA7855BE7F75B7388C17B3BC169A50850
+@0 SimTraceCtf, flags:  wavelets=0 landing=1 inst=1 switch_positions=0 stalls=1
+@0 Architecture is: FYN
+@0 Simtile is: hwtile
+@876380 Stopping due to fatal error
+@876380 CTF Stats: num_stalls_       =    425897800
+@876380 CTF Stats: num_wavelets      =         2073
+@876380 CTF Stats: num_inst_dispatch =        25228
+@876380 CTF Stats: num_inst_pipe     =        49932
+@876380 CTF Stats: num_switch_pos    =            0
+@0 GITREV=6fa1d2e77d85620a5a65599a2cbed8a986df5378, GITCLEAN=1
+@0 Create from size nx=10 ny=4
+@0 dimX=10, dimY=4
+@0 Invocation key is: simADE23B3716819560F006E81620D92BF1
+@0 Plan key is: planA7855BE7F75B7388C17B3BC169A50850
+@0 SimTraceCtf, flags:  wavelets=0 landing=1 inst=1 switch_positions=0 stalls=1
+@0 Architecture is: FYN
+@0 Simtile is: hwtile
+@59229 Stopping due to signal 2 (Interrupt)
+@0 GITREV=6fa1d2e77d85620a5a65599a2cbed8a986df5378, GITCLEAN=1
+@0 Create from size nx=10 ny=4
+@0 dimX=10, dimY=4
+@0 Invocation key is: sim3569D2EFD6BC05064A430FAC2C76939E
+@0 Plan key is: planA7855BE7F75B7388C17B3BC169A50850
+@0 SimTraceCtf, flags:  wavelets=0 landing=1 inst=1 switch_positions=0 stalls=1
+@0 Architecture is: FYN
+@0 Simtile is: hwtile
+@160459 Stopping due to signal 2 (Interrupt)
+@0 GITREV=6fa1d2e77d85620a5a65599a2cbed8a986df5378, GITCLEAN=1
+@0 Create from size nx=10 ny=4
+@0 dimX=10, dimY=4
+@0 Invocation key is: simF5E0975C072103F70107AC217B4335BF
+@0 Plan key is: planA7855BE7F75B7388C17B3BC169A50850
+@0 SimTraceCtf, flags:  wavelets=0 landing=1 inst=1 switch_positions=0 stalls=1
+@0 Architecture is: FYN
+@0 Simtile is: hwtile
+@727438 Stopping due to fatal error
+@727438 CTF Stats: num_stalls_       =    353512442
+@727438 CTF Stats: num_wavelets      =         2073
+@727438 CTF Stats: num_inst_dispatch =        25227
+@727438 CTF Stats: num_inst_pipe     =        49931
+@727438 CTF Stats: num_switch_pos    =            0
+@0 GITREV=6fa1d2e77d85620a5a65599a2cbed8a986df5378, GITCLEAN=1
+@0 Create from size nx=9 ny=4
+@0 dimX=9, dimY=4
+@0 Invocation key is: sim059B12CE08FE04D744B923B0B4645038
+@0 Plan key is: plan751CA0A40C0AE5E6545924AB8DBAA4E1
+@0 SimTraceCtf, flags:  wavelets=0 landing=1 inst=1 switch_positions=0 stalls=1
+@0 Architecture is: FYN
+@0 Simtile is: hwtile
+@9484 Stopping.
+@0 GITREV=6fa1d2e77d85620a5a65599a2cbed8a986df5378, GITCLEAN=1
+@0 Create from size nx=9 ny=4
+@0 dimX=9, dimY=4
+@0 Invocation key is: simF310EF0A26B55A6C5FA5BF215BFD8C14
+@0 Plan key is: plan751CA0A40C0AE5E6545924AB8DBAA4E1
+@0 SimTraceCtf, flags:  wavelets=0 landing=1 inst=1 switch_positions=0 stalls=1
+@0 Architecture is: FYN
+@0 Simtile is: hwtile
+@9550 Stopping.
+@0 GITREV=6fa1d2e77d85620a5a65599a2cbed8a986df5378, GITCLEAN=1
+@0 Create from size nx=10 ny=4
+@0 dimX=10, dimY=4
+@0 Invocation key is: simB450FD5F5544C99339C70352504E9406
+@0 Plan key is: planA7855BE7F75B7388C17B3BC169A50850
+@0 SimTraceCtf, flags:  wavelets=0 landing=1 inst=1 switch_positions=0 stalls=1
+@0 Architecture is: FYN
+@0 Simtile is: hwtile
+@370081 Stopping due to signal 2 (Interrupt)
+@0 GITREV=6fa1d2e77d85620a5a65599a2cbed8a986df5378, GITCLEAN=1
+@0 Create from size nx=9 ny=4
+@0 dimX=9, dimY=4
+@0 Invocation key is: simF6473C43B01768D56FA74FD170D07D21
+@0 Plan key is: plan751CA0A40C0AE5E6545924AB8DBAA4E1
+@0 SimTraceCtf, flags:  wavelets=0 landing=1 inst=1 switch_positions=0 stalls=1
+@0 Architecture is: FYN
+@0 Simtile is: hwtile
+@9430 Stopping.

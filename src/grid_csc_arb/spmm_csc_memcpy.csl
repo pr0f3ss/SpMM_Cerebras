@@ -94,9 +94,6 @@ var B  = @zeros([Kt*M]f32);
 // workspace for A*B
 var C_temp = @zeros([Nt*M]f32);
 
-// hold incoming results of A*B
-var C_buffer = @zeros([Nt*M]f32);
-
 // (_px, _py) is the coordinate of region of interest, set by the function bcast_B
 // which starts the computation
 var _px : i16 ;
@@ -137,9 +134,6 @@ const fab_trans_B_wdsd = @get_dsd(fabout_dsd, .{
     .fabric_color = TXACT_B,
     .output_queue = 1
 });
-
-// C_buffer dsd
-const mem_C_buffer_dsd = @get_dsd(mem1d_dsd, .{ .tensor_access = |i|{Nt*M} -> C_buffer[i] });
 
 // C_temp buffer
 const mem_C_temp_buf_dsd = @get_dsd(mem1d_dsd, .{ .tensor_access = |i|{Nt*M} -> C_temp[i] });

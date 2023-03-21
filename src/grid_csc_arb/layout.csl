@@ -42,8 +42,11 @@ param height: i16;
 
 const LAUNCH : color = @get_color(LAUNCH_ID);
 
-const RXACT_B: color  = @get_color(8) ;  // receive B
-const C_TEMP_REDUCE: color     = @get_color(9) ;  // row reduction
+// Utilize checkerboard pattern for routing
+const RXACT_B_ODD: color  = @get_color(8) ;  // receive B
+const RXACT_B_EVEN: color  = @get_color(9) ; 
+const C_TEMP_REDUCE_ODD: color     = @get_color(10) ;  // row reduction
+const C_TEMP_REDUCE_EVEN: color = @get_color(11);
 
 // local tasks
 const COMP: color     = @get_color(12) ;
@@ -93,27 +96,39 @@ layout{
     };
 
     // The routing and coloring works as follows
-    //
+    // Note that it is neccessary to utilize the checkerboard pattern for the routing
+    // to ensure no color overlap
+    // 
     // ====== C_temp routing ======
-    // First column of PEs:         Only send out C via C_TEMP_REDUCE color
-    // Intermediate columns of PEs: Receive and send out C via C_TEMP_REDUCE color
-    // Last column of PEs:          Only receive C via C_TEMP_REDUCE color
+    // First column of PEs:                 Only send out C via C_TEMP_REDUCE_EVEN color
+    // Odd intermediate columns of PEs:     Receive via C_TEMP_REDUCE_EVEN and send via C_TEMP_REDUCE_ODD colors
+    // Even intermediate columns of PEs:    Receive via C_TEMP_REDUCE_ODD and send via C_TEMP_REDUCE_EVEN colors
+    // Last column of PEs:                  If odd: receive C_TEMP_REDUCE_EVEN. Else receive C_TEMP_REDUCE_ODD
     // ====== C_temp colors ======
-    // First column of PEs:         .{ .rx = .{RAMP},  .tx = .{EAST} }    
-    // Intermediate columns of PEs: .{ .rx = .{WEST}, .tx = .{RAMP, EAST} }
-    // Last column of PEs:          .{ .rx = .{WEST}, .tx = .{RAMP} }
+    // First column of PEs:                 C_TEMP_REDUCE_EVEN = .{ .rx = .{RAMP},  .tx = .{EAST} }    
+    // Odd intermediate columns of PEs:     C_TEMP_REDUCE_EVEN = .{ .rx = .{WEST}, .tx = .{RAMP}  }, C_TEMP_REDUCE_ODD = { .rx = .{RAMP}, .tx = .{EAST}  }
+    // Even intermediate columns of PEs:    C_TEMP_REDUCE_EVEN = .{ .rx = .{RAMP}, .tx = .{EAST}  }, C_TEMP_REDUCE_ODD = { .rx = .{WEST}, .tx = .{RAMP}  }
+    // Last column of PEs:                  If odd: C_TEMP_REDUCE_EVEN = .{ .rx = .{WEST}, .tx = .{RAMP} }, otherwise C_TEMP_REDUCE_ODD = .{ .rx = .{WEST}, .tx = .{RAMP} }
     //
     // ====== B routing ======
-    // First row of PEs:            Only send B via RXACT_B color
-    // Intermediate columns of PEs: Receive and send B via RXACT_B color
-    // Last row of PEs:             Only receive B via RXACT_B color
+    // First row of PEs:                    Only send out B via RXACT_B_EVEN color
+    // Odd intermediate rows of PEs:        Receive via RXACT_B_EVEN and send via RXACT_B_ODD colors
+    // Even intermediate rows of PEs:       Receive via RXACT_B_ODD and send via RXACT_B_EVEN colors
+    // Last row of PEs:                     If odd: receive RXACT_B_EVEN. Else receive RXACT_B_ODD
     // ====== B colors ======
-    // First row of PEs:            .{ .rx = .{RAMP},  .tx = .{SOUTH} }    
-    // Intermediate row of PEs:     .{ .rx = .{NORTH}, .tx = .{RAMP, SOUTH} }
-    // Last row of PEs:             .{ .rx = .{NORTH}, .tx = .{RAMP} }   
+    // First row of PEs:                    RXACT_B_EVEN = .{ .rx = .{RAMP},  .tx = .{SOUTH} }    
+    // Odd intermediate rows of PEs:        RXACT_B_EVEN = .{ .rx = .{NORTH}, .tx = .{RAMP}  }, RXACT_B_ODD = .{ .rx = .{RAMP}, .tx = .{SOUTH}  }
+    // Even intermediate rows of PEs:       RXACT_B_EVEN = .{ .rx = .{RAMP}, .tx = .{SOUTH}  }, RXACT_B_ODD = .{ .rx = .{NORTH}, .tx = .{RAMP}  }
+    // Last row of PEs:                     If odd: RXACT_B_EVEN = .{ .rx = .{NORTH}, .tx = .{RAMP} }, otherwise RXACT_B_ODD = .{ .rx = .{NORTH}, .tx = .{RAMP} }
 
-    const height_1 = height - 1;
-    const width_1 = width - 1;  
+
+    // Here we define the color config routes (ccr)
+    // Notation:
+    // ccr_SYMBOL_RECV.SEND
+    const ccr_B_RS = .{ .rx = .{RAMP},  .tx = .{SOUTH} };
+    const ccr_B_NR = .{ .rx = .{NORTH},  .tx = .{RAMP} };
+    const ccr_C_RE = .{ .rx = .{RAMP},  .tx = .{EAST} };
+    const ccr_C_WR = .{ .rx = .{WEST}, .tx = .{RAMP} };
 
     for (@range(i16, width)) |pe_x| {
 
@@ -130,138 +145,334 @@ layout{
             // for better readability
             // Refer to comments above for specific routing data
             if(pe_x == 0){
-                const pe_color_config_route_C = .{ .rx = .{RAMP},  .tx = .{EAST} };
 
                 if(pe_y == 0){
                     // px = 0, pe_y = 0
 
-                    const pe_color_config_route_B = .{ .rx = .{RAMP},  .tx = .{SOUTH} };
-
                     const route = @concat_structs(
-                        .{ .RXACT_B = NONE, .TXACT_B=RXACT_B, .RXACT_C = NONE, .TXACT_C = C_TEMP_REDUCE},
+                        .{ .RXACT_B = NONE, .TXACT_B=RXACT_B_EVEN, .RXACT_C = NONE, .TXACT_C = C_TEMP_REDUCE_EVEN},
                         .{ .memcpyParams = memcpyParams_col } );
                     
                     @set_tile_code(pe_x, pe_y, "spmm_csc_memcpy.csl", @concat_structs(route, comm_params) );
-                    @set_color_config(pe_x, pe_y, C_TEMP_REDUCE, .{ .routes = pe_color_config_route_C });
-                    @set_color_config(pe_x, pe_y, RXACT_B, .{ .routes = pe_color_config_route_B });
+                    @set_color_config(pe_x, pe_y, C_TEMP_REDUCE_EVEN, .{ .routes = ccr_C_RE });
+                    @set_color_config(pe_x, pe_y, RXACT_B_EVEN, .{ .routes = ccr_B_RS });
 
 
                 }else if(pe_y == height-1){
                     // px = 0, pe_y = height-1
 
-                    const pe_color_config_route_B = .{ .rx = .{NORTH}, .tx = .{RAMP} };
-
-                    const route = @concat_structs(
-                        .{ .RXACT_B = RXACT_B, .TXACT_B=NONE, .RXACT_C = NONE, .TXACT_C = C_TEMP_REDUCE},
+                    if(pe_y % 2 == 1){
+                        // odd row
+                        const route = @concat_structs(
+                        .{ .RXACT_B = RXACT_B_EVEN, .TXACT_B=NONE, .RXACT_C = NONE, .TXACT_C = C_TEMP_REDUCE_EVEN},
                         .{ .memcpyParams = memcpyParams_col } );
                     
-                    @set_tile_code(pe_x, pe_y, "spmm_csc_memcpy.csl", @concat_structs(route, comm_params) );
-                    @set_color_config(pe_x, pe_y, C_TEMP_REDUCE, .{ .routes = pe_color_config_route_C });
-                    @set_color_config(pe_x, pe_y, RXACT_B, .{ .routes = pe_color_config_route_B });
+                        @set_tile_code(pe_x, pe_y, "spmm_csc_memcpy.csl", @concat_structs(route, comm_params) );
+                        @set_color_config(pe_x, pe_y, C_TEMP_REDUCE_EVEN, .{ .routes = ccr_C_RE });
+                        @set_color_config(pe_x, pe_y, RXACT_B_EVEN, .{ .routes = ccr_B_NR });
+                    }else{
+                        // even row
+                        const route = @concat_structs(
+                        .{ .RXACT_B = RXACT_B_ODD, .TXACT_B=NONE, .RXACT_C = NONE, .TXACT_C = C_TEMP_REDUCE_EVEN},
+                        .{ .memcpyParams = memcpyParams_col } );
 
-
+                        @set_tile_code(pe_x, pe_y, "spmm_csc_memcpy.csl", @concat_structs(route, comm_params) );
+                        @set_color_config(pe_x, pe_y, C_TEMP_REDUCE_EVEN, .{ .routes = ccr_C_RE });
+                        @set_color_config(pe_x, pe_y, RXACT_B_ODD, .{ .routes = ccr_B_NR });
+                    }
+                    
                 }else{
                     // px = 0, pe_y = between
-
-                    const pe_color_config_route_B = .{ .rx = .{NORTH}, .tx = .{RAMP, SOUTH} };
-
-                    const route = @concat_structs(
-                        .{ .RXACT_B = RXACT_B, .TXACT_B=RXACT_B, .RXACT_C = NONE, .TXACT_C = C_TEMP_REDUCE},
+                    if(pe_y % 2 == 1){
+                        // odd row
+                        const route = @concat_structs(
+                        .{ .RXACT_B = RXACT_B_EVEN, .TXACT_B=RXACT_B_ODD, .RXACT_C = NONE, .TXACT_C = C_TEMP_REDUCE_EVEN},
                         .{ .memcpyParams = memcpyParams_col } );
                     
-                    @set_tile_code(pe_x, pe_y, "spmm_csc_memcpy.csl", @concat_structs(route, comm_params) );
-                    @set_color_config(pe_x, pe_y, C_TEMP_REDUCE, .{ .routes = pe_color_config_route_C });
-                    @set_color_config(pe_x, pe_y, RXACT_B, .{ .routes = pe_color_config_route_B });
+                        @set_tile_code(pe_x, pe_y, "spmm_csc_memcpy.csl", @concat_structs(route, comm_params) );
+                        @set_color_config(pe_x, pe_y, C_TEMP_REDUCE_EVEN, .{ .routes = ccr_C_RE });
+                        @set_color_config(pe_x, pe_y, RXACT_B_EVEN, .{ .routes = ccr_B_NR });
+                        @set_color_config(pe_x, pe_y, RXACT_B_ODD, .{ .routes = ccr_B_RS });
+                    }else{
+                        // even row
+                        const route = @concat_structs(
+                        .{ .RXACT_B = RXACT_B_ODD, .TXACT_B=RXACT_B_EVEN, .RXACT_C = NONE, .TXACT_C = C_TEMP_REDUCE_EVEN},
+                        .{ .memcpyParams = memcpyParams_col } );
+                    
+                        @set_tile_code(pe_x, pe_y, "spmm_csc_memcpy.csl", @concat_structs(route, comm_params) );
+                        @set_color_config(pe_x, pe_y, C_TEMP_REDUCE_EVEN, .{ .routes = ccr_C_RE });
+                        @set_color_config(pe_x, pe_y, RXACT_B_EVEN, .{ .routes = ccr_B_RS });
+                        @set_color_config(pe_x, pe_y, RXACT_B_ODD, .{ .routes = ccr_B_NR });
+                    }
                 }
 
             }else if(pe_x == width-1){
-                const pe_color_config_route_C = .{ .rx = .{WEST}, .tx = .{RAMP} };
+                
 
                 if(pe_y == 0){
                     // px = width-1, pe_y = 0
 
-                    const pe_color_config_route_B = .{ .rx = .{RAMP},  .tx = .{SOUTH} };
+                    if(pe_x % 2 == 1){
+                        // odd column
+                        const route = @concat_structs(
+                            .{ .RXACT_B = NONE, .TXACT_B=RXACT_B_EVEN, .RXACT_C = C_TEMP_REDUCE_EVEN, .TXACT_C = NONE},
+                            .{ .memcpyParams = memcpyParams_col } );
+                        
+                        @set_tile_code(pe_x, pe_y, "spmm_csc_memcpy.csl", @concat_structs(route, comm_params) );
+                        @set_color_config(pe_x, pe_y, C_TEMP_REDUCE_EVEN, .{ .routes = ccr_C_WR });
+                        @set_color_config(pe_x, pe_y, RXACT_B_EVEN, .{ .routes = ccr_B_RS });
+                    }else{
+                        // even column
+                        const route = @concat_structs(
+                            .{ .RXACT_B = NONE, .TXACT_B=RXACT_B_EVEN, .RXACT_C = C_TEMP_REDUCE_ODD, .TXACT_C = NONE},
+                            .{ .memcpyParams = memcpyParams_col } );
+                        
+                        @set_tile_code(pe_x, pe_y, "spmm_csc_memcpy.csl", @concat_structs(route, comm_params) );
+                        @set_color_config(pe_x, pe_y, C_TEMP_REDUCE_ODD, .{ .routes = ccr_C_WR });
+                        @set_color_config(pe_x, pe_y, RXACT_B_EVEN, .{ .routes = ccr_B_RS });
+                    }
 
-                    const route = @concat_structs(
-                        .{ .RXACT_B = NONE, .TXACT_B=RXACT_B, .RXACT_C = C_TEMP_REDUCE, .TXACT_C = NONE},
-                        .{ .memcpyParams = memcpyParams_col } );
-                    
-                    @set_tile_code(pe_x, pe_y, "spmm_csc_memcpy.csl", @concat_structs(route, comm_params) );
-                    @set_color_config(pe_x, pe_y, C_TEMP_REDUCE, .{ .routes = pe_color_config_route_C });
-                    @set_color_config(pe_x, pe_y, RXACT_B, .{ .routes = pe_color_config_route_B });
 
 
                 }else if(pe_y == height-1){
                     // px = width-1, pe_y = height-1
 
-                    const pe_color_config_route_B = .{ .rx = .{NORTH}, .tx = .{RAMP} };
+                    if(pe_x % 2 == 1){
+                        // odd column
 
-                    const route = @concat_structs(
-                        .{ .RXACT_B = RXACT_B, .TXACT_B=NONE, .RXACT_C = C_TEMP_REDUCE, .TXACT_C = NONE},
-                        .{ .memcpyParams = memcpyParams_col } );
-                    
-                    @set_tile_code(pe_x, pe_y, "spmm_csc_memcpy.csl", @concat_structs(route, comm_params) );
-                    @set_color_config(pe_x, pe_y, C_TEMP_REDUCE, .{ .routes = pe_color_config_route_C });
-                    @set_color_config(pe_x, pe_y, RXACT_B, .{ .routes = pe_color_config_route_B });
+                        if(pe_y % 2 == 1){
+                            // odd row
+                            const route = @concat_structs(
+                            .{ .RXACT_B = RXACT_B_EVEN, .TXACT_B=NONE, .RXACT_C = C_TEMP_REDUCE_EVEN, .TXACT_C = NONE},
+                            .{ .memcpyParams = memcpyParams_col } );
+                        
+                            @set_tile_code(pe_x, pe_y, "spmm_csc_memcpy.csl", @concat_structs(route, comm_params) );
+                            @set_color_config(pe_x, pe_y, C_TEMP_REDUCE_EVEN, .{ .routes = ccr_C_WR });
+                            @set_color_config(pe_x, pe_y, RXACT_B_EVEN, .{ .routes = ccr_B_NR });
+                        }else{
+                            // even row
+                            const route = @concat_structs(
+                            .{ .RXACT_B = RXACT_B_ODD, .TXACT_B=NONE, .RXACT_C = C_TEMP_REDUCE_EVEN, .TXACT_C = NONE},
+                            .{ .memcpyParams = memcpyParams_col } );
+                        
+                            @set_tile_code(pe_x, pe_y, "spmm_csc_memcpy.csl", @concat_structs(route, comm_params) );
+                            @set_color_config(pe_x, pe_y, C_TEMP_REDUCE_EVEN, .{ .routes = ccr_C_WR });
+                            @set_color_config(pe_x, pe_y, RXACT_B_ODD, .{ .routes = ccr_B_NR });
+                        }
+                        
+                    }else{
+                        // even column
 
+                        if(pe_y % 2 == 1){
+                            // odd row
+                            const route = @concat_structs(
+                            .{ .RXACT_B = RXACT_B_EVEN, .TXACT_B=NONE, .RXACT_C = C_TEMP_REDUCE_ODD, .TXACT_C = NONE},
+                            .{ .memcpyParams = memcpyParams_col } );
+                        
+                            @set_tile_code(pe_x, pe_y, "spmm_csc_memcpy.csl", @concat_structs(route, comm_params) );
+                            @set_color_config(pe_x, pe_y, C_TEMP_REDUCE_ODD, .{ .routes = ccr_C_WR });
+                            @set_color_config(pe_x, pe_y, RXACT_B_EVEN, .{ .routes = ccr_B_NR });
+                        }else{
+                            // even row
+                            const route = @concat_structs(
+                            .{ .RXACT_B = RXACT_B_ODD, .TXACT_B=NONE, .RXACT_C = C_TEMP_REDUCE_ODD, .TXACT_C = NONE},
+                            .{ .memcpyParams = memcpyParams_col } );
+                        
+                            @set_tile_code(pe_x, pe_y, "spmm_csc_memcpy.csl", @concat_structs(route, comm_params) );
+                            @set_color_config(pe_x, pe_y, C_TEMP_REDUCE_ODD, .{ .routes = ccr_C_WR });
+                            @set_color_config(pe_x, pe_y, RXACT_B_ODD, .{ .routes = ccr_B_NR });
+                        }
+                    }                    
 
                 }else{
                     // px = width-1, pe_y = between
 
-                    const pe_color_config_route_B = .{ .rx = .{NORTH}, .tx = .{RAMP, SOUTH} };
+                    if(pe_x % 2 == 1){
+                        // odd column
 
-                    const route = @concat_structs(
-                        .{ .RXACT_B = RXACT_B, .TXACT_B=RXACT_B, .RXACT_C = C_TEMP_REDUCE, .TXACT_C = NONE},
-                        .{ .memcpyParams = memcpyParams_col } );
-                    
-                    @set_tile_code(pe_x, pe_y, "spmm_csc_memcpy.csl", @concat_structs(route, comm_params) );
-                    @set_color_config(pe_x, pe_y, C_TEMP_REDUCE, .{ .routes = pe_color_config_route_C });
-                    @set_color_config(pe_x, pe_y, RXACT_B, .{ .routes = pe_color_config_route_B });
+                        if(pe_y % 2 == 1){
+                            // odd row
+                            const route = @concat_structs(
+                                .{ .RXACT_B = RXACT_B_EVEN, .TXACT_B=RXACT_B_ODD, .RXACT_C = C_TEMP_REDUCE_EVEN, .TXACT_C = NONE},
+                                .{ .memcpyParams = memcpyParams_col } );
+                            
+                            @set_tile_code(pe_x, pe_y, "spmm_csc_memcpy.csl", @concat_structs(route, comm_params) );
+                            @set_color_config(pe_x, pe_y, C_TEMP_REDUCE_EVEN, .{ .routes = ccr_C_WR });
+                            @set_color_config(pe_x, pe_y, RXACT_B_EVEN, .{ .routes = ccr_B_NR });
+                            @set_color_config(pe_x, pe_y, RXACT_B_ODD, .{ .routes = ccr_B_RS });
+
+                        }else{
+                            // even row
+                            const route = @concat_structs(
+                            .{ .RXACT_B = RXACT_B_ODD, .TXACT_B=RXACT_B_EVEN, .RXACT_C = C_TEMP_REDUCE_EVEN, .TXACT_C = NONE},
+                            .{ .memcpyParams = memcpyParams_col } );
+                        
+                            @set_tile_code(pe_x, pe_y, "spmm_csc_memcpy.csl", @concat_structs(route, comm_params) );
+                            @set_color_config(pe_x, pe_y, C_TEMP_REDUCE_EVEN, .{ .routes = ccr_C_WR });
+                            @set_color_config(pe_x, pe_y, RXACT_B_EVEN, .{ .routes = ccr_B_RS });
+                            @set_color_config(pe_x, pe_y, RXACT_B_ODD, .{ .routes = ccr_B_NR });
+                        }
+                        
+                    }else{
+                        // even column
+
+                        if(pe_y % 2 == 1){
+                            // odd row
+                            const route = @concat_structs(
+                                .{ .RXACT_B = RXACT_B_EVEN, .TXACT_B=RXACT_B_ODD, .RXACT_C = C_TEMP_REDUCE_ODD, .TXACT_C = NONE},
+                                .{ .memcpyParams = memcpyParams_col } );
+                            
+                            @set_tile_code(pe_x, pe_y, "spmm_csc_memcpy.csl", @concat_structs(route, comm_params) );
+                            @set_color_config(pe_x, pe_y, C_TEMP_REDUCE_ODD, .{ .routes = ccr_C_WR });
+                            @set_color_config(pe_x, pe_y, RXACT_B_EVEN, .{ .routes = ccr_B_NR });
+                            @set_color_config(pe_x, pe_y, RXACT_B_ODD, .{ .routes = ccr_B_RS });
+
+                        }else{
+                            // even row
+                            const route = @concat_structs(
+                            .{ .RXACT_B = RXACT_B_ODD, .TXACT_B=RXACT_B_EVEN, .RXACT_C = C_TEMP_REDUCE_ODD, .TXACT_C = NONE},
+                            .{ .memcpyParams = memcpyParams_col } );
+                        
+                            @set_tile_code(pe_x, pe_y, "spmm_csc_memcpy.csl", @concat_structs(route, comm_params) );
+                            @set_color_config(pe_x, pe_y, C_TEMP_REDUCE_ODD, .{ .routes = ccr_C_WR });
+                            @set_color_config(pe_x, pe_y, RXACT_B_EVEN, .{ .routes = ccr_B_RS });
+                            @set_color_config(pe_x, pe_y, RXACT_B_ODD, .{ .routes = ccr_B_NR });
+                        }
+                    }     
+
                 }       
             }else{
-                const pe_color_config_route_C = .{ .rx = .{WEST}, .tx = .{RAMP, EAST} };
-
 
                 if(pe_y == 0){
                     // px = between, pe_y = 0
 
-                    const pe_color_config_route_B = .{ .rx = .{RAMP},  .tx = .{SOUTH} };
-
-                    const route = @concat_structs(
-                        .{ .RXACT_B = NONE, .TXACT_B=RXACT_B, .RXACT_C = C_TEMP_REDUCE, .TXACT_C = C_TEMP_REDUCE},
+                    if(pe_x % 2 == 1){
+                        // odd column
+                        const route = @concat_structs(
+                        .{ .RXACT_B = NONE, .TXACT_B=RXACT_B_EVEN, .RXACT_C = C_TEMP_REDUCE_EVEN, .TXACT_C = C_TEMP_REDUCE_ODD},
                         .{ .memcpyParams = memcpyParams_col } );
                     
-                    @set_tile_code(pe_x, pe_y, "spmm_csc_memcpy.csl", @concat_structs(route, comm_params) );
-                    @set_color_config(pe_x, pe_y, C_TEMP_REDUCE, .{ .routes = pe_color_config_route_C });
-                    @set_color_config(pe_x, pe_y, RXACT_B, .{ .routes = pe_color_config_route_B });
-
+                        @set_tile_code(pe_x, pe_y, "spmm_csc_memcpy.csl", @concat_structs(route, comm_params) );
+                        @set_color_config(pe_x, pe_y, C_TEMP_REDUCE_EVEN, .{ .routes = ccr_C_WR });
+                        @set_color_config(pe_x, pe_y, C_TEMP_REDUCE_ODD, .{ .routes = ccr_C_RE });
+                        @set_color_config(pe_x, pe_y, RXACT_B_EVEN, .{ .routes = ccr_B_RS });
+                    }else{
+                        // even column
+                        const route = @concat_structs(
+                        .{ .RXACT_B = NONE, .TXACT_B=RXACT_B_EVEN, .RXACT_C = C_TEMP_REDUCE_ODD, .TXACT_C = C_TEMP_REDUCE_EVEN},
+                        .{ .memcpyParams = memcpyParams_col } );
+                    
+                        @set_tile_code(pe_x, pe_y, "spmm_csc_memcpy.csl", @concat_structs(route, comm_params) );
+                        @set_color_config(pe_x, pe_y, C_TEMP_REDUCE_EVEN, .{ .routes = ccr_C_RE });
+                        @set_color_config(pe_x, pe_y, C_TEMP_REDUCE_ODD, .{ .routes = ccr_C_WR });
+                        @set_color_config(pe_x, pe_y, RXACT_B_EVEN, .{ .routes = ccr_B_RS });
+                    }
 
                 }else if(pe_y == height-1){
                     // px = between, pe_y = height-1
-
-                    const pe_color_config_route_B = .{ .rx = .{NORTH}, .tx = .{RAMP} };
-
-                    const route = @concat_structs(
-                        .{ .RXACT_B = RXACT_B, .TXACT_B=NONE, .RXACT_C = C_TEMP_REDUCE, .TXACT_C = C_TEMP_REDUCE},
-                        .{ .memcpyParams = memcpyParams_col } );
-                    
-                    @set_tile_code(pe_x, pe_y, "spmm_csc_memcpy.csl", @concat_structs(route, comm_params) );
-                    @set_color_config(pe_x, pe_y, C_TEMP_REDUCE, .{ .routes = pe_color_config_route_C });
-                    @set_color_config(pe_x, pe_y, RXACT_B, .{ .routes = pe_color_config_route_B });
+                    if(pe_y % 2 == 1){
+                        // odd row
+                        if(pe_x % 2 == 1){
+                            // odd column
+                            const route = @concat_structs(
+                            .{ .RXACT_B = RXACT_B_EVEN, .TXACT_B=NONE, .RXACT_C = C_TEMP_REDUCE_EVEN, .TXACT_C = C_TEMP_REDUCE_ODD},
+                            .{ .memcpyParams = memcpyParams_col } );
+                        
+                            @set_tile_code(pe_x, pe_y, "spmm_csc_memcpy.csl", @concat_structs(route, comm_params) );
+                            @set_color_config(pe_x, pe_y, C_TEMP_REDUCE_EVEN, .{ .routes = ccr_C_WR });
+                            @set_color_config(pe_x, pe_y, C_TEMP_REDUCE_ODD, .{ .routes = ccr_C_RE });
+                            @set_color_config(pe_x, pe_y, RXACT_B_EVEN, .{ .routes = ccr_B_NR });
+                        }else{
+                            // even column
+                            const route = @concat_structs(
+                            .{ .RXACT_B = RXACT_B_EVEN, .TXACT_B=NONE, .RXACT_C = C_TEMP_REDUCE_ODD, .TXACT_C = C_TEMP_REDUCE_EVEN},
+                            .{ .memcpyParams = memcpyParams_col } );
+                        
+                            @set_tile_code(pe_x, pe_y, "spmm_csc_memcpy.csl", @concat_structs(route, comm_params) );
+                            @set_color_config(pe_x, pe_y, C_TEMP_REDUCE_EVEN, .{ .routes = ccr_C_RE });
+                            @set_color_config(pe_x, pe_y, C_TEMP_REDUCE_ODD, .{ .routes = ccr_C_WR });
+                            @set_color_config(pe_x, pe_y, RXACT_B_EVEN, .{ .routes = ccr_B_NR });
+                        }
+                    }else{
+                        // even row
+                        if(pe_x % 2 == 1){
+                            // odd column
+                            const route = @concat_structs(
+                            .{ .RXACT_B = RXACT_B_ODD, .TXACT_B=NONE, .RXACT_C = C_TEMP_REDUCE_EVEN, .TXACT_C = C_TEMP_REDUCE_ODD},
+                            .{ .memcpyParams = memcpyParams_col } );
+                        
+                            @set_tile_code(pe_x, pe_y, "spmm_csc_memcpy.csl", @concat_structs(route, comm_params) );
+                            @set_color_config(pe_x, pe_y, C_TEMP_REDUCE_EVEN, .{ .routes = ccr_C_WR });
+                            @set_color_config(pe_x, pe_y, C_TEMP_REDUCE_ODD, .{ .routes = ccr_C_RE });
+                            @set_color_config(pe_x, pe_y, RXACT_B_ODD, .{ .routes = ccr_B_NR });
+                        }else{
+                            // even column
+                            const route = @concat_structs(
+                            .{ .RXACT_B = RXACT_B_ODD, .TXACT_B=NONE, .RXACT_C = C_TEMP_REDUCE_ODD, .TXACT_C = C_TEMP_REDUCE_EVEN},
+                            .{ .memcpyParams = memcpyParams_col } );
+                        
+                            @set_tile_code(pe_x, pe_y, "spmm_csc_memcpy.csl", @concat_structs(route, comm_params) );
+                            @set_color_config(pe_x, pe_y, C_TEMP_REDUCE_EVEN, .{ .routes = ccr_C_RE });
+                            @set_color_config(pe_x, pe_y, C_TEMP_REDUCE_ODD, .{ .routes = ccr_C_WR });
+                            @set_color_config(pe_x, pe_y, RXACT_B_ODD, .{ .routes = ccr_B_NR });
+                        }
+                    }
 
 
                 }else{
                     // px = between, pe_y = between
-
-                    const pe_color_config_route_B = .{ .rx = .{NORTH}, .tx = .{RAMP, SOUTH} };
-
-                    const route = @concat_structs(
-                        .{ .RXACT_B = RXACT_B, .TXACT_B=RXACT_B, .RXACT_C = C_TEMP_REDUCE, .TXACT_C = C_TEMP_REDUCE},
-                        .{ .memcpyParams = memcpyParams_col } );
+                    if(pe_y % 2 == 1){
+                        // odd row
+                        if(pe_x % 2 == 1){
+                            // odd column
+                            const route = @concat_structs(
+                            .{ .RXACT_B = RXACT_B_EVEN, .TXACT_B=RXACT_B_ODD, .RXACT_C = C_TEMP_REDUCE_EVEN, .TXACT_C = C_TEMP_REDUCE_ODD},
+                            .{ .memcpyParams = memcpyParams_col } );
+                        
+                            @set_tile_code(pe_x, pe_y, "spmm_csc_memcpy.csl", @concat_structs(route, comm_params) );
+                            @set_color_config(pe_x, pe_y, C_TEMP_REDUCE_EVEN, .{ .routes = ccr_C_WR });
+                            @set_color_config(pe_x, pe_y, C_TEMP_REDUCE_ODD, .{ .routes = ccr_C_RE });
+                            @set_color_config(pe_x, pe_y, RXACT_B_ODD, .{ .routes = ccr_B_RS });
+                            @set_color_config(pe_x, pe_y, RXACT_B_EVEN, .{ .routes = ccr_B_NR });
+                        }else{
+                            // even column
+                            const route = @concat_structs(
+                            .{ .RXACT_B = RXACT_B_EVEN, .TXACT_B=RXACT_B_ODD, .RXACT_C = C_TEMP_REDUCE_ODD, .TXACT_C = C_TEMP_REDUCE_EVEN},
+                            .{ .memcpyParams = memcpyParams_col } );
+                        
+                            @set_tile_code(pe_x, pe_y, "spmm_csc_memcpy.csl", @concat_structs(route, comm_params) );
+                            @set_color_config(pe_x, pe_y, C_TEMP_REDUCE_EVEN, .{ .routes = ccr_C_RE });
+                            @set_color_config(pe_x, pe_y, C_TEMP_REDUCE_ODD, .{ .routes = ccr_C_WR });
+                            @set_color_config(pe_x, pe_y, RXACT_B_ODD, .{ .routes = ccr_B_RS });
+                            @set_color_config(pe_x, pe_y, RXACT_B_EVEN, .{ .routes = ccr_B_NR });
+                        }
+                    }else{
+                        // even row
+                        if(pe_x % 2 == 1){
+                            // odd column
+                            const route = @concat_structs(
+                            .{ .RXACT_B = RXACT_B_ODD, .TXACT_B=RXACT_B_EVEN, .RXACT_C = C_TEMP_REDUCE_EVEN, .TXACT_C = C_TEMP_REDUCE_ODD},
+                            .{ .memcpyParams = memcpyParams_col } );
+                        
+                            @set_tile_code(pe_x, pe_y, "spmm_csc_memcpy.csl", @concat_structs(route, comm_params) );
+                            @set_color_config(pe_x, pe_y, C_TEMP_REDUCE_EVEN, .{ .routes = ccr_C_WR });
+                            @set_color_config(pe_x, pe_y, C_TEMP_REDUCE_ODD, .{ .routes = ccr_C_RE });
+                            @set_color_config(pe_x, pe_y, RXACT_B_ODD, .{ .routes = ccr_B_NR });
+                            @set_color_config(pe_x, pe_y, RXACT_B_EVEN, .{ .routes = ccr_B_RS });
+                        }else{
+                            // even column
+                            const route = @concat_structs(
+                            .{ .RXACT_B = RXACT_B_ODD, .TXACT_B=RXACT_B_EVEN, .RXACT_C = C_TEMP_REDUCE_ODD, .TXACT_C = C_TEMP_REDUCE_EVEN},
+                            .{ .memcpyParams = memcpyParams_col } );
+                        
+                            @set_tile_code(pe_x, pe_y, "spmm_csc_memcpy.csl", @concat_structs(route, comm_params) );
+                            @set_color_config(pe_x, pe_y, C_TEMP_REDUCE_EVEN, .{ .routes = ccr_C_RE });
+                            @set_color_config(pe_x, pe_y, C_TEMP_REDUCE_ODD, .{ .routes = ccr_C_WR });
+                            @set_color_config(pe_x, pe_y, RXACT_B_ODD, .{ .routes = ccr_B_NR });
+                            @set_color_config(pe_x, pe_y, RXACT_B_EVEN, .{ .routes = ccr_B_RS });
+                        }
+                    }
                     
-                    @set_tile_code(pe_x, pe_y, "spmm_csc_memcpy.csl", @concat_structs(route, comm_params) );
-                    @set_color_config(pe_x, pe_y, C_TEMP_REDUCE, .{ .routes = pe_color_config_route_C });
-                    @set_color_config(pe_x, pe_y, RXACT_B, .{ .routes = pe_color_config_route_B });
                 }          
             }
             

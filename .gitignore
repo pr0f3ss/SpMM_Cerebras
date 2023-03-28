@@ -12,7 +12,5 @@
 /src/mpi_collectives/reduce_1d_2colors/
 
 
-/src/grid_csc/simfab_traces/*
-/src/grid_csc/out/*
-/src/grid_csc_2x2/out/*
-/src/grid_csc_2x2/simfab_traces/*
+/src/*/simfab_traces/*
+/src/*/out/*

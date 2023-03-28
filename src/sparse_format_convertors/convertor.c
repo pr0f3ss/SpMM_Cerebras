@@ -339,19 +339,18 @@ int main()
 
 
     // Read matrix
-    m = read_csv_matrix("PE2x2_6x6.csv", 6, 6);
+    //m = read_csv_matrix("PE2x2_6x6.csv", 6, 6);
 
     // Print matrix
-    print_matrix(m, 6, 6);
+    //print_matrix(m, 6, 6);
 
     // Generate matrix (Density in percent)
-    //gen = generate_sparse_matrix(20, 6, 6);    
+    gen = generate_sparse_matrix(100, 12, 12);    
     
     // Write matrix
-    //write_csv_matrix(gen, 6, 6, "test.csv");
+    write_csv_matrix(gen, 12, 12, "PE6x6_12x12.csv");
 
-    // Convert to grid CSC
-    convert_to_grid_csc_grid(m, 6, 6, 3, 3, "PE3x3_val.csv", "PE3x3_row_idx.csv", "PE3x3_col_ptr.csv");
+    convert_to_grid_csr_grid(gen, 12, 12, 4, 4, "PE6x6_12x12_val.csv", "PE6x6_12x12_col_idx.csv", "PE6x6_12x12_row_ptr.csv");
 
     // Convert to grid CSR
     //convert_to_grid_csr_grid(gen, 6, 6, 2, 2, "test_val.csv", "test_col_idx.csv", "test_row_ptr.csv");

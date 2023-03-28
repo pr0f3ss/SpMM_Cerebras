@@ -1,0 +1,58 @@
+// Performs grid CSR matrix multiplication to compute C = A*B (of local PE)
+//     C := A*B
+//
+// @param[in] A_val          values in the local matrix A (may be padded with -1 values)
+// @param[in] A_col_idx      column index array of the local matrix A (may be padded with -1 values)
+// @param[in] A_row_ptr      row pointer array of the local matrix A (may be padded with -1 values)
+// @param[in] B              array of dimension Kt x M
+// @param[in,out] C          array of dimension Nt x M
+
+param A_val_len : i32 ;     // number of values in the local matrix A
+param A_colidx_len : i32 ;  // length of column index array of the local matrix A
+param A_rowptr_len : i32 ;  // length of row pointer array of the local matrix A
+
+param Nt : i32 ;            // row dimension of C
+param Kt : i32 ;            // row dimension of local B
+param M  : i32 ;            // column dimension of local B and C
+
+fn spmm_csr_f32(A_val: *[A_val_len]f32, A_col_idx: *[A_colidx_len]f32, A_row_ptr: *[A_rowptr_len]f32, B: *[Kt*M]f32, C: *[Nt*M]f32) void { 
+
+    // iterate over row pointers
+    for (@range(i32, A_rowptr_len-1)) |j| {
+
+        // get number of non-zero columns in the current row
+        // cast from f32 to i32
+        var col_elems = @as(i32, (A_row_ptr.*)[j+1] - (A_row_ptr.*)[j]);
+
+        var col_idx_start = @as(i32, (A_row_ptr.*)[j]);
+
+        if(@as(i32, (A_row_ptr.*)[j+1]) == -1){
+            // exit if we reach padded end
+            break;
+        }
+
+        // iterate over all non-zero columns in the current row
+        for (@range(i32, col_elems)) |i| {
+
+            // get the reference element column index
+            var ref_elem_col_idx = @as(i32, (A_col_idx.*)[col_idx_start+i]);
+
+            // extract the referenced non-zero value
+            var a = (A_val.*)[col_idx_start+i];
+
+            // get a's coordinates
+            var a_i = ref_elem_col_idx;   // col
+            var a_j = j;                  // row
+
+
+            for (@range(i32, M)) |m| {
+                var C_idx = a_j*M + m;
+                var B_idx = a_i*M + m;
+
+                (C.*)[C_idx] = (C.*)[C_idx] + (B.*)[B_idx]*a;
+            }
+        }
+
+    }
+
+}

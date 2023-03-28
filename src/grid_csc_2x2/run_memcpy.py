@@ -1,7 +1,7 @@
 #!/usr/bin/env cs_python
 # pylint: disable=line-too-long
 
-""" Compute |b-A*x| using a 2-by-2 PE rectangle
+""" Compute A*B using a 2-by-2 PE rectangle
 
    The 2-by-2 rectangle is surrounded by a halo of size 1.
    The halo is used to route the input and output data between the host and the device.
@@ -13,21 +13,17 @@
    P0.0 of the kernel is P1.1 when the user calls sdk_debug_shell to dump the trace or
    landing log.
 
-   Each PE computes A*x and does a row reduction, so last column has the result b - A*x.
-   Then last column computes |b-A*x| via a column reduction.
+   Each PE computes its local A*B and does a row reduction, so last column has the result A*B = C_final.
 
-   To simplify the example, the dimensions M and N are assumed even.
-   Three functions gemv, axpy and nrminf are used to compute y=A*x, y=y+alpha*x and
-   |x|_inf locally.
-   Such functions are imported as modules via gemv.csl, axpy.csl and nrminf.csl.
-   The arrays A, x and y are passed into the function as pointers.
+   To simplify the example, the dimensions N and K are assumed even.
+   A functions spmm_csc_f32 is used to compute C_temp=A*B using the CSC grid format.
+   This function is imported as a module via spmm_csc.csl.
+   The arrays A_val, A_row_idx, A_col_ptr, B, C_temp and C_final are passed into the function as pointers.
 
-   The vector x is distributed into columns. The first row receives x from the fabric,
-   then broadcasts x into other rows.
+   The matrix B is distributed into columns. The first row receives B from the fabric,
+   then broadcasts B into other rows.
 
-   The vector b is distributed into rows of the first column.
-
-   P1.0 computes |b-A*x| which is sent out..
+   P1.0 and P1.1 compute the reduction C_final which is sent out..
 
    One can use the following command to check the landing log of P0.0,
     sdk_debug_shell wavelet-trace --artifact_dir . --x 1 --y 1 trace
@@ -70,11 +66,14 @@ def parse_args():
   """ parse the command line """
 
   parser = argparse.ArgumentParser(description="residual parameters.")
-  parser.add_argument("-m", type=int,
-                      help="number of rows of the matrix A")
-  parser.add_argument("-n", type=int,
-                      help="number of columns of the matrix A. If A is square, \
-                            n is the dimension of the matrix and m is not used")
+  parser.add_argument("-N", type=int,
+                      help="number of rows of the A and C_temp/C_final")
+  parser.add_argument("-K", type=int,
+                      help="number of columns of the  A and number of rows of B")
+  parser.add_argument("-M", type=int,
+                      help="number of columns of the matrix B and C.")
+  parser.add_argument("-A_prefix", type=str,
+                      help="prefix of all three grid csc files")
   parser.add_argument(
       "--cslc",
       required=False,
@@ -131,8 +130,12 @@ def csl_compile(
     compile_flag: bool,
     arch: Optional[str],
     LAUNCH: int,
-    LOCAL_OUT_SZ: int,
-    LOCAL_IN_SZ: int,
+    A_val_len: int,
+    A_rowidx_len: int,
+    A_colptr_len: int,
+    M: int,
+    Nt: int,
+    Kt: int,
     n_channels: int,
     width_west_buf: int,
     width_east_buf: int
@@ -148,7 +151,7 @@ def csl_compile(
     args.append(f"--fabric-dims={fabric_width},{fabric_height}") # options
     args.append(f"--fabric-offsets={core_fabric_offset_x},{core_fabric_offset_y}") # options
     args.append(f"--params=width:{width},height:{height}") # options
-    args.append(f"--params=LOCAL_OUT_SZ:{LOCAL_OUT_SZ},LOCAL_IN_SZ:{LOCAL_IN_SZ}") # options
+    args.append(f"--params=Nt:{Nt}, Kt:{Kt}, M:{M}, A_val_len:{A_val_len}, A_rowidx_len:{A_rowidx_len}, A_colptr_len:{A_colptr_len}") # options
 
     args.append(f"--params=LAUNCH_ID:{LAUNCH}") # options
 
@@ -167,7 +170,7 @@ def csl_compile(
 
 
 def main():
-  """Main method to run the example code."""
+  """Main method to run the code."""
 
   args = parse_args()
 
@@ -175,42 +178,71 @@ def main():
   width = 2
   height = 2
 
-  if args.m is not None:
-    M = args.m
+  if args.N is not None:
+    N = args.N
   else:
-    M = 6
+    N = 6
 
-  if args.n is not None:
-    N = args.n
+  if args.K is not None:
+    K = args.K
   else:
-    N = 4
+    K = 4
 
-  LOCAL_OUT_SZ = M // height
-  LOCAL_IN_SZ = N // width
+  if args.M is not None:
+    M = args.M
+  else:
+    M = 8
 
-  assert M == (LOCAL_OUT_SZ*height), "M must be multiple of LOCAL_OUT_SZ"
-  assert N == (LOCAL_IN_SZ*width), "N must be multiple of LOCAL_IN_SZ"
+  if args.A_prefix is not None:
+    A_prefix = args.A_prefix
+  else:
+    A_prefix = "test"
 
-  print(f"M = {M}, N = {N}, width = {width}, height = {height}")
+  Nt = N // height
+  Kt= K // width
+
+  assert N == (Nt*height), "N must be multiple of Nt"
+  assert K == (Kt*width), "K must be multiple of Kt"
+
+  Nt = int(Nt)
+  Kt = int(Kt)
+
+  print(f"N = {N}, K = {K}, M = {M}, width = {width}, height = {height}")
 
   # prepare host data and reference solution
+  file_dir = "test_vectors/"
+
+  # Use this for reference solution
+  A_dense_format = file_dir+A_prefix+".csv"
+  A_dense = np.genfromtxt(A_dense_format, delimiter=",", dtype=np.float32)
+
+  A_val_file = file_dir+A_prefix+"_val_pad.csv"
+  A_colptr_file = file_dir+A_prefix+"_col_ptr_pad.csv"
+  A_rowidx_file = file_dir+A_prefix+"_row_idx_pad.csv"
+
+  # Read in
+  A_val = np.genfromtxt(A_val_file, delimiter=",", dtype=np.float32)
+  A_row_idx = np.genfromtxt(A_rowidx_file, delimiter=",", dtype=np.float32)
+  A_col_ptr = np.genfromtxt(A_colptr_file, delimiter=",", dtype=np.float32)
+
+  # Get lengths
+  A_val_len = A_val.shape[1]
+  A_rowidx_len = A_row_idx.shape[1]
+  A_colptr_len = A_col_ptr.shape[1]
+
   np.random.seed(2)
-  A = np.arange(M*N).reshape(M, N).astype(np.float32)
-  x = np.arange(N).reshape(N, 1).astype(np.float32) + 100
-  b = np.arange(M).reshape(M, 1).astype(np.float32) + 200
+  B = np.arange(K*M).reshape(K, M).astype(np.float32) + 100
 
-  Ax = np.matmul(A, x)
-  r = b - Ax
-
-  nrm_r = np.linalg.norm(r, np.inf)
-
-  print(f"nrm_r = |b - A*x| = {nrm_r}")
+  # TODO: implement CSC matmul
+  C_ref = np.matmul(A_dense, B)
+  # TODO: print C_reference
+  print(f"C_ref = {C_ref}")
 
   # prepare the simulation
 
   # core dump after execution is complete
   # layout of a rectangle
-  code_csl = "layout_memcpy.csl"
+  code_csl = "layout.csl"
 
   # text file containing the simulator logs
   sim_log = os.path.join(args.name, "sim.log")
@@ -256,8 +288,12 @@ def main():
       args.compile,
       args.arch,
       LAUNCH,
-      LOCAL_OUT_SZ,
-      LOCAL_IN_SZ,
+      A_val_len,
+      A_rowidx_len,
+      A_colptr_len,
+      M,
+      Nt,
+      Kt,
       n_channels,
       width_west_buf,
       width_east_buf)
@@ -267,47 +303,59 @@ def main():
 
   simulator = SdkRuntime(args.name, cmaddr=args.cmaddr)
 
-  symbol_A = simulator.get_id("A")
-  symbol_x = simulator.get_id("x")
-  symbol_y = simulator.get_id("y")
-  symbol_nrm = simulator.get_id("nrm")
-  print(f"symbol_A = {symbol_A}")
-  print(f"symbol_x = {symbol_x}")
-  print(f"symbol_y = {symbol_y}")
-  print(f"symbol_nrm = {symbol_nrm}")
+  symbol_A_val = simulator.get_id("A_val")
+  symbol_A_row_idx = simulator.get_id("A_row_idx")
+  symbol_A_col_ptr = simulator.get_id("A_col_ptr")
+  symbol_B = simulator.get_id("B")
+  symbol_C_temp = simulator.get_id("C_temp")
+  symbol_C_final = simulator.get_id("C_final")
+
+  print(f"symbol_A_val = {symbol_A_val}")
+  print(f"symbol_A_row_idx = {symbol_A_row_idx}")
+  print(f"symbol_A_col_ptr = {symbol_A_col_ptr}")
+  print(f"symbol_x = {symbol_B}")
+  print(f"symbol_C_temp = {symbol_C_temp}")
+  print(f"symbol_C_final= {symbol_C_final}")
 
   simulator.load()
   simulator.run()
 
-  # A is M-by-N
-  iportmap_A = f"{{ A[j=0:{M-1}][i=0:{N-1}] -> [PE[i//{LOCAL_IN_SZ}, j//{LOCAL_OUT_SZ}] -> \
-        index[i%{LOCAL_IN_SZ}, j%{LOCAL_OUT_SZ}]] }}"
-  print(f"iportmap_A = {iportmap_A}")
+  num_PE = width*height
 
-  # x distributes to {py = 0}
-  iportmap_x = f"{{ x[i=0:{N-1}][j=0] -> [PE[i//{LOCAL_IN_SZ}, 0] ->  \
-        index[i%{LOCAL_IN_SZ}]] }}"
-  print(f"iportmap_x = {iportmap_x}")
+  # iport maps for A arrays are derived from Leighton's advice
+  iportmap_A_val = f"{{ A_val[i=0:{num_PE-1}][j=0:{A_val_len-1}] -> [PE[i % {width}, i // {width}] -> index[j]] }}"
+  print(f"iportmap_A_val = {iportmap_A_val}")
 
-  # b distributes to {px = 0}
-  #  i = N*(i/N) + (i % N)  ==> PE_y = (i/N)
-  iportmap_b = f"{{ b[i=0:{M-1}][j=0] -> [PE[0, i//{LOCAL_OUT_SZ}] -> \
-        index[i%{LOCAL_OUT_SZ}]] }}"
-  print(f"iportmap_b = {iportmap_b}")
+  iportmap_A_row_idx = f"{{ A_row_idx[i=0:{num_PE-1}][j=0:{A_rowidx_len-1}] -> [PE[i % {width}, i // {width}] -> index[j]] }}"
+  print(f"iportmap_A_row_idx = {iportmap_A_row_idx}")
 
-  # |b-A*x| is from P1.0
-  oportmap_nrm_r = "{ nrm_r[i=0:0][j=0] -> [PE[1, 0] -> index[i]] }"
-  print(f"oportmap_nrm_r = {oportmap_nrm_r}")
+  iportmap_A_col_ptr = f"{{ A_col_ptr[i=0:{num_PE-1}][j=0:{A_colptr_len-1}] -> [PE[i % {width}, i // {width}] -> index[j]] }}"
+  print(f"iportmap_A_col_ptr = {iportmap_A_col_ptr}")
 
-  # prepare A, x and b via memcpy
+  # B distributes to {py = 0}
+  # derived from Residual example code
+  iportmap_B = f"{{ B[i=0:{K-1}][j=0:{M-1}] -> [PE[i//{Kt}, 0] ->  index[i%{Kt}, j]] }}"
+  print(f"iportmap_B = {iportmap_B}")
+
+  # C_final is gathered from P1.0 and P1.1
+  # oport maps for C_final array is dervied from Leighton's advice
+  # C_final's size in each PE is Nt*M
+  # (Remember: Nt = N // height)
+  # Total size: height * Nt * M = N * M 
+  oportmap_C_final = f"{{ C_final[n = 0:{N*M-1}] -> [PE[{width-1}, n // {Nt*M}] -> index[n % {Nt*M}]] }}"
+  print(f"oportmap_C_final = {oportmap_C_final}")
+
+  # prepare all of A and B via memcpy
   # use the runtime_utils library to calculate memcpy args and shuffle data
-  (px, py, w, h, l, data) = runtime_utils.convert_input_tensor(iportmap_A, A)
-  simulator.memcpy_h2d(symbol_A, data, False, px, py, w, h, l, 0, False)
-  (px, py, w, h, l, data) = runtime_utils.convert_input_tensor(iportmap_x, x)
-  simulator.memcpy_h2d(symbol_x, data, False, px, py, w, h, l, 0, False)
-  (px, py, w, h, l, data) = runtime_utils.convert_input_tensor(iportmap_b, b)
-  simulator.memcpy_h2d(symbol_y, data, False, px, py, w, h, l, 0, False)
+  (px, py, w, h, l, data) = runtime_utils.convert_input_tensor(iportmap_A_val, A_val)
+  simulator.memcpy_h2d(symbol_A_val, data, False, px, py, w, h, l, 0, False)
+  (px, py, w, h, l, data) = runtime_utils.convert_input_tensor(iportmap_A_row_idx, A_row_idx)
+  simulator.memcpy_h2d(symbol_A_row_idx, data, False, px, py, w, h, l, 0, False)
+  (px, py, w, h, l, data) = runtime_utils.convert_input_tensor(iportmap_A_col_ptr, A_col_ptr)
+  simulator.memcpy_h2d(symbol_A_col_ptr, data, False, px, py, w, h, l, 0, False)
 
+  (px, py, w, h, l, data) = runtime_utils.convert_input_tensor(iportmap_B, B)
+  simulator.memcpy_h2d(symbol_B, data, False, px, py, w, h, l, 0, False)
   # trigger the computation
   h_params = np.zeros(2).astype(np.uint32)
   # format of h_params
@@ -329,11 +377,16 @@ def main():
   h_params[1] = cast_uint32(np.int16(0)) # ID of the function
   simulator.memcpy_launch(LAUNCH, h_params, False)
 
-  # receive |b-A*x| from P1.1
+  # receive C_final from P1.1 and P1.0
   # use the runtime_utils library to calculate memcpy args and manage output data
-  (px, py, w, h, l, data) = runtime_utils.prepare_output_tensor(oportmap_nrm_r, np.float32)
-  simulator.memcpy_d2h(data, symbol_nrm, False, px, py, w, h, l, 0, False)
-  nrm_r_cs = runtime_utils.format_output_tensor(oportmap_nrm_r, np.float32, data)
+  (px, py, w, h, l, data) = runtime_utils.prepare_output_tensor(oportmap_C_final, np.float32)
+  simulator.memcpy_d2h(data, symbol_C_final, False, px, py, w, h, l, 0, False)
+
+  C_cs = runtime_utils.format_output_tensor(oportmap_C_final, np.float32, data)
+
+  # Reshape back to original state
+  C_cs = np.reshape(C_cs, (N, M))
+
 
   simulator.stop()
 
@@ -346,13 +399,12 @@ def main():
       shutil.rmtree(dst)
     shutil.move("simfab_traces", dst)
 
-  print(f"`nrm_r`     from CPU:\n{nrm_r}")
-  print(f"`nrm_r_cs`  from CS1 (1-by-1 matrix):\n{nrm_r_cs}")
+  print(f"`C_ref`     from CPU:\n{C_ref}")
+  print(f"`C_cs`  from CS1 (1-by-1 matrix):\n{C_cs}")
 
-  dr = abs(nrm_r - nrm_r_cs[(0, 0)])
-  print(f"|nrm_r - nrm_r_cs| = {dr}")
+  assert np.allclose(C_ref, C_cs, 1.e-5)
 
-  assert np.allclose(nrm_r, nrm_r_cs[(0, 0)], 1.e-5)
+  
   print("\nSUCCESS!")
 
 

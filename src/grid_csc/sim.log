@@ -303,3 +303,12 @@
 @0 Architecture is: FYN
 @0 Simtile is: hwtile
 @11027 Stopping.
+@0 GITREV=6fa1d2e77d85620a5a65599a2cbed8a986df5378, GITCLEAN=1
+@0 Create from size nx=11 ny=6
+@0 dimX=11, dimY=6
+@0 Invocation key is: simC9D5D6D56BBABC4232F3DE9B2E400BD8
+@0 Plan key is: plan6D31F69F925AC4B84F7522069C0DA04E
+@0 SimTraceCtf, flags:  wavelets=0 landing=1 inst=1 switch_positions=0 stalls=1
+@0 Architecture is: FYN
+@0 Simtile is: hwtile
+@11034 Stopping.

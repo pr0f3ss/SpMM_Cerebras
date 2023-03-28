@@ -1,21 +1,21 @@
-// Performs grid CSC matrix multiplication to compute C_temp = A*B (of local PE)
-//     C_temp := A*B
+// Performs grid CSC matrix multiplication to compute C = A*B (of local PE)
+//     C := A*B
 //
 // @param[in] A_val          values in the local matrix A (may be padded with -1 values)
 // @param[in] A_row_idx      row index array of the local matrix A (may be padded with -1 values)
 // @param[in] A_col_ptr      column pointer array of the local matrix A (may be padded with -1 values)
 // @param[in] B              array of dimension Kt x M
-// @param[in,out] C_temp     array of dimension Nt x M
+// @param[in,out] C          array of dimension Nt x M
 
 param A_val_len : i32 ;     // number of values in the local matrix A
 param A_rowidx_len : i32 ;  // length of row index array of the local matrix A
 param A_colptr_len : i32 ;  // length of column pointer array of the local matrix A
 
-param Nt : i32 ;            // row dimension of C_temp
+param Nt : i32 ;            // row dimension of C
 param Kt : i32 ;            // row dimension of local B
-param M  : i32 ;            // column dimension of local B and C_temp
+param M  : i32 ;            // column dimension of local B and C
 
-fn spmm_csc_f32(A_val: *[A_val_len]f32, A_row_idx: *[A_rowidx_len]f32, A_col_ptr: *[A_colptr_len]f32, B: *[Kt*M]f32, C_temp: *[Nt*M]f32) void { 
+fn spmm_csc_f32(A_val: *[A_val_len]f32, A_row_idx: *[A_rowidx_len]f32, A_col_ptr: *[A_colptr_len]f32, B: *[Kt*M]f32, C: *[Nt*M]f32) void { 
 
     // iterate over column pointers
     for (@range(i32, A_colptr_len-1)) |j| {
@@ -49,7 +49,7 @@ fn spmm_csc_f32(A_val: *[A_val_len]f32, A_row_idx: *[A_rowidx_len]f32, A_col_ptr
                 var C_idx = a_i*M + m;
                 var B_idx = a_j*M + m;
 
-                (C_temp.*)[C_idx] = (C_temp.*)[C_idx] + (B.*)[B_idx]*a;
+                (C.*)[C_idx] = (C.*)[C_idx] + (B.*)[B_idx]*a;
             }
 
             // This version doesn't work since a_j and a_i cannot be evaluated as comptime-known values.
@@ -57,10 +57,10 @@ fn spmm_csc_f32(A_val: *[A_val_len]f32, A_row_idx: *[A_rowidx_len]f32, A_col_ptr
             // get B row
             // var B_dsd  = @get_dsd(mem1d_dsd, .{ .tensor_access = |i|{M} -> B[a_j, i] });
 
-            // get C_temp row to write into
-            // var C_temp_dsd = @get_dsd(mem1d_dsd, .{ .tensor_access = |i|{M} -> C_temp[a_i, i] });
+            // get C row to write into
+            // var C_dsd = @get_dsd(mem1d_dsd, .{ .tensor_access = |i|{M} -> C[a_i, i] });
 
-            // @fmacs(C_temp_dsd, C_temp_dsd, B_dsd, a);
+            // @fmacs(C_dsd, C_dsd, B_dsd, a);
         }
 
     }

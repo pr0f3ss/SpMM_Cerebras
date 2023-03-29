@@ -95,7 +95,29 @@ def pad_csr_grid(prefix, replace=-1):
 
     print("Row pointer length:")
     pad_file(prefix+"_row_ptr.csv", prefix+"_row_ptr_pad.csv", dtype=int)
+
+def pad_custom_grid(prefix, replace=-1):
+    """Takes the prefix of a grid custom formatted matrix and pads NaN entries with replace
+
+    Parameters
+    ----------
+    prefix: prefix of the filenames of a custom grid formatted matrix
+    replace (optional): number to replace it with
+
+    Returns
+    -------
+    Three files that have the padded grid CSV format
+    """
+    print("Value length:")
+    pad_file(prefix+"_val.csv", prefix+"_val_pad.csv", dtype=float)
+
+    print("Column length:")
+    pad_file(prefix+"_x.csv", prefix+"_x_pad.csv", dtype=int)
+
+    print("Row length:")
+    pad_file(prefix+"_y.csv", prefix+"_y_pad.csv", dtype=int)
     
 
 #pad_csc_grid("PE3x3")
-pad_csr_grid("PE6x6_12x12")
+#pad_csr_grid("PE4x4_12x12")
+pad_custom_grid("PE6x6_12x12")

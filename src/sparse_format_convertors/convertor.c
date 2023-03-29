@@ -436,10 +436,10 @@ int main()
     //print_matrix(m, 6, 6);
 
     // Generate matrix (Density in percent)
-    gen = generate_sparse_matrix(50, 12, 12);    
+    gen = generate_sparse_matrix(25, 12, 12);    
     
     // Write matrix
-    write_csv_matrix(gen, 12, 12, "PE6x6_12x12.csv");
+    write_csv_matrix(gen, 12, 12, "PE4x4_12x12.csv");
 
     // Convert to grid CSC
     //convert_to_grid_csc_grid(gen, 12, 12, 4, 4, "PE6x6_12x12_val.csv", "PE6x6_12x12_row_idx.csv", "PE6x6_12x12_col_ptr.csv");
@@ -448,7 +448,7 @@ int main()
     //convert_to_grid_csr_grid(gen, 6, 6, 2, 2, "test_val.csv", "test_col_idx.csv", "test_row_ptr.csv");
 
     // Convert to custom grid
-    convert_to_grid_custom_grid(gen, 12, 12, 4, 4, "PE6x6_12x12_val.csv", "PE6x6_12x12_x.csv", "PE6x6_12x12_y.csv");
+    convert_to_grid_custom_grid(gen, 12, 12, 4, 4, "PE4x4_12x12_val.csv", "PE4x4_12x12_x.csv", "PE4x4_12x12_y.csv");
 
     return 0;
  }

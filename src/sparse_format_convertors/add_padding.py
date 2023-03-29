@@ -120,4 +120,4 @@ def pad_custom_grid(prefix, replace=-1):
 
 #pad_csc_grid("PE3x3")
 #pad_csr_grid("PE4x4_12x12")
-pad_custom_grid("PE6x6_12x12")
+pad_custom_grid("PE4x4_12x12")

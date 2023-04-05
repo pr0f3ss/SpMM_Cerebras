@@ -3,6 +3,7 @@
 import numpy as np
 import pandas as pd
 import fileinput
+from sys import argv
 
 def col_is_nan(s):
     """Returns whether array-like object s is all NaN
@@ -118,6 +119,20 @@ def pad_custom_grid(prefix, replace=-1):
     pad_file(prefix+"_y.csv", prefix+"_y_pad.csv", dtype=int)
     
 
-#pad_csc_grid("PE3x3")
-#pad_csr_grid("PE4x4_12x12")
-pad_custom_grid("PE4x4_12x12")
+def main():
+    prefix = "tmp"
+    fmt_type = int(argv[1])
+    if(fmt_type == 0):
+        pad_csc_grid(prefix)
+        
+    elif(fmt_type == 1):
+        pad_csr_grid(prefix)
+        
+    elif(fmt_type == 2):
+        pad_custom_grid(prefix)
+        
+    else:
+        print("Incorrect format type. Did not add padded arrays.")
+
+if __name__=="__main__":
+    main()

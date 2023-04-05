@@ -423,32 +423,58 @@ void convert_to_grid_custom_grid(double* matrix, int n, int m, int Px, int Py, c
 }
 
 
-int main()
+int main(int argc, char **argv)
 {   
     double* m;
-    double *gen;
+    double* gen;
 
-
-    // Read matrix
-    //m = read_csv_matrix("PE2x2_6x6.csv", 6, 6);
-
-    // Print matrix
-    //print_matrix(m, 6, 6);
+    printf("A matrix:\n");
+    printf("Height: %s\n", argv[1]);
+    printf("Width: %s\n", argv[2]);
+    printf("Density: %s\n", argv[3]);
+    int height = atoi(argv[1]);
+    int width = atoi(argv[2]);
+    int density = atoi(argv[3]);
 
     // Generate matrix (Density in percent)
-    gen = generate_sparse_matrix(25, 12, 12);    
-    
-    // Write matrix
-    write_csv_matrix(gen, 12, 12, "PE4x4_12x12.csv");
+    gen = generate_sparse_matrix(density, height, width); 
+    write_csv_matrix(gen, height, width, "tmp.csv");
 
-    // Convert to grid CSC
-    //convert_to_grid_csc_grid(gen, 12, 12, 4, 4, "PE6x6_12x12_val.csv", "PE6x6_12x12_row_idx.csv", "PE6x6_12x12_col_ptr.csv");
 
-    // Convert to grid CSR
-    //convert_to_grid_csr_grid(gen, 6, 6, 2, 2, "test_val.csv", "test_col_idx.csv", "test_row_ptr.csv");
+    printf("=========================\n");
+    printf("Grid size:\n");
+    printf("Height: %s\n", argv[4]);
+    printf("Width: %s\n", argv[5]);
+    int grid_height = atoi(argv[4]);
+    int grid_width = atoi(argv[5]);
 
-    // Convert to custom grid
-    convert_to_grid_custom_grid(gen, 12, 12, 4, 4, "PE4x4_12x12_val.csv", "PE4x4_12x12_x.csv", "PE4x4_12x12_y.csv");
+    printf("=========================\n");
+    printf("Format type: ");
+    // Format types
+    // 0: CSC
+    // 1: CSR
+    // 2: Custom
+    int type = atoi(argv[6]);
+
+    switch(type){
+        case 0:
+            // Convert to grid CSC
+            convert_to_grid_csc_grid(gen, height, width, grid_height, grid_width, "tmp_val.csv", "tmp_row_idx.csv", "tmp_col_ptr.csv");
+            printf("CSC\n");
+            break;
+        case 1:
+            // Convert to grid CSR
+            convert_to_grid_csr_grid(gen, height, width, grid_height, grid_width, "tmp_val.csv", "tmp_col_idx.csv", "tmp_row_ptr.csv");
+            printf("CSR\n");
+            break;
+        case 2:
+            // Convert to grid Custom
+            convert_to_grid_custom_grid(gen, height, width, grid_height, grid_width, "tmp_val.csv", "tmp_x.csv", "tmp_y.csv");
+            printf("Custom\n");
+            break;
+        default:
+            printf("Enter a correct format type. 0: CSC, 1: CSR, 2: Custom");
+    }
 
     return 0;
  }

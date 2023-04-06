@@ -39,7 +39,7 @@ double* generate_sparse_matrix(int density, int n, int m){
         for (int j=0; j<m; j++) 
         { 
             if (rand()%100 < density){ 
-                matrix[i*n + j] = (double)(rand()%10 + 1); 
+                matrix[i*m + j] = (double)(rand()%10 + 1); 
             }
         } 
     } 
@@ -118,7 +118,7 @@ void write_csv_matrix(double* matrix, int rows, int cols, char* filename) {
     // Write the matrix to the file
     for (int i = 0; i < rows; i++) {
         for (int j = 0; j < cols; j++) {
-            fprintf(fp, "%f", matrix[i*rows + j]);
+            fprintf(fp, "%f", matrix[i*cols + j]);
             if (j < cols - 1) {
                 fprintf(fp, ",");
             }
@@ -459,17 +459,17 @@ int main(int argc, char **argv)
     switch(type){
         case 0:
             // Convert to grid CSC
-            convert_to_grid_csc_grid(gen, height, width, grid_height, grid_width, "tmp_val.csv", "tmp_row_idx.csv", "tmp_col_ptr.csv");
+            convert_to_grid_csc_grid(gen, height, width, grid_width, grid_height, "tmp_val.csv", "tmp_row_idx.csv", "tmp_col_ptr.csv");
             printf("CSC\n");
             break;
         case 1:
             // Convert to grid CSR
-            convert_to_grid_csr_grid(gen, height, width, grid_height, grid_width, "tmp_val.csv", "tmp_col_idx.csv", "tmp_row_ptr.csv");
+            convert_to_grid_csr_grid(gen, height, width, grid_width, grid_height, "tmp_val.csv", "tmp_col_idx.csv", "tmp_row_ptr.csv");
             printf("CSR\n");
             break;
         case 2:
             // Convert to grid Custom
-            convert_to_grid_custom_grid(gen, height, width, grid_height, grid_width, "tmp_val.csv", "tmp_x.csv", "tmp_y.csv");
+            convert_to_grid_custom_grid(gen, height, width, grid_width, grid_height, "tmp_val.csv", "tmp_x.csv", "tmp_y.csv");
             printf("Custom\n");
             break;
         default:

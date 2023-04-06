@@ -1,12 +1,12 @@
 // This program computes A*B on a height-by-width PE rectangle
-// The matrix A in CSC format is distributed to every PE via memcpy
+// The matrix A in grid custom format is distributed to every PE via memcpy
 // The matrix B is distributed to first row PEs via memcpy
-// Pw.0, ..., Pw.h send out the result C via memcpy, where h = height-1 and w = width-1.
+// Pw.0, ..., Pw.h send out the result C_final via memcpy, where h = height-1 and w = width-1.
 // Note that this is the right-hand side column of PEs
 //
-// The host sends matrix A, matrix B into the core rectangle, launches a RPC (remote procedure call) to
-// broadcast vector x from 1st row to other rows, computes A*B locally, then performs a row
-// reduction to finish C = A*B.
+// Each PE receives the local matrices representing A and B and computes A*B locally, then performs a row reduction
+// The last column of PEs finally contains the corresponding rows of C and sends its result back to the host
+//
 
 // Notation: a PE (Px.y) is labeled as (px = x, py = y)
 
@@ -42,7 +42,7 @@ param EXIT: color;     // entrypoint to leave RPC
 // C grid: Nt x Mt
 // We set Mt = M
 
-// A uses grid CSC format and predetermined (padded) size 
+// A uses grid custom format and predetermined (padded) size 
 // A_len
 
 param Nt:i32;         

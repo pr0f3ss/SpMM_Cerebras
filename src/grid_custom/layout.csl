@@ -1,11 +1,11 @@
 // This program computes A*B on a height-by-width PE rectangle
-// The matrix A in CSC format is distributed to every PE via memcpy
+// The matrix A in grid Custom format is distributed to every PE via memcpy
 // The matrix B is distributed to first row PEs via memcpy
 // Pw.0, ..., Pw.h send out the result C_final via memcpy, where h = height-1 and w = width-1.
 // Note that this is the right-hand side column of PEs
 //
 // Each PE receives the local matrices representing A and B and computes A*B locally, then performs a row reduction
-// The last column of PEs finally contains C_final and sends its result back to the host
+// The last column of PEs finally contains the corresponding rows of C and sends its result back to the host
 //
 
 // global routing colors
@@ -23,7 +23,7 @@ param LAUNCH_ID: i16;
 //    Kt  = K / width
 //    M
 // where N, K and M are dimensions of global tensors A_global, B_global and C_global
-//    A_global is N x K (remember its represented in CSC format)
+//    A_global is N x K (remember its represented in custom format)
 //    B_global is K x M
 //    C_global is N x M
 

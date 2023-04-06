@@ -1,12 +1,12 @@
 // This program computes A*B on a height-by-width PE rectangle
-// The matrix A in CSC format is distributed to every PE via memcpy
+// The matrix A in grid CSC format is distributed to every PE via memcpy
 // The matrix B is distributed to first row PEs via memcpy
-// Pw.0, ..., Pw.h send out the result C via memcpy, where h = height-1 and w = width-1.
+// Pw.0, ..., Pw.h send out the result C_final via memcpy, where h = height-1 and w = width-1.
 // Note that this is the right-hand side column of PEs
 //
-// The host sends matrix A, matrix B into the core rectangle, launches a RPC (remote procedure call) to
-// broadcast vector x from 1st row to other rows, computes A*B locally, then performs a row
-// reduction to finish C = A*B.
+// Each PE receives the local matrices representing A and B and computes A*B locally, then performs a row reduction
+// The last column of PEs finally contains the corresponding rows of C and sends its result back to the host
+//
 
 // Notation: a PE (Px.y) is labeled as (px = x, py = y)
 
@@ -117,7 +117,7 @@ var ptr_C : [*]f32 = &C;
 // serves to describe the actual data operand, which is a memory or fabric tensor.
 ////////////////////////////////////////////////////////////////////////////////
 
-// Have to use multi-dimensional memory vector -> mem4d_dsd
+// B buffer
 const mem_B_buf_dsd = @get_dsd(mem1d_dsd, .{ .tensor_access = |i|{Kt*M} -> B[i] });
 
 // Receiving B
@@ -137,14 +137,14 @@ const fab_trans_B_wdsd = @get_dsd(fabout_dsd, .{
 // C buffer
 const mem_C_buf_dsd = @get_dsd(mem1d_dsd, .{ .tensor_access = |i|{Nt*M} -> C[i] });
 
-// Receiving C (in last column)
+// Receiving C
 const fab_recv_C_wdsd = @get_dsd(fabin_dsd, .{
     .extent = _SIZE_C,
     .fabric_color = RXACT_C,
     .input_queue = 2
 });
 
-// Sending C (to right hand side last column PE)
+// Sending C
 const fab_trans_C_wdsd = @get_dsd(fabout_dsd, .{
     .extent = _SIZE_C,
     .fabric_color = TXACT_C,
@@ -279,8 +279,8 @@ comptime {
     @bind_task(f_comp, COMP);
     @bind_task(f_reduce, REDUCE);
 
-    @bind_task( f_launch, LAUNCH);
-    @bind_task( f_exit, EXIT);
+    @bind_task(f_launch, LAUNCH);
+    @bind_task(f_exit, EXIT);
 }
 
 comptime {

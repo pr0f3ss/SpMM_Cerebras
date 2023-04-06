@@ -1,9 +1,9 @@
 #!/usr/bin/env cs_python
 # pylint: disable=line-too-long
 
-""" Compute A*B using a 2-by-2 PE rectangle
+""" Compute A*B using a height-by-width PE rectangle
 
-   The 2-by-2 rectangle is surrounded by a halo of size 1.
+   The height-by-width rectangle is surrounded by a halo of size 1.
    The halo is used to route the input and output data between the host and the device.
    It does not impact the layout index of the kernel code.
    For example, the kernel has 2-by-2 PEs, with the index P0.0, P1.0, P0.1, P1.1
@@ -13,19 +13,22 @@
    P0.0 of the kernel is P1.1 when the user calls sdk_debug_shell to dump the trace or
    landing log.
 
-   Each PE computes its local A*B and does a row reduction, so last column has the result A*B = C_final (which is reduced result from C).
+   The workflow goes as follows:
+   Memcpy of A (and B in the first row)
+   Each PE receives B from north and broadcasts B to the south
+   Each PE computes its local A*B
+   Each PE reduces its local C to the east
+   Last column has the result A*B = C from its rows.
 
-   To simplify the example, the dimensions N and K are assumed even.
-   A functions spmm_csc_f32 is used to compute C=A*B using the CSC grid format.
+   To simplify the example, the dimensions N and K are divisible by height and width respectively.
+   A function 'spmm_csc_f32' is used to compute C=A*B using the CSC grid format.
    This function is imported as a module via spmm_csc.csl.
    The arrays A_val, A_row_idx, A_col_ptr, B, C are passed into the function as pointers.
 
    The matrix B is distributed into columns. The first row receives B from the fabric,
    then broadcasts B into other rows.
 
-   P1.0 and P1.1 compute the reduction C_final (which is denoted as C) which is sent out..
-
-   One can use the following command to check the landing log of P0.0,
+   One can use the following command to check the landing log of P0.0:
     sdk_debug_shell wavelet-trace --artifact_dir . --x 1 --y 1 trace
 
 """
@@ -178,7 +181,7 @@ def main():
 
   args = parse_args()
 
-#  if not, must redo the routing
+# Set up params and fill in missing params
   if args.width is not None:
     width = args.width
   else:
@@ -401,14 +404,14 @@ def main():
 
   simulator.stop()
 
-  #if args.cmaddr is None:
-    # move simulation log and core dump to the given folder
-    #shutil.move("sim.log", sim_log)
+  if args.cmaddr is None:
+    #move simulation log and core dump to the given folder
+    shutil.move("sim.log", sim_log)
 
-    #dst = Path(f"{args.name}/simfab_traces")
-    #if dst.exists():
-      #shutil.rmtree(dst)
-    #shutil.move("simfab_traces", dst)
+    dst = Path(f"{args.name}/simfab_traces")
+    if dst.exists():
+      shutil.rmtree(dst)
+    shutil.move("simfab_traces", dst)
 
   print(f"`C_ref`     from CPU:\n{C_ref}")
   print(f"`C_cs`  from CS1 (1-by-1 matrix):\n{C_cs}")

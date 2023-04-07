@@ -23,12 +23,12 @@ To generate a random height x width matrix with a specific density in the desire
 
 `./a.out A_height A_width A_density Py Px Format`
 
-`A_height`: Height dimension of A (rows, N)
-`A_width`: Width dimension of A (columns, K)
-`A_density`: supplied as percentage
-`Py`: The PE height dimension (how many PE rows exist)
-`Px`: The PE height dimension (how many PE columns exist)
-`Format`: 0: CSC, 1: CSR, 2: Custom
+- `A_height`: Height dimension of A (rows, N)
+- `A_width`: Width dimension of A (columns, K)
+- `A_density`: supplied as percentage
+- `Py`: The PE height dimension (how many PE rows exist)
+- `Px`: The PE height dimension (how many PE columns exist)
+- `Format`: 0: CSC, 1: CSR, 2: Custom
 
 This will generate 4 files with prefix `tmp`.
 
@@ -37,7 +37,7 @@ To add a padding to the converted files with filename prefix `tmp`, use:
 
 `python3 add_padding.py Format`
 
-`Format`: 0: CSC, 1: CSR, 2: Custom
+- `Format`: 0: CSC, 1: CSR, 2: Custom
 
 By default, it adds a suffix `_pad` to the new files.
 

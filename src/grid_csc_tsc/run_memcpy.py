@@ -51,10 +51,6 @@ BENCHMARKS_DIR = os.path.dirname(RESIDUAL_DIR)
 CSL_DIR = os.path.dirname(BENCHMARKS_DIR)
 CSLC = os.path.join(CSL_DIR, "build") + "/bin/cslc"
 
-# Helper functions for computing the delta in the cycle count
-def make_u48(words):
-  return words[0] + (words[1] << 16) + (words[2] << 32)
-
 
 def cast_uint32(x):
   if isinstance(x, (np.float16, np.int16, np.uint16)):
@@ -66,6 +62,30 @@ def cast_uint32(x):
     return np.uint32(x)
 
   raise RuntimeError(f"type of x {type(x)} is not supported")
+
+def float_triple_to_uint48_bits(f1: float, f2: float, f3: float) -> int:
+    # First, convert each float to a 32-bit integer using struct.pack and unpack
+    import struct
+    packed1 = struct.pack('f', f1)
+    packed2 = struct.pack('f', f2)
+    packed3 = struct.pack('f', f3)
+    i1, i2, i3 = struct.unpack('III', packed1 + packed2 + packed3)
+    
+    # Next, discard the lower 16 bits of each integer by shifting them right by 16 bits
+    i1 >>= 16
+    i2 >>= 16
+    i3 >>= 16
+    
+    # Finally, combine the three 16-bit integers into a single 48-bit unsigned integer
+    return (i1 << 32) | (i2 << 16) | i3
+
+def convert_array(arr: np.ndarray) -> np.ndarray:
+    # First, make sure that the input array has the correct shape
+    if arr.shape[1] != 3:
+        raise ValueError("Input array must have 3 columns")
+    
+    # Next, apply the float_triple_to_uint48_bits function to each row of the array
+    return np.apply_along_axis(lambda x: float_triple_to_uint48_bits(*x), axis=1, arr=arr)
 
 
 
@@ -364,6 +384,7 @@ def main():
 
   # tsc gathered from all PEs
   # timestamps are 48-bit, stored as three u16, however memcpy gives them as f32
+  # We only retrieve the cycle count of the last row of PEs
   oportmap_startBuffer = f"{{ startBuffer[i=0:{3*height-1}] -> [PE[{width-1}, i // 3] -> index[i % 3]] }}"
   print(f"oportmap_startBuffer = {oportmap_startBuffer}")
 
@@ -409,34 +430,35 @@ def main():
   # use the runtime_utils library to calculate memcpy args and manage output data
   (px, py, w, h, l, data) = runtime_utils.prepare_output_tensor(oportmap_C, np.float32)
   simulator.memcpy_d2h(data, symbol_C, False, px, py, w, h, l, 0, False)
+  C_cs = runtime_utils.format_output_tensor(oportmap_C, np.float32, data)
+
+  # Reshape back to original state
+  C_cs = np.reshape(C_cs, (N, M))
 
   (px, py, w, h, l, data) = runtime_utils.prepare_output_tensor(oportmap_startBuffer, np.float32)
   simulator.memcpy_d2h(data, symbol_startBuffer, False, px, py, w, h, l, 0, False)
+  tsc_s = runtime_utils.format_output_tensor(oportmap_startBuffer, np.float32, data)
 
   (px, py, w, h, l, data) = runtime_utils.prepare_output_tensor(oportmap_finishBuffer, np.float32)
   simulator.memcpy_d2h(data, symbol_finishBuffer, False, px, py, w, h, l, 0, False)
-
-  tsc_s = runtime_utils.format_output_tensor(oportmap_startBuffer, np.float32, data)
   tsc_f = runtime_utils.format_output_tensor(oportmap_finishBuffer, np.float32, data)
 
-  #C_cs = runtime_utils.format_output_tensor(oportmap_C, np.float32, data)
-
-  # todo f32 to u16
+  # Reshape arrays: each row represents the three f32 values extracted from the last column PE of said row 
   tsc_s = np.reshape(tsc_s, (height, 3))
   tsc_f = np.reshape(tsc_f, (height, 3))
 
-  print(tsc_s)
+  # Reverse order of elements
+  tsc_s = np.fliplr(tsc_s)
+  tsc_f = np.fliplr(tsc_f)
 
-  tsc_s = np.asarray(tsc_s, dtype = np.uint16)
-  tsc_f = np.asarray(tsc_f, dtype = np.uint16)
+  # Convert three f32 to one uint48
+  tsc_s = convert_array(tsc_s)
+  tsc_f = convert_array(tsc_f)
 
-  tsc_1 = make_u48(tsc_s[0])
-  tsc_2 = make_u48(tsc_f[0])
+  # Get cycle count per PE
+  cycles = np.subtract(tsc_f, tsc_s)
 
-  
-  # Reshape back to original state
-  #C_cs = np.reshape(C_cs, (N, M))
-
+  print(cycles)
 
   simulator.stop()
 
@@ -450,9 +472,9 @@ def main():
     shutil.move("simfab_traces", dst)
 
   print(f"`C_ref`     from CPU:\n{C_ref}")
-  #print(f"`C_cs`  from CS1 (1-by-1 matrix):\n{C_cs}")
+  print(f"`C_cs`  from CS1 (1-by-1 matrix):\n{C_cs}")
 
-  #assert np.allclose(C_ref, C_cs, 1.e-5)
+  assert np.allclose(C_ref, C_cs, 1.e-5)
 
   
   print("\nSUCCESS!")

@@ -246,15 +246,14 @@ fn bcast_B() void {
 task f_exit() void {
     tsc.get_timestamp(&finishBuffer_local);
 
-    // convert to f32
-    startBuffer[0] = @as(f32, startBuffer_local[0]);
-    startBuffer[1] = @as(f32, startBuffer_local[1]);
-    startBuffer[2] = @as(f32, startBuffer_local[2]);
+    // bitcast to f16 first, then extend to 32-bits
+    startBuffer[0] = @as(f32, @bitcast(f16, startBuffer_local[0]));
+    startBuffer[1] = @as(f32, @bitcast(f16, startBuffer_local[1]));
+    startBuffer[2] = @as(f32, @bitcast(f16, startBuffer_local[2]));
 
-    finishBuffer[0] = @as(f32, finishBuffer_local[0]);
-    finishBuffer[1] = @as(f32, finishBuffer_local[1]);
-    finishBuffer[2] = @as(f32, finishBuffer_local[2]);
-
+    finishBuffer[0] = @as(f32, @bitcast(f16, finishBuffer_local[0]));
+    finishBuffer[1] = @as(f32, @bitcast(f16, finishBuffer_local[1]));
+    finishBuffer[2] = @as(f32, @bitcast(f16, finishBuffer_local[2]));
 
 
     // the user must unblock cmd color for every PE

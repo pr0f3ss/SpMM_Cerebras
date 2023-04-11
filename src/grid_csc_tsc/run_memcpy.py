@@ -460,6 +460,11 @@ def main():
 
   print(cycles)
 
+  # Adds results to file
+  file1 = open("benchmark_results.txt", "a")  # append mode
+  file1.write(str(cycles) + ",")
+  file1.close()
+
   simulator.stop()
 
   if args.cmaddr is None:

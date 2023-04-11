@@ -63,7 +63,29 @@ def cast_uint32(x):
 
   raise RuntimeError(f"type of x {type(x)} is not supported")
 
+def float_triple_to_uint48_bits(f1: float, f2: float, f3: float) -> int:
+  # First, convert each float to a 32-bit integer using struct.pack and unpack
+  import struct
+  packed1 = struct.pack('f', f1)
+  packed2 = struct.pack('f', f2)
+  packed3 = struct.pack('f', f3)
+  i1, i2, i3 = struct.unpack('III', packed1 + packed2 + packed3)
+  
+  # Next, discard the lower 16 bits of each integer by shifting them right by 16 bits
+  i1 >>= 16
+  i2 >>= 16
+  i3 >>= 16
+  
+  # Finally, combine the three 16-bit integers into a single 48-bit unsigned integer
+  return (i1 << 32) | (i2 << 16) | i3
 
+def convert_array(arr: np.ndarray) -> np.ndarray:
+  # First, make sure that the input array has the correct shape
+  if arr.shape[1] != 3:
+      raise ValueError("Input array must have 3 columns")
+  
+  # Next, apply the float_triple_to_uint48_bits function to each row of the array
+  return np.apply_along_axis(lambda x: float_triple_to_uint48_bits(*x), axis=1, arr=arr)
 
 def parse_args():
   """ parse the command line """
@@ -315,6 +337,8 @@ def main():
   symbol_A_y = simulator.get_id("A_y")
   symbol_B = simulator.get_id("B")
   symbol_C = simulator.get_id("C")
+  symbol_startBuffer = simulator.get_id("startBuffer")
+  symbol_finishBuffer = simulator.get_id("finishBuffer")
 
   print(f"symbol_A_val = {symbol_A_val}")
   print(f"symbol_A_x = {symbol_A_x}")
@@ -349,6 +373,15 @@ def main():
   # Total size: height * Nt * M = N * M 
   oportmap_C = f"{{ C[n = 0:{N*M-1}] -> [PE[{width-1}, n // {Nt*M}] -> index[n % {Nt*M}]] }}"
   print(f"oportmap_C = {oportmap_C}")
+
+  # tsc gathered from all PEs
+  # timestamps are 48-bit, stored as three u16, however memcpy gives them as f32
+  # We only retrieve the cycle count of the last row of PEs
+  oportmap_startBuffer = f"{{ startBuffer[i=0:{3*height-1}] -> [PE[{width-1}, i // 3] -> index[i % 3]] }}"
+  print(f"oportmap_startBuffer = {oportmap_startBuffer}")
+
+  oportmap_finishBuffer = f"{{ finishBuffer[i=0:{3*height-1}] -> [PE[{width-1}, i // 3] -> index[i % 3]] }}"
+  print(f"oportmap_finish = {oportmap_finishBuffer}")
 
   # prepare all of A and B via memcpy
   # use the runtime_utils library to calculate memcpy args and shuffle data
@@ -395,6 +428,41 @@ def main():
   # Reshape back to original state
   C_cs = np.reshape(C_cs, (N, M))
 
+  (px, py, w, h, l, data) = runtime_utils.prepare_output_tensor(oportmap_startBuffer, np.float32)
+  simulator.memcpy_d2h(data, symbol_startBuffer, False, px, py, w, h, l, 0, False)
+  tsc_s = runtime_utils.format_output_tensor(oportmap_startBuffer, np.float32, data)
+
+  (px, py, w, h, l, data) = runtime_utils.prepare_output_tensor(oportmap_finishBuffer, np.float32)
+  simulator.memcpy_d2h(data, symbol_finishBuffer, False, px, py, w, h, l, 0, False)
+  tsc_f = runtime_utils.format_output_tensor(oportmap_finishBuffer, np.float32, data)
+
+  # Reshape arrays: each row represents the three f32 values extracted from the last column PE of said row 
+  tsc_s = np.reshape(tsc_s, (height, 3))
+  tsc_f = np.reshape(tsc_f, (height, 3))
+
+  # Reverse order of elements
+  tsc_s = np.fliplr(tsc_s)
+  tsc_f = np.fliplr(tsc_f)
+
+  # Convert three f32 to one uint48
+  tsc_s = convert_array(tsc_s)
+  tsc_f = convert_array(tsc_f)
+
+  # Get cycle count per PE
+  cycles = np.subtract(tsc_f, tsc_s)
+
+  print(cycles)
+
+  # Create file if it does not exist
+  try:
+    file1 = open("benchmark_results.txt", "x")
+    file1.close()
+  except:
+    pass
+  # Adds results to file
+  file1 = open("benchmark_results.txt", "a")  # append mode
+  file1.write(str(cycles) + ",")
+  file1.close()
 
   simulator.stop()
 

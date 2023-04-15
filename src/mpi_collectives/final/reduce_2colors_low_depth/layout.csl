@@ -1,0 +1,26 @@
+const Pw: u16 = 512;
+const reduce_color_1 = @get_color(4);
+const reduce_color_2 = @get_color(5);
+const step: u16 = 32;
+param Nx:u16;
+
+layout {
+  @set_rectangle(Pw, 1);
+
+  var Px: u16 = 0;
+  while (Px < Pw) : (Px += 1) {
+    var i: u16 = 0;
+    var pow: u16 = 1;
+  
+    while (pow <= Pw) : (pow *= 2) {
+      if (Px & pow != 0) {
+        i += 1;
+      }
+    }
+    if(i % 2 == 0) {
+      @set_tile_code(Px, 0, "code.csl", .{ .pe_id = Px, .reduce_recv_color = reduce_color_1, .reduce_send_color = reduce_color_2, .step = step, .Nx = Nx});
+    } else {
+      @set_tile_code(Px, 0, "code.csl", .{ .pe_id = Px, .reduce_recv_color = reduce_color_2, .reduce_send_color = reduce_color_1, .step = step, .Nx = Nx});
+    }
+  }
+}

@@ -6,7 +6,7 @@ const rect_height = @get_rectangle().height;
 const rect_width = @get_rectangle().width;
 
 const x_color = @get_color(14);
-const Nx = 32; //Vector length
+const Nx = 256; //Vector length
 
 const rev_id: u16 = rect_width - (pe_id + 1);
 

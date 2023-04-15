@@ -1,0 +1,66 @@
+param pe_id: u16;
+param step: u16;
+param reduce_recv_color_linear: color;
+param reduce_send_color_linear: color;
+param reduce_recv_color_low: color;
+param reduce_send_color_low: color;
+param message: color;
+
+const rect_height = @get_rectangle().height;
+const rect_width = @get_rectangle().width;
+
+const x_color = @get_color(14);
+const Nx = 1; //Vector length
+
+var data = @constants([Nx]f32, 1.0);
+
+var memDsd = @get_dsd(mem1d_dsd, .{ .tensor_access = |i|{Nx} -> data[i]});
+var sendDsdLinear = @get_dsd(fabout_dsd, .{.extent = Nx, .fabric_color = reduce_send_color_linear});
+var recvDsdLinear = @get_dsd(fabin_dsd, .{.extent = Nx, .fabric_color = reduce_recv_color_linear});
+var sendDsdLow = @get_dsd(fabout_dsd, .{.extent = Nx, .fabric_color = reduce_send_color_low});
+var recvDsdLow = @get_dsd(fabin_dsd, .{.extent = Nx, .fabric_color = reduce_recv_color_low});
+
+
+// Reduction Task
+task task_x() void {
+
+  if ((pe_id + 1) % step == 0) {
+    @fmovs(sendDsdLinear, memDsd);
+  } else if (pe_id % step != 0){
+    @fadds(sendDsdLinear, recvDsdLinear, memDsd);
+  } else if (pe_id + step == rect_width) {
+    @fadds(sendDsdLow, recvDsdLinear, memDsd);
+  } else if (pe_id != 0) {
+    @fadds(memDsd, recvDsdLinear, memDsd);
+    @fadds(sendDsdLow, recvDsdLow, memDsd);
+  } else {
+    @fadds(memDsd, recvDsdLinear, memDsd);
+    @fadds(memDsd, recvDsdLow, memDsd);
+  }
+}
+
+fn reduce_low_tx() comptime_struct {
+  if (pe_id % (2 * step) == 0) {
+    return .{RAMP};
+  } else {
+    return .{WEST};
+  }
+}
+
+fn reduce_low_rx() comptime_struct {
+  if (pe_id % (2 * step) != 0 and pe_id % step == 0) {
+    return .{RAMP};
+  } else {
+    return .{EAST};
+  }
+}
+comptime {
+  @bind_task(task_x, x_color);
+  @activate(x_color);
+  @block(reduce_recv_color_linear);
+  @block(reduce_recv_color_low);
+  @set_local_color_config(reduce_recv_color_linear, .{.routes = .{.rx = .{EAST}, .tx = .{RAMP}}});
+  @set_local_color_config(reduce_send_color_linear, .{.routes = .{.rx = .{RAMP}, .tx = .{WEST}}});
+  @set_local_color_config(reduce_recv_color_low, .{.routes = .{.rx = .{ EAST }, .tx = if (pe_id % step == 0) .{RAMP} else .{ WEST }}});
+  @set_local_color_config(reduce_send_color_low, .{.routes = .{.rx = if (pe_id % step == 0) .{RAMP} else .{ EAST }, .tx = .{WEST}}});
+}

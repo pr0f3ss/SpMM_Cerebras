@@ -1,0 +1,150 @@
+param pe_id: u16;
+param Nx: u16;
+param step: u16;
+
+param reduce_recv_color: color;
+param reduce_send_color: color;
+
+const rect_height = @get_rectangle().height;
+const rect_width = @get_rectangle().width;
+
+const x_color = @get_color(14);
+
+const rev_id: u16 = rect_width - (pe_id + 1);
+
+var data = @constants([Nx]f32, 1.0);
+
+const trace = @import_module("<debug>", .{.buffer_size = 100});
+const times = @import_module("<debug>", .{.buffer_size = 100});
+
+
+fn get_iter_count() u16 {
+  var i: u16 = 0;
+  var pow: u16 = step;
+
+  if (pe_id > 0) {
+    while (rev_id & pow != 0 and pow <= rect_width) : (pow *= 2) {
+      i += 1;
+    }
+  } else {
+    while (pow <= rect_width) : (pow *= 2) {
+      if (rev_id & pow != 0) {
+        i += 1;
+      }
+    }
+  }
+
+  return i;
+}
+
+const iterations = comptime get_iter_count();
+
+fn snd_ctrl() bool {
+  var i: u16 = 0;
+  var pow: u16 = step;
+
+  if (pe_id == 0) return false;
+  
+  while (rev_id & pow != 0 and pow <= rect_width) : (pow *= 2) {
+    i += 1;
+  }
+
+  pow *= 2;
+
+  if (pow <= rect_width and rev_id & pow == 0) return true;
+
+  return false;
+}
+
+const is_ctrl = comptime snd_ctrl();
+
+var memDsd = @get_dsd(mem1d_dsd, .{ .tensor_access = |i|{Nx} -> data[i]});
+var sendDsd = @get_dsd(fabout_dsd, .{.extent = Nx, .fabric_color = reduce_send_color, .advance_switch = if ((!is_ctrl and pe_id % step == 0) or (pe_id % step == 1 and pe_id % (2 * step) == 1)) true else false});
+var recvDsd = @get_dsd(fabin_dsd, .{.extent = Nx, .fabric_color = reduce_recv_color});
+var ctrlDsd = @get_dsd(fabout_dsd, .{.extent = 1, .fabric_color = reduce_send_color, .control = true});
+
+// Opcodes for potentially updating switches
+const opcode_nop = 0;
+const opcode_switch_advance = 1;
+const opcode_switch_reset = 2;
+const opcode_teardown = 3;
+
+// Helper function to construct the payload of the control wavelet.
+// args:
+//    ceFilter: a filter bit to disable transmission from the destination
+//              router to the destination CE,
+//    opcode: switching opcode (see comment above), and
+//    data: 16-bit wavelet data
+fn ctrl(ce_filter: bool, opcode: i16, data: u16) u32 {
+  const six = @as(u32, 6);
+  const eight = @as(u32, 8);
+  const sixteen = @as(u32, 16);
+
+  const hi_word = @as(u32, 1) |
+                  @as(u32, opcode) << six |
+                  @as(u32, ce_filter) << eight;
+
+  const lo_word = @as(u32, data);
+  return hi_word << sixteen | lo_word;
+}
+
+
+// Reduction Task
+task task_x() void {
+  times.trace_timestamp();
+
+  if ((pe_id + 1) % step == 0) {
+    @fmovs(sendDsd, memDsd);
+    @mov32(ctrlDsd, comptime ctrl(true, opcode_switch_advance, 0x00));
+  } else if (pe_id % step == 1 and pe_id % step * 2 == 1) {
+    @fadds(sendDsd, recvDsd, memDsd);
+  } else if (pe_id % step != 0){
+    @fadds(sendDsd, recvDsd, memDsd);
+    @mov32(ctrlDsd, comptime ctrl(true, opcode_switch_advance, 0x00));
+  } else if (pe_id + step == rect_width) {
+    @fadds(sendDsd, recvDsd, memDsd);
+  } else {
+    // Different than 2 color dynamic stuff
+      var count: u16 = 0;
+      while (count < iterations) : (count += 1) {
+        @fadds(memDsd, memDsd, recvDsd);
+      }
+
+      if (pe_id > 0) {
+        @fadds(sendDsd, memDsd, recvDsd);
+      } else if (iterations == 0) {
+        @fmovs(sendDsd, memDsd);
+      } else {
+        @fadds(memDsd, memDsd, recvDsd);
+        times.trace_timestamp();
+      }
+
+      if (is_ctrl) {
+        @mov32(ctrlDsd, comptime ctrl(true, opcode_switch_advance, 0x00));
+      }
+
+  }
+
+
+}
+
+const switches_sender = .{
+  .pos1 = .{ .rx = EAST },
+  .current_switch_pos = 0,
+  .ring_mode = false
+};
+
+const switches_receiver = .{
+  .pos1 = .{ .tx = WEST },
+  .current_switch_pos = 0,
+  .ring_mode = false
+};
+
+comptime {
+  @bind_task(task_x, x_color);
+  @activate(x_color);
+  @block(reduce_recv_color);
+  @set_local_color_config(reduce_recv_color, .{.routes = .{.rx = .{EAST}, .tx = if ((pe_id + 1) % step == 0) .{WEST} else .{RAMP}}, .switches = switches_receiver});
+
+  @set_local_color_config(reduce_send_color, .{.routes = .{.rx = .{RAMP}, .tx = .{WEST}}, .switches = switches_sender});
+}

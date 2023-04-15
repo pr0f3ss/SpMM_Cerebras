@@ -1,0 +1,44 @@
+param pe_id: u16;
+
+const reduce_color = @get_color(11);
+
+const rect_height = @get_rectangle().height;
+const rect_width = @get_rectangle().width;
+
+const x_color = @get_color(14);
+const Nx = 1; //Vector length
+
+var data = @constants([8]f32, 1.0);
+
+const iterations = comptime get_iter_count();
+
+var memDsd = @get_dsd(mem1d_dsd, .{ .tensor_access = |i|{Nx} -> data[i]});
+var reduceDsd = @get_dsd(mem1d_dsd, .{ .tensor_access = |i|{8} -> data[i]});
+var sendDsd = @get_dsd(fabout_dsd, .{.extent = Nx, .fabric_color = reduce_color, .advance_switch=true});
+var recvDsd = @get_dsd(fabin_dsd, .{.extent = 8, .fabric_color = reduce_color});
+
+
+// Reduction Task
+task task_x() void {
+
+  var count: u16 = 0;
+  if (pe_id == 0) {
+    @fadds(reduceDsd, reduceDsd, recvDsd);
+    @fadds(reduceDsd, reduceDsd, recvDsd);
+  } else {
+    @fmovs(sendDsd, memDsd);
+  }
+}
+
+const switches = .{
+  .pos1 = .{ .rx = EAST },
+  .current_switch_pos = 0,
+  .ring_mode = true,
+};
+
+comptime {
+  @bind_task(task_x, x_color);
+  @activate(x_color);
+  @block(reduce_color);
+  @set_local_color_config(reduce_color, .{.routes = .{.rx = if (pe_id == 0) .{EAST} else .{RAMP}, .tx = if (pe_id == 0) .{RAMP} else .{WEST}}, .switches = switches});
+}

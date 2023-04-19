@@ -1,0 +1,41 @@
+// Performs custom grid matrix multiplication to compute C = A*B (of local PE)
+//     C := A*B
+//
+// @param[in] A_val          values in the local matrix A (may be padded with -1 values)
+// @param[in] A_x            column index array of the local matrix A (may be padded with -1 values)
+// @param[in] A_y            row index array of the local matrix A (may be padded with -1 values)
+// @param[in] B              array of dimension Kt x M
+// @param[in,out] C          array of dimension Nt x M
+
+param A_len : i32 ;         // lengths of the local A matrices (may be padded with -1)
+
+param Nt : i32 ;            // row dimension of C
+param Kt : i32 ;            // row dimension of local B
+param M  : i32 ;            // column dimension of local B and C
+
+fn spmm_custom_f32(A_val: *[A_len]f32, A_x: *[A_len]f32, A_y: *[A_len]f32, B: *[Kt*M]f32, C: *[Nt*M]f32) void { 
+
+    // iterate over all non-zero values
+    for (@range(i32, A_len-1)) |j| {
+
+        if(@as(i32, (A_x.*)[j]) == -1){
+            // exit if we reach padded end
+            break;
+        }
+
+        // get a's coordinates
+        var a_i = @as(i32, (A_x.*)[j]);   // col
+        var a_j = @as(i32, (A_y.*)[j]);   // row
+        var a = (A_val.*)[j];             // value
+
+        for (@range(i32, M)) |m| {
+            var C_idx = a_j*M + m;
+            var B_idx = a_i*M + m;
+
+            (C.*)[C_idx] = (C.*)[C_idx] + (B.*)[B_idx]*a;
+        }
+        
+
+    }
+
+}

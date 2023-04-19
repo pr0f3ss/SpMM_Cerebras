@@ -181,7 +181,13 @@ task f_comp() void {
     }
 
     // C = A * B 
+
+    tsc.enable_tsc();
+    tsc.get_timestamp(&startBuffer_local);
+
     spmm_custom_mod.spmm_custom_f32(&A_val, &A_x, &A_y, &B, &C);
+
+    tsc.get_timestamp(&finishBuffer_local);
 
     // activate reduce task after C computation
     @activate(REDUCE);
@@ -219,8 +225,7 @@ var num_wavelets: i32 = 0;
 
 fn bcast_B() void {
 
-    tsc.enable_tsc();
-    tsc.get_timestamp(&startBuffer_local);
+    
 
     _px = @as(i16, get_x_coord());
     _py = @as(i16, get_y_coord());
@@ -238,7 +243,7 @@ fn bcast_B() void {
 }
 
 task f_exit() void {
-    tsc.get_timestamp(&finishBuffer_local);
+
 
     // bitcast to f16 first, then extend to 32-bits
     startBuffer[0] = @as(f32, @bitcast(f16, startBuffer_local[0]));

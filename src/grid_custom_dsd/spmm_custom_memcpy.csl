@@ -172,58 +172,43 @@ const fab_trans_C_wdsd = @get_dsd(fabout_dsd, .{
 // All PEs compute local A*B after A and B are received
 task f_comp() void {
 
-    // if we are in row inbetween, send over B to south
+    // if we are in row inbetween, send over B to south in a separate microthread
     if(0 < _py and _py < height-1 ){
-        // Todo: see if async works here or if we have to assign a new task+color for a separate microthread
-        // Also verify if input/output queue identifiers can overlap with this implementation
-        // They can overlap for 2x2 because they are not used simultaneously in a PE
-        @fmovs(fab_trans_B_wdsd, mem_B_buf_dsd);
+        @fmovs(fab_trans_B_wdsd, mem_B_buf_dsd, .{.async=true});
     }
+
+    tsc.enable_tsc();
+    tsc.get_timestamp(&startBuffer_local);
 
     // C = A * B 
-    // iteration variable for coordinate arrays 
-    var it_coord: i16 = 0;
+    // iterate over A_len
+    for(@range(i16, A_len)) |idx|{
 
-    // iterate rows
-    for(@range(i16, Nt)) |n|{
+        var a_i = @as(i16, A_x[idx]);   // get column
 
-        // iterate columns
-        for(@range(i16, Kt)) |k|{
-            var a_i = @as(i16, A_x[it_coord]);   // get column
-
-            var a_j = @as(i16, A_y[it_coord]);   // get row
-
-            // If we reach pad values, break
-            // if(a_j == -1){
-            //     break;
-            // }
-
-            // If new non-zero value is not in the same row, skip
-            if(a_j != n){
-                continue;
-            }
-
-            // If new non-zero value is not in the same column, skip
-            if(a_i != k){
-                continue;
-            }
-
-            var a = A_val[it_coord]; // value
-
-            // Because we cannot directly access a row (returns an error for some reason), we have to use a hack ...
-            // Basically get first row and then increment the offset to the row we want
-            var B_dsd  = @get_dsd(mem1d_dsd, .{ .tensor_access = |i|{M} -> B[i] });
-            var C_dsd  = @get_dsd(mem1d_dsd, .{ .tensor_access = |i|{M} -> C[i] });
-            
-            B_dsd = @increment_dsd_offset(B_dsd, k*M, f32);
-            C_dsd = @increment_dsd_offset(C_dsd, n*M, f32);
-
-            @fmacs(C_dsd, C_dsd, B_dsd, a);
-            
-            it_coord += 1;
+        // If we reach pad values, break
+        if(a_i == -1){
+            break;
         }
 
+        var a_j = @as(i16, A_y[idx]);   // get row
+
+        var a = A_val[idx]; // value
+        
+
+        // Because we cannot directly access a row (returns an error for some reason), we have to use a hack ...
+        // Basically get first row and then increment the offset to the row we want
+        var B_dsd  = @get_dsd(mem1d_dsd, .{ .tensor_access = |i|{M} -> B[i] });
+        var C_dsd  = @get_dsd(mem1d_dsd, .{ .tensor_access = |i|{M} -> C[i] });
+        
+        B_dsd = @increment_dsd_offset(B_dsd, a_i*M, f32);
+        C_dsd = @increment_dsd_offset(C_dsd, a_j*M, f32);
+
+        @fmacs(C_dsd, C_dsd, B_dsd, a);
+
     }
+
+    tsc.get_timestamp(&finishBuffer_local);
 
     // activate reduce task after C computation
     @activate(REDUCE);
@@ -237,16 +222,14 @@ task f_reduce() void {
 
     if (_px == 0){
         // send partial sum to the east and finish (every PE must call f_exit)
-        //@fmovs(fab_trans_C_wdsd, mem_C_buf_dsd, .{.async=true, .activate = f_exit});
+        @fmovs(fab_trans_C_wdsd, mem_C_buf_dsd, .{.async=true, .activate = f_exit});
     }else if(_px == width-1){
         // P_width.0, ... , P_width.height: Receive C from west, compute in local buffer and activate exit
-        //@fadds(mem_C_buf_dsd, fab_recv_C_wdsd, mem_C_buf_dsd, .{.async=true, .activate = f_exit});
+        @fadds(mem_C_buf_dsd, fab_recv_C_wdsd, mem_C_buf_dsd, .{.async=true, .activate = f_exit});
     }else{
         // Receive result from west, add local + west C and send to result to east
-        //@fadds(fab_trans_C_wdsd, fab_recv_C_wdsd, mem_C_buf_dsd, .{.async=true, .activate = f_exit});
+        @fadds(fab_trans_C_wdsd, fab_recv_C_wdsd, mem_C_buf_dsd, .{.async=true, .activate = f_exit});
     }
-
-    @activate(EXIT);
 
     
 }
@@ -265,9 +248,6 @@ var num_wavelets: i32 = 0;
 
 fn bcast_B() void {
 
-    tsc.enable_tsc();
-    tsc.get_timestamp(&startBuffer_local);
-
     _px = @as(i16, get_x_coord());
     _py = @as(i16, get_y_coord());
 
@@ -284,7 +264,6 @@ fn bcast_B() void {
 }
 
 task f_exit() void {
-    tsc.get_timestamp(&finishBuffer_local);
 
     // bitcast to f16 first, then extend to 32-bits
     startBuffer[0] = @as(f32, @bitcast(f16, startBuffer_local[0]));

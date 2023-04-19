@@ -184,47 +184,45 @@ task f_comp() void {
     // iteration variable for coordinate arrays 
     var it_coord: i16 = 0;
 
-    // Because we cannot directly access a row (returns an error for some reason), we have to use a hack ...
-    // Basically get first row and then increment the offset to the row we want
-    var C_dsd  = @get_dsd(mem1d_dsd, .{ .tensor_access = |i|{M} -> C[i] });
-
     // iterate rows
     for(@range(i16, Nt)) |n|{
-
-        var a_j = @as(i16, A_y[it_coord]);   // get row
-
-        // If we reach pad values, break
-        // if(a_j == -1){
-        //     break;
-        // }
-
-        // If new non-zero value is not in the same row, skip
-        if(a_j != n){
-            @increment_dsd_offset(C_dsd, M, f32);
-            continue;
-        }
-
-        var B_dsd  = @get_dsd(mem1d_dsd, .{ .tensor_access = |i|{M} -> B[i] });
 
         // iterate columns
         for(@range(i16, Kt)) |k|{
             var a_i = @as(i16, A_x[it_coord]);   // get column
 
+            var a_j = @as(i16, A_y[it_coord]);   // get row
+
+            // If we reach pad values, break
+            // if(a_j == -1){
+            //     break;
+            // }
+
+            // If new non-zero value is not in the same row, skip
+            if(a_j != n){
+                continue;
+            }
+
             // If new non-zero value is not in the same column, skip
             if(a_i != k){
-                @increment_dsd_offset(B_dsd, M, f32);
                 continue;
             }
 
             var a = A_val[it_coord]; // value
 
-            @fmacs(C_dsd, C_dsd, B_dsd, a);
+            // Because we cannot directly access a row (returns an error for some reason), we have to use a hack ...
+            // Basically get first row and then increment the offset to the row we want
+            var B_dsd  = @get_dsd(mem1d_dsd, .{ .tensor_access = |i|{M} -> B[i] });
+            var C_dsd  = @get_dsd(mem1d_dsd, .{ .tensor_access = |i|{M} -> C[i] });
+            
+            B_dsd = @increment_dsd_offset(B_dsd, k*M, f32);
+            C_dsd = @increment_dsd_offset(C_dsd, n*M, f32);
 
-            @increment_dsd_offset(B_dsd, M, f32);
+            @fmacs(C_dsd, C_dsd, B_dsd, a);
+            
             it_coord += 1;
         }
 
-        @increment_dsd_offset(C_dsd, M, f32);
     }
 
     // activate reduce task after C computation
@@ -249,6 +247,8 @@ task f_reduce() void {
     }
 
     @activate(EXIT);
+
+    
 }
 
 // This defines the h_params structure

@@ -11,6 +11,10 @@
 /src/mpi_collectives/allreduce_1d/
 /src/mpi_collectives/reduce_1d_2colors/
 
+/src/mpi_collectives/reduce_specific_pe/
+/src/mpi_collectives/reduce_0_pe/reduce_2colors_dynamic/
+/src/mpi_collectives/reduce_0_pe/reduce_2colors_2phase/simfab_traces/
+/src/mpi_collectives/reduce_0_pe/reduce_2colors_2phase/out/
 
 /src/*/simfab_traces/*
 /src/*/out/*

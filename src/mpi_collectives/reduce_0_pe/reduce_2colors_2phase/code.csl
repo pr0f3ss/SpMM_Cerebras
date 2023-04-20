@@ -1,0 +1,87 @@
+const ctrl_module = @import_module("modules/ctrl_module.csl");
+
+param pe_id: u16;
+param step: u16;
+param Nx: u16;
+param reduce_recv_color: color;
+param reduce_send_color: color;
+
+const rect_height = @get_rectangle().height;
+const rect_width = @get_rectangle().width;
+const times = @import_module("<debug>", .{.buffer_size = 100});
+const x_color = @get_color(14);
+
+var data = @constants([Nx]f32, 1.0);
+
+var memDsd = @get_dsd(mem1d_dsd, .{ .tensor_access = |i|{Nx} -> data[i]});
+var sendDsd = @get_dsd(fabout_dsd, .{.extent = Nx, .fabric_color = reduce_send_color, .advance_switch = if (pe_id % step == 1) true else false});
+var recvDsd = @get_dsd(fabin_dsd, .{.extent = Nx, .fabric_color = reduce_recv_color});
+var ctrlDsd = @get_dsd(fabout_dsd, .{.extent = 1, .fabric_color = reduce_send_color, .control = true});
+
+const mem_dsr = @get_dsr(dsr_src0, 0);
+const fabin_dsr = @get_dsr(dsr_src1, 1);
+
+
+// Reduction Task
+task task_x() void {
+  times.trace_timestamp();
+
+  if ((pe_id + 1) % step != 0) {
+    @load_to_dsr(mem_dsr, memDsd);
+    @load_to_dsr(fabin_dsr, recvDsd);
+  }
+
+  if (step >= rect_width) {
+    // Perform chain reduction
+
+    if (pe_id == 0) {
+      @fadds(memDsd, mem_dsr, fabin_dsr);
+      times.trace_timestamp();
+    } else if (pe_id + 1 == rect_width) {
+      @fmovs(sendDsd, memDsd);
+    } else {
+      @fadds(sendDsd, mem_dsr, fabin_dsr);
+    }
+
+  } else if ((pe_id + 1) % step == 0 or pe_id + 1 == rect_width) {
+    @fmovs(sendDsd, memDsd);
+    @mov32(ctrlDsd, comptime ctrl_module.ctrl(true, ctrl_module.opcode_switch_advance, 0x00));
+  } else if (pe_id % step == 1) {
+    @fadds(sendDsd, mem_dsr, fabin_dsr);
+  } else if (pe_id % step != 0){
+    @fadds(sendDsd, mem_dsr, fabin_dsr);
+    @mov32(ctrlDsd, comptime ctrl_module.ctrl(true, ctrl_module.opcode_switch_advance, 0x00));
+  } else if (pe_id + step >= rect_width) {
+    @fadds(sendDsd, mem_dsr, fabin_dsr);
+  } else if (pe_id != 0) {
+    @fadds(memDsd, mem_dsr, fabin_dsr);
+    @fadds(sendDsd, mem_dsr, fabin_dsr);
+  } else {
+    @fadds(memDsd, mem_dsr, fabin_dsr);
+    @fadds(memDsd, mem_dsr, fabin_dsr);
+
+    times.trace_timestamp();
+  }
+}
+
+const switches_sender = .{
+  .pos1 = .{ .rx = EAST },
+  .current_switch_pos = 0,
+  .ring_mode = false
+};
+
+const switches_receiver = .{
+  .pos1 = .{ .tx = WEST },
+  .current_switch_pos = 0,
+  .ring_mode = false
+};
+
+comptime {
+  @bind_task(task_x, x_color);
+  @activate(x_color);
+  @block(reduce_recv_color);
+
+  @set_local_color_config(reduce_recv_color, .{.routes = .{.rx = .{EAST}, .tx = if ((pe_id + 1) % step == 0) .{WEST} else .{RAMP}}, .switches = switches_receiver});
+
+  @set_local_color_config(reduce_send_color, .{.routes = .{.rx = .{RAMP}, .tx = .{WEST}}, .switches = switches_sender});
+}

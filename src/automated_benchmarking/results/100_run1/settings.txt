@@ -1,0 +1,7 @@
+
+A_heights=(100)
+A_widths=(100)
+A_densities=(5)
+grid_h=(4)
+grid_w=(4)
+M_w=(16)

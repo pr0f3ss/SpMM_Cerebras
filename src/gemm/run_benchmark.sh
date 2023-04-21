@@ -2,12 +2,12 @@
 
 set -e
 
-A_height=6
-A_width=6
-A_density=100
-grid_height=3
-grid_width=3
-M_width=6
+A_height=$1
+A_width=$2
+A_density=$3
+grid_height=$4
+grid_width=$5
+M_width=$6
 
 cd test_vectors
 # Generate A matrix
@@ -20,7 +20,7 @@ col_ptr_len=${OUTPUT[2]}
 cd ..
 
 # Run compilation
-cslc ./layout.csl --fabric-dims=10,5 --fabric-offsets=4,1 --params=width:$grid_width,height:$grid_height,Nt:$(($A_height / $grid_height)),Kt:$(($A_width / $grid_width)),M:$M_width,A_val_len:$val_len,A_rowidx_len:$row_idx_len,A_colptr_len:$col_ptr_len,LAUNCH_ID:4 -o=out --memcpy --channels=1 --width-west-buf=0 --width-east-buf=0
+cslc ./layout.csl --fabric-dims=$(($grid_width + 7)),$(($grid_height + 2)) --fabric-offsets=4,1 --params=width:$grid_width,height:$grid_height,Nt:$(($A_height / $grid_height)),Kt:$(($A_width / $grid_width)),M:$M_width,LAUNCH_ID:4 -o=out --memcpy --channels=1 --width-west-buf=0 --width-east-buf=0
 
 echo "Running simulator now!"
 

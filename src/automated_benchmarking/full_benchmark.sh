@@ -3,12 +3,12 @@
 set -x
 set -e
 
-A_heights=(32 32 32 32 32 32 32 32 32 32 32 32)
-A_widths=(32 32 32 32 32 32 32 32 32 32 32 32)
-A_densities=(5 10 20 100 5 10 20 100 5 10 20 100)
-grid_h=(4 4 4 4 8 8 8 8 16 16 16 16)
-grid_w=(4 4 4 4 8 8 8 8 16 16 16 16)
-M_w=(16 16 16 16 16 16 16 16 16 16 16 16)
+A_heights=(100)
+A_widths=(100)
+A_densities=(5)
+grid_h=(4)
+grid_w=(4)
+M_w=(16)
 
 testlen=${#A_heights[@]}
 

@@ -187,8 +187,7 @@ fn bcast_B() void {
     _px = @as(i16, get_x_coord());
     _py = @as(i16, get_y_coord());
 
-    
-    var B_buf = @ptrcast([*]f32, &B);
+    var B_buf = @ptrcast([*]u32, &B);
     mpi_y.broadcast(0, B_buf, _SIZE_B, COMP);
 }
 

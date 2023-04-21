@@ -430,8 +430,7 @@ layout{
                             // odd column
                             const route = @concat_structs(
                                 .{.RXACT_C = C_REDUCE_EVEN, .TXACT_C = C_REDUCE_ODD},
-                                .{ .memcpyParams = memcpyParams_col }  ,
-                                .{ .c2d_params = c2d_params }
+                                .{ .memcpyParams = memcpyParams_col, .c2d_params = c2d_params }
                             );
                         
                             @set_tile_code(pe_x, pe_y, "spmm_csc_memcpy.csl", @concat_structs(route, comm_params) );

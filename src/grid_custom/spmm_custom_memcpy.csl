@@ -174,10 +174,7 @@ task f_comp() void {
 
     // if we are in row inbetween, send over B to south
     if(0 < _py and _py < height-1 ){
-        // Todo: see if async works here or if we have to assign a new task+color for a separate microthread
-        // Also verify if input/output queue identifiers can overlap with this implementation
-        // They can overlap for 2x2 because they are not used simultaneously in a PE
-        @fmovs(fab_trans_B_wdsd, mem_B_buf_dsd);
+        @fmovs(fab_trans_B_wdsd, mem_B_buf_dsd, .{.async=true});
     }
 
     // C = A * B 

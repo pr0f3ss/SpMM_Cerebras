@@ -2,12 +2,12 @@
 
 set -e
 
-A_height=12
-A_width=12
-A_density=100
+A_height=160
+A_width=160
+A_density=5
 grid_height=4
 grid_width=4
-M_width=6
+M_width=8
 
 cd test_vectors
 # Generate A matrix

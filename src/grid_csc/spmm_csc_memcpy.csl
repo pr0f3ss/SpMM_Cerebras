@@ -99,11 +99,11 @@ var C = @zeros([Nt*M]f32);
 
 // Declare variables for storing the timestamp counter at the start and the end
 // of the core computation.
-var startBuffer = @zeros([tsc.tsc_size_words]f32);
-var finishBuffer = @zeros([tsc.tsc_size_words]f32);
+var time_buf_f32 = @zeros([3]f32);
 
-var startBuffer_local = @zeros([tsc.tsc_size_words]u16);
-var finishBuffer_local = @zeros([tsc.tsc_size_words]u16);
+var tscStartBuffer = @zeros([tsc.tsc_size_words]u16);
+// ending time of H2D/D2H
+var tscEndBuffer = @zeros([tsc.tsc_size_words]u16);
 
 // (_px, _py) is the coordinate of region of interest, set by the function bcast_B
 // which starts the computation
@@ -116,8 +116,7 @@ var ptr_A_row_idx  : [*]f32 = &A_row_idx;
 var ptr_A_col_ptr : [*]f32 = &A_col_ptr;
 var ptr_B : [*]f32 = &B;
 var ptr_C : [*]f32 = &C;
-var ptr_startBuffer : [*]f32 = &startBuffer;
-var ptr_finishBuffer : [*]f32 = &finishBuffer;
+var ptr_time_memcpy: [*]f32 = &time_buf_f32;
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -183,8 +182,13 @@ task f_comp() void {
         @fmovs(fab_trans_B_wdsd, mem_B_buf_dsd, .{.async=true});
     }
 
+    tsc.enable_tsc();
+    tsc.get_timestamp(&tscStartBuffer);
+
     // C = A * B 
     spmm_csc_mod.spmm_csc_f32(&A_val, &A_row_idx, &A_col_ptr, &B, &C);
+
+    tsc.get_timestamp(&tscEndBuffer);
 
     // activate reduce task after C computation
     @activate(REDUCE);
@@ -222,9 +226,6 @@ var num_wavelets: i32 = 0;
 
 fn bcast_B() void {
 
-    tsc.enable_tsc();
-    tsc.get_timestamp(&startBuffer_local);
-
     _px = @as(i16, get_x_coord());
     _py = @as(i16, get_y_coord());
 
@@ -241,17 +242,21 @@ fn bcast_B() void {
 }
 
 task f_exit() void {
-    tsc.get_timestamp(&finishBuffer_local);
+    var lo_ : u16 = 0;
+    var hi_ : u16 = 0;
+    var word : u32 = 0;
 
-    // bitcast to f16 first, then extend to 32-bits
-    startBuffer[0] = @as(f32, @bitcast(f16, startBuffer_local[0]));
-    startBuffer[1] = @as(f32, @bitcast(f16, startBuffer_local[1]));
-    startBuffer[2] = @as(f32, @bitcast(f16, startBuffer_local[2]));
+    lo_ = tscStartBuffer[0];
+    hi_ = tscStartBuffer[1];
+    time_buf_f32[0] = @bitcast(f32, (@as(u32,hi_) << @as(u16,16)) | @as(u32, lo_) );
 
-    finishBuffer[0] = @as(f32, @bitcast(f16, finishBuffer_local[0]));
-    finishBuffer[1] = @as(f32, @bitcast(f16, finishBuffer_local[1]));
-    finishBuffer[2] = @as(f32, @bitcast(f16, finishBuffer_local[2]));
+    lo_ = tscStartBuffer[2];
+    hi_ = tscEndBuffer[0];
+    time_buf_f32[1] = @bitcast(f32, (@as(u32,hi_) << @as(u16,16)) | @as(u32, lo_) );
 
+    lo_ = tscEndBuffer[1];
+    hi_ = tscEndBuffer[2];
+    time_buf_f32[2] = @bitcast(f32, (@as(u32,hi_) << @as(u16,16)) | @as(u32, lo_) );
 
     // the user must unblock cmd color for every PE
     sys_mod.unblock_cmd_stream();
@@ -315,6 +320,5 @@ comptime {
     @export_symbol(ptr_A_col_ptr, "A_col_ptr");
     @export_symbol(ptr_B, "B");
     @export_symbol(ptr_C, "C");
-    @export_symbol(ptr_startBuffer, "startBuffer");
-    @export_symbol(ptr_finishBuffer, "finishBuffer");
+    @export_symbol(ptr_time_memcpy, "time_memcpy");
 }

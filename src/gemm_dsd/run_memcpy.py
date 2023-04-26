@@ -423,6 +423,17 @@ def main():
 
   print(cycles)
 
+  # Create file if it does not exist
+  try:
+    file1 = open("benchmark_results.txt", "x")
+    file1.close()
+  except:
+    pass
+  # Adds results to file
+  file1 = open("benchmark_results.txt", "a")  # append mode
+  file1.write(str(cycles) + ",")
+  file1.close()
+
 
   simulator.stop()
 

@@ -35,6 +35,7 @@
 
 
 import os
+import struct
 import argparse
 from pathlib import Path
 from typing import Optional
@@ -60,29 +61,12 @@ def split_matrix_into_grids(matrix, Nt, Kt):
             submatrices.append(submatrix)
     return np.array(submatrices)
 
-def float_triple_to_uint48_bits(f1: float, f2: float, f3: float) -> int:
-    # First, convert each float to a 32-bit integer using struct.pack and unpack
-    import struct
-    packed1 = struct.pack('f', f1)
-    packed2 = struct.pack('f', f2)
-    packed3 = struct.pack('f', f3)
-    i1, i2, i3 = struct.unpack('III', packed1 + packed2 + packed3)
-    
-    # Next, discard the lower 16 bits of each integer by shifting them right by 16 bits
-    i1 >>= 16
-    i2 >>= 16
-    i3 >>= 16
-    
-    # Finally, combine the three 16-bit integers into a single 48-bit unsigned integer
-    return (i1 << 32) | (i2 << 16) | i3
 
-def convert_array(arr: np.ndarray) -> np.ndarray:
-    # First, make sure that the input array has the correct shape
-    if arr.shape[1] != 3:
-        raise ValueError("Input array must have 3 columns")
-    
-    # Next, apply the float_triple_to_uint48_bits function to each row of the array
-    return np.apply_along_axis(lambda x: float_triple_to_uint48_bits(*x), axis=1, arr=arr)
+def float_to_hex(f):
+  return hex(struct.unpack('<I', struct.pack('<f', f))[0])
+
+def make_u48(words):
+  return words[0] + (words[1] << 16) + (words[2] << 32)
 
 
 def cast_uint32(x):
@@ -333,8 +317,7 @@ def main():
   symbol_A = simulator.get_id("A")
   symbol_B = simulator.get_id("B")
   symbol_C = simulator.get_id("C")
-  symbol_startBuffer = simulator.get_id("startBuffer")
-  symbol_finishBuffer = simulator.get_id("finishBuffer")
+  symbol_time_memcpy = simulator.get_id("time_memcpy")
 
   print(f"symbol_A = {symbol_A}")
   print(f"symbol_x = {symbol_B}")
@@ -365,13 +348,10 @@ def main():
   print(f"oportmap_C = {oportmap_C}")
 
   # tsc gathered from all PEs
-  # timestamps are 48-bit, stored as three u16, however memcpy gives them as f32
+  # timestamps are two 48-bit unsigned integers, concatenated and stored as three f32
   # We only retrieve the cycle count of the last row of PEs
-  oportmap_startBuffer = f"{{ startBuffer[i=0:{3*height-1}] -> [PE[{width-1}, i // 3] -> index[i % 3]] }}"
-  print(f"oportmap_startBuffer = {oportmap_startBuffer}")
-
-  oportmap_finishBuffer = f"{{ finishBuffer[i=0:{3*height-1}] -> [PE[{width-1}, i // 3] -> index[i % 3]] }}"
-  print(f"oportmap_finish = {oportmap_finishBuffer}")
+  oportmap_timestamps = f"{{ time_memcpy[i=0:{3*height-1}] -> [PE[{width-1}, i // 3] -> index[i % 3]] }}"
+  print(f"oportmap_timestamps = {oportmap_timestamps}")
 
   # prepare all of A and B via memcpy
   # use the runtime_utils library to calculate memcpy args and shuffle data
@@ -415,28 +395,31 @@ def main():
   # Reshape back to original state
   C_cs = np.reshape(C_cs, (N, M))
 
-  (px, py, w, h, l, data) = runtime_utils.prepare_output_tensor(oportmap_startBuffer, np.float32)
-  simulator.memcpy_d2h(data, symbol_startBuffer, False, px, py, w, h, l, 0, False)
-  tsc_s = runtime_utils.format_output_tensor(oportmap_startBuffer, np.float32, data)
+  (px, py, w, h, l, data) = runtime_utils.prepare_output_tensor(oportmap_timestamps, np.float32)
+  simulator.memcpy_d2h(data, symbol_time_memcpy, False, px, py, w, h, l, 0, False)
+  raw_timestamps = runtime_utils.format_output_tensor(oportmap_timestamps, np.float32, data)
+  # Reshape timestamps to three f32 per row of PE's in the grid
+  raw_timestamps = np.reshape(raw_timestamps, (height, 3))
 
-  (px, py, w, h, l, data) = runtime_utils.prepare_output_tensor(oportmap_finishBuffer, np.float32)
-  simulator.memcpy_d2h(data, symbol_finishBuffer, False, px, py, w, h, l, 0, False)
-  tsc_f = runtime_utils.format_output_tensor(oportmap_finishBuffer, np.float32, data)
+  time_start = np.zeros(height).astype(int)
+  time_end = np.zeros(height).astype(int)
+  word = np.zeros(3).astype(np.uint16)
 
-  # Reshape arrays: each row represents the three f32 values extracted from the last column PE of said row 
-  tsc_s = np.reshape(tsc_s, (height, 3))
-  tsc_f = np.reshape(tsc_f, (height, 3))
+  # split three f32 into two u48
+  for h in range(height):
+      hex_t0 = int(float_to_hex(raw_timestamps[(h, 0)]), base=16)
+      hex_t1 = int(float_to_hex(raw_timestamps[(h, 1)]), base=16)
+      hex_t2 = int(float_to_hex(raw_timestamps[(h, 2)]), base=16)
+      word[0] = hex_t0 & 0x0000ffff
+      word[1] = (hex_t0 >> 16) & 0x0000ffff
+      word[2] = hex_t1 & 0x0000ffff
+      time_start[h] = make_u48(word)
+      word[0] = (hex_t1 >> 16) & 0x0000ffff
+      word[1] = hex_t2 & 0x0000ffff
+      word[2] = (hex_t2 >> 16) & 0x0000ffff
+      time_end[h] = make_u48(word)
 
-  # Reverse order of elements
-  tsc_s = np.fliplr(tsc_s)
-  tsc_f = np.fliplr(tsc_f)
-
-  # Convert three f32 to one uint48
-  tsc_s = convert_array(tsc_s)
-  tsc_f = convert_array(tsc_f)
-
-  # Get cycle count per PE
-  cycles = np.subtract(tsc_f, tsc_s)
+  cycles = time_end - time_start
 
   print(cycles)
 

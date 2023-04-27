@@ -16,7 +16,3 @@ for (( i=0; i<${testlen}; i++ ));
 do
   ./run_benchmark.sh ${A_heights[i]} ${A_widths[i]} ${A_densities[i]} ${grid_h[i]} ${grid_w[i]} ${M_w[i]} 
 done
-
-mv ../grid_csc_dsd/benchmark_results.txt results/csc_benchmark_results.txt
-mv ../grid_csr_dsd/benchmark_results.txt results/csr_benchmark_results.txt
-mv ../grid_custom_dsd/benchmark_results.txt results/custom_benchmark_results.txt

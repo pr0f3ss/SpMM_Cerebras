@@ -137,7 +137,7 @@ const mem_B_buf_dsd = @get_dsd(mem1d_dsd, .{ .tensor_access = |i|{Kt*M} -> B[i] 
 const fab_recv_B_wdsd = @get_dsd(fabin_dsd, .{
     .extent = _SIZE_B,
     .fabric_color = RXACT_B,
-    .input_queue = 0
+    .input_queue = @get_input_queue(0)
 });
 
 // Sending B
@@ -154,7 +154,7 @@ const mem_C_buf_dsd = @get_dsd(mem1d_dsd, .{ .tensor_access = |i|{Nt*M} -> C[i] 
 const fab_recv_C_wdsd = @get_dsd(fabin_dsd, .{
     .extent = _SIZE_C,
     .fabric_color = RXACT_C,
-    .input_queue = 2
+    .input_queue = @get_input_queue(2)
 });
 
 // Sending C
@@ -163,8 +163,6 @@ const fab_trans_C_wdsd = @get_dsd(fabout_dsd, .{
     .fabric_color = TXACT_C,
     .output_queue = 3
 });
-
-
 
 ////////////////////////////////////////////////////////////////////////////////
 // Tasks
@@ -176,7 +174,6 @@ const spmm_csc_mod = @import_module( "spmm_csc.csl" , .{  .A_val_len = A_val_len
 
 // All PEs compute local A*B after A and B are received
 task f_comp() void {
-
     // if we are in row inbetween, send over B to south
     if(0 < _py and _py < height-1 ){
         @fmovs(fab_trans_B_wdsd, mem_B_buf_dsd, .{.async=true});
@@ -199,7 +196,6 @@ task f_comp() void {
 // px = 1 .. width - 2: receive C from west, compute new C and send result to east
 // px = width-1: receive C from west and compute new C
 task f_reduce() void {
-
     if (_px == 0){
         // send partial sum to the east and finish (every PE must call f_exit)
         @fmovs(fab_trans_C_wdsd, mem_C_buf_dsd, .{.async=true, .activate = f_exit});
@@ -212,20 +208,12 @@ task f_reduce() void {
     }
 }
 
-// This defines the h_params structure
-var params = @zeros([32]i32);
-var index :i32 =  -1;
-var num_wavelets: i32 = 0;
-
-
-// f_launch: reads h_params and sets up the execution
 // bcast_B: broadcasts local B to south PEs
 // f_comp: computes local A*B
 // f_reduce: receives local A*B from west, does computation and sends local A*B to east 
 // f_exit: unblock cmd color for every PE such that C dsds can be read on host
 
 fn bcast_B() void {
-
     _px = @as(i16, get_x_coord());
     _py = @as(i16, get_y_coord());
 
@@ -262,44 +250,6 @@ task f_exit() void {
     sys_mod.unblock_cmd_stream();
 }
 
-// host runtime sends h_params via color LAUNCH
-//
-// format of h_params
-//
-//  +---------------------+
-//  | # of wvlts          | 1st wavelet
-//  +---------------------+
-//  | param 1             | 2nd wavelet
-//  +---------------------+
-//  | param 2             | 3rd wavelet
-//  +---------------------+
-//  | param 3             | 4th wavelet
-//  +---------------------+
-//  | ...                 |
-//  +---------------------+
-//  | ID of the function  | last wavelet
-//  +---------------------+
-//
-task f_launch( data : i32 ) void {
-    if (index < 0){
-        num_wavelets = data;
-        index = 0;
-    }else{
-        if (index < num_wavelets){
-            params[index] = data;
-            index +=1;
-        }else{
-            index = -1;
-            // data is the ID of the function
-            if (0 == data){
-                // WARNING: all PEs must call f_exit()
-                bcast_B();
-            }
-        }
-    }
-}
-
-
 comptime {
 
     // use microthreads to read B and C, so block RXACT_B and RXACT_C
@@ -310,7 +260,6 @@ comptime {
     @bind_task(f_comp, COMP);
     @bind_task(f_reduce, REDUCE);
 
-    @bind_task(f_launch, LAUNCH);
     @bind_task(f_exit, EXIT);
 }
 
@@ -321,4 +270,8 @@ comptime {
     @export_symbol(ptr_B, "B");
     @export_symbol(ptr_C, "C");
     @export_symbol(ptr_time_memcpy, "time_memcpy");
+
+    // For memcpy
+    @export_symbol(bcast_B);
+    @rpc(LAUNCH);
 }

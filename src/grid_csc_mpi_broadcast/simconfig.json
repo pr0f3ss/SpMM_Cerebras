@@ -17,7 +17,7 @@
   "debug": [],
   "dieOnTerm": false,
   "logger": {
-    "fd": -1,
+    "compress": false,
     "logfile": "",
     "minloglevel": "INFO"
   },
@@ -25,6 +25,7 @@
   "multinode": {
     "enabled": false
   },
+  "orderTraces": false,
   "outdir": ".",
   "planmeta": "",
   "randSeed": 1,
@@ -38,16 +39,7 @@
     "pinBias": 0,
     "pinThreads": false
   },
-  "trace": {
-    "dumpInstructions": false,
-    "dumpLandingWavelets": false,
-    "dumpNodeBusy": false,
-    "dumpStalls": true,
-    "dumpStateUpdates": false,
-    "dumpSwitchPositions": false,
-    "dumpWavelets": false,
-    "orderTraces": false
-  },
+  "trace": [],
   "traceFormat": {
     "ctfTrace": {
       "dirname": "",

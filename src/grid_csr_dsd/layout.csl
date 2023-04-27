@@ -475,4 +475,6 @@ layout{
     @export_name("B", [*]f32, true);
     @export_name("C", [*]f32, true);
     @export_name("time_memcpy", [*]f32, true);
+
+    @export_name("bcast_B", fn()void);
 }

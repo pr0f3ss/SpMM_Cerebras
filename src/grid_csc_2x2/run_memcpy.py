@@ -41,6 +41,9 @@ import numpy as np
 
 from cerebras.sdk.runtime import runtime_utils # pylint: disable=no-name-in-module
 from cerebras.sdk.runtime.sdkruntimepybind import SdkRuntime # pylint: disable=no-name-in-module
+from cerebras.sdk.runtime.sdkruntimepybind import MemcpyDataType # pylint: disable=no-name-in-module
+from cerebras.sdk.runtime.sdkruntimepybind import MemcpyOrder    # pylint: disable=no-name-in-module
+
 
 FILE_PATH = os.path.realpath(__file__)
 RESIDUAL_DIR = os.path.dirname(FILE_PATH)
@@ -301,6 +304,9 @@ def main():
     print("COMPILE ONLY: EXIT")
     return
 
+  memcpy_dtype = MemcpyDataType.MEMCPY_32BIT
+  memcpy_order = MemcpyOrder.ROW_MAJOR
+
   simulator = SdkRuntime(args.name, cmaddr=args.cmaddr)
 
   symbol_A_val = simulator.get_id("A_val")
@@ -348,39 +354,33 @@ def main():
   # prepare all of A and B via memcpy
   # use the runtime_utils library to calculate memcpy args and shuffle data
   (px, py, w, h, l, data) = runtime_utils.convert_input_tensor(iportmap_A_val, A_val)
-  simulator.memcpy_h2d(symbol_A_val, data, False, px, py, w, h, l, 0, False)
+  simulator.memcpy_h2d(symbol_A_val, data, px, py, w, h, l,
+                     streaming=False, data_type=memcpy_dtype, nonblock=False,
+                     order=memcpy_order)
+
   (px, py, w, h, l, data) = runtime_utils.convert_input_tensor(iportmap_A_row_idx, A_row_idx)
-  simulator.memcpy_h2d(symbol_A_row_idx, data, False, px, py, w, h, l, 0, False)
+  simulator.memcpy_h2d(symbol_A_row_idx, data, px, py, w, h, l,
+                     streaming=False, data_type=memcpy_dtype, nonblock=False,
+                     order=memcpy_order)
+
   (px, py, w, h, l, data) = runtime_utils.convert_input_tensor(iportmap_A_col_ptr, A_col_ptr)
-  simulator.memcpy_h2d(symbol_A_col_ptr, data, False, px, py, w, h, l, 0, False)
+  simulator.memcpy_h2d(symbol_A_col_ptr, data, px, py, w, h, l,
+                     streaming=False, data_type=memcpy_dtype, nonblock=False,
+                     order=memcpy_order)
 
   (px, py, w, h, l, data) = runtime_utils.convert_input_tensor(iportmap_B, B)
-  simulator.memcpy_h2d(symbol_B, data, False, px, py, w, h, l, 0, False)
-  # trigger the computation
-  h_params = np.zeros(2).astype(np.uint32)
-  # format of h_params
-  #  +---------------------+
-  #  | # of wvlts          | 1st wavelet
-  #  +---------------------+
-  #  | param 1             | 2nd wavelet
-  #  +---------------------+
-  #  | param 2             | 3rd wavelet
-  #  +---------------------+
-  #  | param 3             | 4th wavelet
-  #  +---------------------+
-  #  | ...                 |
-  #  +---------------------+
-  #  | ID of the function  | last wavelet
-  #  +---------------------+
-  # h_params has K+2 wavelets where K = number of parameters
-  h_params[0] = cast_uint32(0) # number of wavelets
-  h_params[1] = cast_uint32(np.int16(0)) # ID of the function
-  simulator.memcpy_launch(LAUNCH, h_params, False)
+  simulator.memcpy_h2d(symbol_B, data, px, py, w, h, l,
+                     streaming=False, data_type=memcpy_dtype, nonblock=False,
+                     order=memcpy_order)
+
+  simulator.call("bcast_B", [], nonblock=False)
 
   # receive C_final from P1.1 and P1.0
   # use the runtime_utils library to calculate memcpy args and manage output data
   (px, py, w, h, l, data) = runtime_utils.prepare_output_tensor(oportmap_C_final, np.float32)
-  simulator.memcpy_d2h(data, symbol_C_final, False, px, py, w, h, l, 0, False)
+  simulator.memcpy_d2h(data, symbol_C_final, px, py, w, h, l,
+                     streaming=False, data_type=memcpy_dtype, nonblock=False,
+                     order=memcpy_order)
 
   C_cs = runtime_utils.format_output_tensor(oportmap_C_final, np.float32, data)
 

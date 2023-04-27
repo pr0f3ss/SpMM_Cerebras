@@ -90,7 +90,7 @@ var C_final  = @zeros([Nt*M]f32);
 // workspace for A*B
 var C_temp = @zeros([Nt*M]f32);
 
-// (_px, _py) is the coordinate of region of interest, set by the function bcast_x
+// (_px, _py) is the coordinate of region of interest, set by the function bcast_B
 // which starts the computation
 var _px : i16 ;
 var _py : i16 ;
@@ -122,7 +122,7 @@ const mem_B_buf_dsd = @get_dsd(mem1d_dsd, .{ .tensor_access = |i|{Kt*M} -> B[i] 
 const fab_recv_B_wdsd = @get_dsd(fabin_dsd, .{
     .extent = _SIZE_B,
     .fabric_color = RXACT_B,
-    .input_queue = 1
+    .input_queue = @get_input_queue(0)
 });
 
 // Sending B
@@ -139,14 +139,14 @@ const mem_C_temp_buf_dsd = @get_dsd(mem1d_dsd, .{ .tensor_access = |i|{Nt*M} -> 
 const fab_recv_C_temp_wdsd = @get_dsd(fabin_dsd, .{
     .extent = _SIZE_C,
     .fabric_color = RXACT_C,
-    .input_queue = 2
+    .input_queue = @get_input_queue(2)
 });
 
 // Sending C_temp (to right hand side last column PE)
 const fab_trans_C_temp_wdsd = @get_dsd(fabout_dsd, .{
     .extent = _SIZE_C,
     .fabric_color = TXACT_C,
-    .output_queue = 2
+    .output_queue = 3
 });
 
 // C_final buffer
@@ -202,19 +202,17 @@ var num_wavelets: i32 = 0;
 
 // the calling sequence
 // px: cols, py: rows
-// py = 0/1, px = 0: bcast_x --> f_comp --> f_reduce --> f_exit
-// py = 0/1, px = 1: bcast_x --> f_comp --> f_reduce --> f_done --> f_exit
+// py = 0/1, px = 0: bcast_B --> f_comp --> f_reduce --> f_exit
+// py = 0/1, px = 1: bcast_B --> f_comp --> f_reduce --> f_done --> f_exit
 // We add the local results in the last column (px = 1), hence why we need an additional 'done' task in the last column
 
-// f_launch: reads h_params and sets up the execution
-// bcast_x: broadcasts local B to south PEs
+// bcast_B: broadcasts local B to south PEs
 // f_comp: computes local A*B
 // f_reduce: sends local A*B to east or receives local A*B from west
 // f_done: computes the addition of the local A*B results
 // f_exit: unblock cmd color for every PE such that C_final dsds can be read on host
 
-fn bcast_x() void {
-
+fn bcast_B() void {
     _px = @as(i16, get_x_coord());
     _py = @as(i16, get_y_coord());
 
@@ -232,43 +230,6 @@ task f_exit() void {
     sys_mod.unblock_cmd_stream();
 }
 
-// host runtime sends h_params via color LAUNCH
-//
-// format of h_params
-//
-//  +---------------------+
-//  | # of wvlts          | 1st wavelet
-//  +---------------------+
-//  | param 1             | 2nd wavelet
-//  +---------------------+
-//  | param 2             | 3rd wavelet
-//  +---------------------+
-//  | param 3             | 4th wavelet
-//  +---------------------+
-//  | ...                 |
-//  +---------------------+
-//  | ID of the function  | last wavelet
-//  +---------------------+
-//
-task f_launch( data : i32 ) void {
-    if (index < 0){
-        num_wavelets = data;
-        index = 0;
-    }else{
-        if (index < num_wavelets){
-            params[index] = data;
-            index +=1;
-        }else{
-            index = -1;
-            // data is the ID of the function
-            if (0 == data){
-                // WARNING: all PEs must call f_exit()
-                bcast_x();
-            }
-        }
-    }
-}
-
 
 comptime {
 
@@ -281,7 +242,6 @@ comptime {
     @bind_task(f_reduce, REDUCE);
     @bind_task(f_done, DONE);
 
-    @bind_task( f_launch, LAUNCH);
     @bind_task( f_exit, EXIT);
 }
 
@@ -292,4 +252,8 @@ comptime {
     @export_symbol(ptr_B, "B");
     @export_symbol(ptr_C_final, "C_final");
     @export_symbol(ptr_C_temp, "C_temp");
+
+    // For memcpy
+    @export_symbol(bcast_B);
+    @rpc(LAUNCH);
 }

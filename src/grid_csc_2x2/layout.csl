@@ -143,4 +143,6 @@ layout{
     @export_name("B", [*]f32, true);
     @export_name("C_temp", [*]f32, true);
     @export_name("C_final", [*]f32, true);
+
+    @export_name("bcast_B", fn()void);
 }

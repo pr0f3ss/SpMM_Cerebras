@@ -472,4 +472,6 @@ layout{
     @export_name("C", [*]f32, true);
     @export_name("startBuffer", [*]f32, true);
     @export_name("finishBuffer", [*]f32, true);
+
+    @export_name("bcast_B", fn()void);
 }

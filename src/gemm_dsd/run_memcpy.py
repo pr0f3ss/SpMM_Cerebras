@@ -45,6 +45,8 @@ import numpy as np
 
 from cerebras.sdk.runtime import runtime_utils # pylint: disable=no-name-in-module
 from cerebras.sdk.runtime.sdkruntimepybind import SdkRuntime # pylint: disable=no-name-in-module
+from cerebras.sdk.runtime.sdkruntimepybind import MemcpyDataType # pylint: disable=no-name-in-module
+from cerebras.sdk.runtime.sdkruntimepybind import MemcpyOrder    # pylint: disable=no-name-in-module
 
 FILE_PATH = os.path.realpath(__file__)
 RESIDUAL_DIR = os.path.dirname(FILE_PATH)
@@ -312,6 +314,9 @@ def main():
     print("COMPILE ONLY: EXIT")
     return
 
+  memcpy_dtype = MemcpyDataType.MEMCPY_32BIT
+  memcpy_order = MemcpyOrder.ROW_MAJOR
+
   simulator = SdkRuntime(args.name, cmaddr=args.cmaddr)
 
   symbol_A = simulator.get_id("A")
@@ -357,38 +362,23 @@ def main():
   # use the runtime_utils library to calculate memcpy args and shuffle data
 
   (px, py, w, h, l, data) = runtime_utils.convert_input_tensor(iportmap_B, B)
-  simulator.memcpy_h2d(symbol_B, data, False, px, py, w, h, l, 0, False)
+  simulator.memcpy_h2d(symbol_B, data, px, py, w, h, l,
+                     streaming=False, data_type=memcpy_dtype, nonblock=False,
+                     order=memcpy_order)
 
   (px, py, w, h, l, data) = runtime_utils.convert_input_tensor(iportmap_A, A_prep)
-  simulator.memcpy_h2d(symbol_A, data, False, px, py, w, h, l, 0, False)
+  simulator.memcpy_h2d(symbol_A, data, px, py, w, h, l,
+                     streaming=False, data_type=memcpy_dtype, nonblock=False,
+                     order=memcpy_order)
 
-
-  # trigger the computation
-  h_params = np.zeros(2).astype(np.uint32)
-  # format of h_params
-  #  +---------------------+
-  #  | # of wvlts          | 1st wavelet
-  #  +---------------------+
-  #  | param 1             | 2nd wavelet
-  #  +---------------------+
-  #  | param 2             | 3rd wavelet
-  #  +---------------------+
-  #  | param 3             | 4th wavelet
-  #  +---------------------+
-  #  | ...                 |
-  #  +---------------------+
-  #  | ID of the function  | last wavelet
-  #  +---------------------+
-  # h_params has K+2 wavelets where K = number of parameters
-  h_params[0] = cast_uint32(0) # number of wavelets
-  h_params[1] = cast_uint32(np.int16(0)) # ID of the function
-  simulator.memcpy_launch(LAUNCH, h_params, False)
-
+  simulator.call("bcast_B", [], nonblock=False)
 
   # receive C from P1.1 and P1.0
   # use the runtime_utils library to calculate memcpy args and manage output data
   (px, py, w, h, l, data) = runtime_utils.prepare_output_tensor(oportmap_C, np.float32)
-  simulator.memcpy_d2h(data, symbol_C, False, px, py, w, h, l, 0, False)
+  simulator.memcpy_d2h(data, symbol_C, px, py, w, h, l,
+                     streaming=False, data_type=memcpy_dtype, nonblock=False,
+                     order=memcpy_order)
 
   C_cs = runtime_utils.format_output_tensor(oportmap_C, np.float32, data)
 
@@ -396,8 +386,14 @@ def main():
   C_cs = np.reshape(C_cs, (N, M))
 
   (px, py, w, h, l, data) = runtime_utils.prepare_output_tensor(oportmap_timestamps, np.float32)
-  simulator.memcpy_d2h(data, symbol_time_memcpy, False, px, py, w, h, l, 0, False)
+  simulator.memcpy_d2h(data, symbol_time_memcpy, px, py, w, h, l,
+                     streaming=False, data_type=memcpy_dtype, nonblock=False,
+                     order=memcpy_order)
+
   raw_timestamps = runtime_utils.format_output_tensor(oportmap_timestamps, np.float32, data)
+
+  simulator.stop()
+
   # Reshape timestamps to three f32 per row of PE's in the grid
   raw_timestamps = np.reshape(raw_timestamps, (height, 3))
 
@@ -433,9 +429,6 @@ def main():
   file1 = open("benchmark_results.txt", "a")  # append mode
   file1.write(str(cycles) + ",")
   file1.close()
-
-
-  simulator.stop()
 
   if args.cmaddr is None:
     #move simulation log and core dump to the given folder

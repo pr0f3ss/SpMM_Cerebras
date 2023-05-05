@@ -1,0 +1,14 @@
+COO example:
+A_len = max(nnz per PE)
+
+Bytes_read = A_len * ((3+2*M) * 4 bytes) 
+
+Flops = A_len * M
+
+I =  {A_len * M} / {A_len * ((3+2*M) * 4 bytes)}
+= 12 + 8*M / M
+~ 8
+
+peak_mem_bw     = 24.5 GB/s
+frequency       = 1.1 GHz
+peak_mem_bw     = 22.27 bytes/cycle

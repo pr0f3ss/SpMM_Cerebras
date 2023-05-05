@@ -180,6 +180,10 @@ task f_comp() void {
     tsc.enable_tsc();
     tsc.get_timestamp(&tscStartBuffer);
 
+    // Initialize DSDs
+    var B_dsd  = @get_dsd(mem1d_dsd, .{ .tensor_access = |i|{M} -> B[i] });
+    var C_dsd  = @get_dsd(mem1d_dsd, .{ .tensor_access = |i|{M} -> C[i] });
+
     // C = A * B 
     // iterate over row pointers
     for (@range(i32, A_rowptr_len-1)) |j| {
@@ -207,14 +211,10 @@ task f_comp() void {
             // get a's coordinates
             var a_i = ref_elem_col_idx;   // col
             var a_j = j;                  // row
-
-            // Because we cannot directly access a row (returns an error for some reason), we have to use a hack ...
-            // Basically get first row and then increment the offset to the row we want
-            var B_dsd  = @get_dsd(mem1d_dsd, .{ .tensor_access = |i|{M} -> B[i] });
-            var C_dsd  = @get_dsd(mem1d_dsd, .{ .tensor_access = |i|{M} -> C[i] });
             
-            B_dsd = @increment_dsd_offset(B_dsd, @as(i16, a_i*M), f32);
-            C_dsd = @increment_dsd_offset(C_dsd, @as(i16, a_j*M), f32);
+            // Set base address to the rows we need
+            B_dsd = @set_dsd_base_addr(B_dsd, @ptrcast([*]f32, &(B[M*a_i])));
+            C_dsd = @set_dsd_base_addr(C_dsd, @ptrcast([*]f32, &(C[M*a_j])));
 
             @fmacs(C_dsd, C_dsd, B_dsd, a);
         }

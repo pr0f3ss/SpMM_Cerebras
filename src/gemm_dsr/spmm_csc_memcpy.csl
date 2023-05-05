@@ -159,6 +159,10 @@ const fab_trans_C_wdsd = @get_dsd(fabout_dsd, .{
 // Tasks
 ////////////////////////////////////////////////////////////////////////////////
 
+fn transformation(a_value : f32, b_value : f32, c_value : f32) f32 {
+  return c + a*b;
+}
+
 
 // All PEs compute local A*B after A and B are received
 task f_comp() void {
@@ -173,28 +177,27 @@ task f_comp() void {
         @fmovs(fab_trans_B_wdsd, mem_B_buf_dsd);
     }
 
-    // C = A * B 
-    // for (@range(i32, Nt)) |i| {
-    //     for (@range(i32, M)) |j| {
-    //         for (@range(i32, Kt)) |k| {
-    //             C[i * M + j] += A[i * Kt + k] * B[k * M + j];
-    //         }
-    //     }
-    // }
-
     // Do an fmacs based local GEMM
     var A_dsd  = @get_dsd(mem1d_dsd, .{ .tensor_access = |i|{Nt} -> A[i*Kt] });
-    //A_dsd = @set_dsd_base_addr(A_dsd, Ap);
+    var C_dsd = @get_dsd(mem1d_dsd, .{ .tensor_access = |i|{Nt} -> C[i*M] });
+
+    const A_dsr = @get_dsr(dsr_src1, 0);
+    const C_dsr = @get_dsr(dsr_src0, 1);
+
+    @load_to_dsr(A_dsr, A_dsd);
+    @load_to_dsr(C_dsr, C_dsd);
 
     for (@range(i16, Kt)) |k| {
-        var C_dsd = @get_dsd(mem1d_dsd, .{ .tensor_access = |i|{Nt} -> C[i*M] });
+
+        @set_dsr_base_addr(A_dsr, @ptrcast([*]f32, &(A[k])));
 
         for (@range(i16, M)) |j| {
+            // Set base address to the rows we need
+            @set_dsr_base_addr(C_dsr, @ptrcast([*]f32, &(C[j])));
+            
             const b = B[k*M + j];
-            @fmacs(C_dsd, C_dsd, A_dsd, b);
-            C_dsd = @increment_dsd_offset(C_dsd, 1, f32);
+            @fmacs(C_dsr, C_dsr, A_dsr, b);
         }
-        A_dsd = @increment_dsd_offset(A_dsd, 1, f32);
     }
 
     tsc.get_timestamp(&tscEndBuffer);

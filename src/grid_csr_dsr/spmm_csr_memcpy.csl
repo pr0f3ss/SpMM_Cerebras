@@ -1,5 +1,5 @@
 // This program computes A*B on a height-by-width PE rectangle
-// The matrix A in grid CSC format is distributed to every PE via memcpy
+// The matrix A in grid CSR format is distributed to every PE via memcpy
 // The matrix B is distributed to first row PEs via memcpy
 // Pw.0, ..., Pw.h send out the result C_final via memcpy, where h = height-1 and w = width-1.
 // Note that this is the right-hand side column of PEs
@@ -27,6 +27,8 @@ param RXACT_C: color; // px = 0: don't care
 param TXACT_C: color; // px = width-1: don't care
                       // px < width-1: send partial sum to east
 
+const timeStampColor: color = @get_color(7);
+
 // local tasks
 param COMP: color;     // compute local C = A*B
 param REDUCE: color;   // reduce local C = A*B
@@ -42,12 +44,16 @@ param EXIT: color;     // entrypoint to leave RPC
 // C grid: Nt x Mt
 // We set Mt = M
 
-// A uses grid CSC format and predetermined (padded) size 
-// A_val_len, A_rowidx_len and A_colptr_len
+// A uses grid CSR format and predetermined (padded) size 
+// A_val_len, A_colidx_len and A_rowptr_len
 
-param Nt:i16;         
-param Kt:i16; 
-param M:i16;  
+param Nt:i32;         
+param Kt:i32; 
+param M:i32;  
+
+param A_val_len:i32;
+param A_colidx_len:i32;
+param A_rowptr_len:i32;
 
 param width: i16;
 param height: i16;
@@ -69,7 +75,6 @@ const sys_mod = @import_module( "<memcpy_multi/memcpy>", @concat_structs(memcpyP
 
 const tsc = @import_module("<time>");
 
-
 ////////////////////////////////////////////////////////////////////////////////
 // Main memory (48KB)
 ////////////////////////////////////////////////////////////////////////////////
@@ -81,8 +86,10 @@ const tsc = @import_module("<time>");
 const  _SIZE_B = Kt*M;
 const  _SIZE_C = Nt*M;
 
-var A  = @zeros([Nt*Kt]f32);
-
+var A_val  = @zeros([A_val_len]f32);
+// Memcpy limitation: Have to be copied in as f32 as sys_mod requires us to have the same datatype
+var A_col_idx  = @zeros([A_colidx_len]f32);
+var A_row_ptr  = @zeros([A_rowptr_len]f32);
 
 var B  = @zeros([Kt*M]f32);
 
@@ -102,7 +109,9 @@ var _px : i16 ;
 var _py : i16 ;
 
 // WARNING: export pointers, not arrays
-var ptr_A : [*]f32 = &A;
+var ptr_A_val : [*]f32 = &A_val;
+var ptr_A_col_idx  : [*]f32 = &A_col_idx;
+var ptr_A_row_ptr : [*]f32 = &A_row_ptr;
 var ptr_B : [*]f32 = &B;
 var ptr_C : [*]f32 = &C;
 var ptr_time_memcpy: [*]f32 = &time_buf_f32;
@@ -119,7 +128,7 @@ var ptr_time_memcpy: [*]f32 = &time_buf_f32;
 // serves to describe the actual data operand, which is a memory or fabric tensor.
 ////////////////////////////////////////////////////////////////////////////////
 
-// B buffer
+// Have to use multi-dimensional memory vector -> mem4d_dsd
 const mem_B_buf_dsd = @get_dsd(mem1d_dsd, .{ .tensor_access = |i|{Kt*M} -> B[i] });
 
 // Receiving B
@@ -163,41 +172,63 @@ const fab_trans_C_wdsd = @get_dsd(fabout_dsd, .{
 // All PEs compute local A*B after A and B are received
 task f_comp() void {
 
-    tsc.enable_tsc();
-    tsc.get_timestamp(&tscStartBuffer);
     // if we are in row inbetween, send over B to south
     if(0 < _py and _py < height-1 ){
-        // Todo: see if async works here or if we have to assign a new task+color for a separate microthread
-        // Also verify if input/output queue identifiers can overlap with this implementation
-        // They can overlap for 2x2 because they are not used simultaneously in a PE
-        @fmovs(fab_trans_B_wdsd, mem_B_buf_dsd);
+        @fmovs(fab_trans_B_wdsd, mem_B_buf_dsd, .{.async=true});
     }
 
+    tsc.enable_tsc();
+    tsc.get_timestamp(&tscStartBuffer);
+
+    // Set up DSRs from DSDs
+    var B_dsd  = @get_dsd(mem1d_dsd, .{ .tensor_access = |i|{M} -> B[i] });
+    var C_dsd  = @get_dsd(mem1d_dsd, .{ .tensor_access = |i|{M} -> C[i] });
+
+    const B_dsr = @get_dsr(dsr_src1, 0);
+    const C_dsr = @get_dsr(dsr_src0, 1);
+
+    @load_to_dsr(B_dsr, B_dsd);
+    @load_to_dsr(C_dsr, C_dsd);
+
     // C = A * B 
-    // for (@range(i32, Nt)) |i| {
-    //     for (@range(i32, M)) |j| {
-    //         for (@range(i32, Kt)) |k| {
-    //             C[i * M + j] += A[i * Kt + k] * B[k * M + j];
-    //         }
-    //     }
-    // }
+    // iterate over row pointers
+    for (@range(i32, A_rowptr_len-1)) |j| {
 
-    // Do an fmacs based local GEMM
-    var A_dsd  = @get_dsd(mem1d_dsd, .{ .tensor_access = |i|{Nt} -> A[i*Kt] });
-    //A_dsd = @set_dsd_base_addr(A_dsd, Ap);
+        // get number of non-zero columns in the current row
+        // cast from f32 to i32
+        var col_elems = @as(i32, A_row_ptr[j+1] - A_row_ptr[j]);
 
-    for (@range(i16, Kt)) |k| {
-        var C_dsd = @get_dsd(mem1d_dsd, .{ .tensor_access = |i|{Nt} -> C[i*M] });
+        var col_idx_start = @as(i32, A_row_ptr[j]);
 
-        for (@range(i16, M)) |j| {
-            const b = B[k*M + j];
-            @fmacs(C_dsd, C_dsd, A_dsd, b);
-            C_dsd = @increment_dsd_offset(C_dsd, 1, f32);
+        if(@as(i32, A_row_ptr[j+1]) == -1){
+            // exit if we reach padded end
+            break;
         }
-        A_dsd = @increment_dsd_offset(A_dsd, 1, f32);
+
+        // iterate over all non-zero columns in the current row
+        for (@range(i32, col_elems)) |i| {
+
+            // get the reference element column index
+            var ref_elem_col_idx = @as(i32, A_col_idx[col_idx_start+i]);
+
+            // extract the referenced non-zero value
+            var a = A_val[col_idx_start+i];
+
+            // get a's coordinates
+            var a_i = ref_elem_col_idx;   // col
+            var a_j = j;                  // row
+
+            // Set base address to the rows we need
+            @set_dsr_base_addr(B_dsr, @ptrcast([*]f32, &(B[M*a_i])));
+            @set_dsr_base_addr(C_dsr, @ptrcast([*]f32, &(C[M*a_j])));
+
+            @fmacs(C_dsr, C_dsr, B_dsr, a);
+        }
+
     }
 
     tsc.get_timestamp(&tscEndBuffer);
+
     // activate reduce task after C computation
     @activate(REDUCE);
 }
@@ -207,6 +238,7 @@ task f_comp() void {
 // px = 1 .. width - 2: receive C from west, compute new C and send result to east
 // px = width-1: receive C from west and compute new C
 task f_reduce() void {
+
     if (_px == 0){
         // send partial sum to the east and finish (every PE must call f_exit)
         @fmovs(fab_trans_C_wdsd, mem_C_buf_dsd, .{.async=true, .activate = f_exit});
@@ -217,10 +249,9 @@ task f_reduce() void {
         // Receive result from west, add local + west C and send to result to east
         @fadds(fab_trans_C_wdsd, fab_recv_C_wdsd, mem_C_buf_dsd, .{.async=true, .activate = f_exit});
     }
-
-    @activate(EXIT);
 }
 
+// f_launch: reads h_params and sets up the execution
 // bcast_B: broadcasts local B to south PEs
 // f_comp: computes local A*B
 // f_reduce: receives local A*B from west, does computation and sends local A*B to east 
@@ -263,8 +294,8 @@ task f_exit() void {
     sys_mod.unblock_cmd_stream();
 }
 
-comptime {
 
+comptime {
     // use microthreads to read B and C, so block RXACT_B and RXACT_C
     @block(RXACT_B);
     @block(RXACT_C);
@@ -277,7 +308,9 @@ comptime {
 }
 
 comptime {
-    @export_symbol(ptr_A, "A");
+    @export_symbol(ptr_A_val, "A_val");
+    @export_symbol(ptr_A_col_idx, "A_col_idx");
+    @export_symbol(ptr_A_row_ptr, "A_row_ptr");
     @export_symbol(ptr_B, "B");
     @export_symbol(ptr_C, "C");
     @export_symbol(ptr_time_memcpy, "time_memcpy");

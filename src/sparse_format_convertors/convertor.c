@@ -422,6 +422,81 @@ void convert_to_grid_custom_grid(double* matrix, int n, int m, int Px, int Py, c
     fclose(fp_y);
 }
 
+/**
+ * Converts a matrix containing doubles to local ellpack grid format and writes it into two files in row-wise grid traversal.
+ * In each file, each grid is contained within 'grid_height' amount of lines. The value array denotes the values for the row, while the indices
+ * denote the column position. The row is implicitly contained by the row identifier.
+ * If a grid row is empty, it will print an empty line in 'filename_val' and 'filename_indices'. 
+ * @param mat double matrix
+ * @param n row dimension of matrix
+ * @param m column dimension of matrix 
+ * @param Px grid dimension column
+ * @param Py grid dimension row
+ * @param filename_val filename to write the ellpack values array into
+ * @param filename_indices filename to write the ellpack column indices array into
+ */
+void convert_to_grid_ellpack_grid(double* matrix, int n, int m, int Px, int Py, char* filename_val, char* filename_indices){
+    // open files
+    FILE* fp_val;
+    fp_val = fopen(filename_val, "w");
+    if (fp_val == NULL) {
+        printf("Error opening file!\n");
+        exit(1);
+    }
+
+    FILE* fp_indices;
+    fp_indices = fopen(filename_indices, "w");
+    if (fp_indices == NULL) {
+        printf("Error opening file!\n");
+        exit(1);
+    }
+
+    int grid_col_idx;
+    int grid_row_idx;
+
+    // If grid dimension do not align, extend by one
+    int grid_height = n % Py == 0 ? n / Py : n/Py + 1;
+    int grid_width = m % Px == 0 ? m / Px : m/Px + 1;
+
+
+    // Traverse gridwise (from left to right)
+    for(int i=0; i<Py; i++){
+        for(int j=0; j<Px; j++){
+
+            // Here, we traverse inside the grid
+            for(grid_row_idx = 0; grid_row_idx < grid_height; grid_row_idx++){
+                
+                // check row bounds
+                int global_row = grid_height*i + grid_row_idx;
+                if(global_row >= n){
+                    break;
+                }
+                
+                for(grid_col_idx = 0; grid_col_idx < grid_width; grid_col_idx++){
+                    // check column bounds
+                    int global_col = grid_width*j + grid_col_idx;
+                    if(global_col >= m){
+                        break;
+                    }
+                        
+                    // check if we have a non-zero value
+                    int index = global_row*m + global_col;
+                    
+                    if(matrix[index] != 0){
+                        fprintf(fp_val, "%f,", matrix[index]);
+                        fprintf(fp_indices, "%d,", grid_col_idx);
+                    }
+                }
+                fprintf(fp_val, "\n");
+                fprintf(fp_indices, "\n");
+            }
+        }
+    }
+
+    fclose(fp_val);
+    fclose(fp_indices);
+}
+
 
 int main(int argc, char **argv)
 {   
@@ -454,6 +529,7 @@ int main(int argc, char **argv)
     // 0: CSC
     // 1: CSR
     // 2: Custom
+    // 3: Ellpack
     int type = atoi(argv[6]);
 
     switch(type){
@@ -472,8 +548,13 @@ int main(int argc, char **argv)
             convert_to_grid_custom_grid(gen, height, width, grid_width, grid_height, "tmp_val.csv", "tmp_x.csv", "tmp_y.csv");
             printf("Custom\n");
             break;
+        case 3:
+            // Convert to grid Ellpack
+            convert_to_grid_ellpack_grid(gen, height, width, grid_width, grid_height, "tmp_val.csv", "tmp_indices.csv");
+            printf("Ellpack\n");
+            break;
         default:
-            printf("Enter a correct format type. 0: CSC, 1: CSR, 2: Custom");
+            printf("Enter a correct format type. 0: CSC, 1: CSR, 2: Custom, 3: Ellpack");
     }
 
     return 0;

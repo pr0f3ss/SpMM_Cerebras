@@ -238,11 +238,12 @@ def main():
 
   # Read in
   A_val = np.genfromtxt(A_val_file, delimiter=",", dtype=np.float32)
-  A_x = np.genfromtxt(A_indices_file, delimiter=",", dtype=np.float32)
+  A_indices = np.genfromtxt(A_indices_file, delimiter=",", dtype=np.float32)
 
   # Get lengths
-  # TODO: find correct
   A_len = A_val.shape[1]
+  print("A_len:")
+  print(A_len)
 
   np.random.seed(2)
   B = np.arange(K*M).reshape(K, M).astype(np.float32) + 100
@@ -361,17 +362,27 @@ def main():
 
   # prepare all of A and B via memcpy
   # use the runtime_utils library to calculate memcpy args and shuffle data
-  (px, py, w, h, l, data) = runtime_utils.convert_input_tensor(iportmap_A_val, A_val)
-  simulator.memcpy_h2d(symbol_A_val, data, px, py, w, h, l,
+  # (px, py, w, h, l, data) = runtime_utils.convert_input_tensor(iportmap_A_val, A_val)
+  print("Nt:")
+  print(Nt)
+  l = Nt*A_len
+  print(l)
+  data_val = A_val.view(dtype=np.int32).flatten()
+  print(A_val.flatten())
+  simulator.memcpy_h2d(symbol_A_val, data_val, 0, 0, width, height, l,
                      streaming=False, data_type=memcpy_dtype, nonblock=False,
                      order=memcpy_order)
   
-  (px, py, w, h, l, data) = runtime_utils.convert_input_tensor(iportmap_A_indices, A_x)
-  simulator.memcpy_h2d(symbol_A_indices, data, px, py, w, h, l,
+  #(px, py, w, h, l, data) = runtime_utils.convert_input_tensor(iportmap_A_indices, A_x)
+  data_indices = A_indices.view(dtype=np.int32).flatten()
+  simulator.memcpy_h2d(symbol_A_indices, data_indices, 0, 0, width, height, l,
                      streaming=False, data_type=memcpy_dtype, nonblock=False,
                      order=memcpy_order)
 
   (px, py, w, h, l, data) = runtime_utils.convert_input_tensor(iportmap_B, B)
+  print(w)
+  print(h)
+  print(l)
   simulator.memcpy_h2d(symbol_B, data, px, py, w, h, l,
                      streaming=False, data_type=memcpy_dtype, nonblock=False,
                      order=memcpy_order)

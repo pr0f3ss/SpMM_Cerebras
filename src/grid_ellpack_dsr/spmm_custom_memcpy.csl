@@ -51,7 +51,7 @@ param Nt:i16;
 param Kt:i16; 
 param M:i16;  
 
-param A_len:i32;
+param A_len:i16;
 
 param width: i16;
 param height: i16;
@@ -84,9 +84,9 @@ const tsc = @import_module("<time>");
 const  _SIZE_B = Kt*M;
 const  _SIZE_C = Nt*M;
 
-var A_val  = @zeros([height*A_len]f32);
+var A_val  = @zeros([Nt*A_len]f32);
 // Memcpy limitation: Have to be copied in as f32 as sys_mod requires us to have the same datatype
-var A_indices  = @zeros([height*A_len]f32);
+var A_indices  = @zeros([Nt*A_len]f32);
 
 var B  = @zeros([Kt*M]f32);
 
@@ -185,17 +185,18 @@ task f_comp() void {
 
     // C = A * B 
     // iterate over A_len
-    for(@range(i16, height)) |a_j|{
-        for(@range(i16, A_len)) |idx|{
+    for(@range(i16, Nt)) |a_j|{
+        var row = a_j*A_len;
 
-            var a_i = @as(i16, A_indices[idx]);   // get column
+        for(@range(i16, A_len)) |idx|{
+            
+            var a_i = @as(i16, A_indices[row+idx]);   // get column
 
             // If we reach pad values, break
             if(a_i == -1){
                 break;
             }
-
-            var a = A_val[idx]; // value
+            var a = A_val[row+idx]; // value
             
             // Set base address to the rows we need
             @set_dsr_base_addr(B_dsr, @ptrcast([*]f32, &(B[M*a_i])));
@@ -226,6 +227,7 @@ task f_reduce() void {
     }else{
         // Receive result from west, add local + west C and send to result to east
         @fadds(fab_trans_C_wdsd, fab_recv_C_wdsd, mem_C_buf_dsd, .{.async=true, .activate = f_exit});
+    
     }
 
     

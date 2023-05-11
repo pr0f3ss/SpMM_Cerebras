@@ -117,8 +117,25 @@ def pad_custom_grid(prefix, replace=-1):
 
     print("Row length:")
     pad_file(prefix+"_y.csv", prefix+"_y_pad.csv", dtype=int)
-    
 
+def pad_ellpack_grid(prefix, replace=-1):
+    """Takes the prefix of a grid ellpack formatted matrix and pads NaN entries with replace
+
+    Parameters
+    ----------
+    prefix: prefix of the filenames of a custom grid formatted matrix
+    replace (optional): number to replace it with
+
+    Returns
+    -------
+    Two files that have the padded grid CSV format
+    """
+    print("Value length:")
+    pad_file(prefix+"_val.csv", prefix+"_val_pad.csv", dtype=float)
+
+    print("Indices length:")
+    pad_file(prefix+"_indices.csv", prefix+"_indices_pad.csv", dtype=int)
+    
 def main():
     prefix = "tmp"
     fmt_type = int(argv[1])
@@ -130,6 +147,9 @@ def main():
         
     elif(fmt_type == 2):
         pad_custom_grid(prefix)
+    
+    elif(fmt_type == 3):
+        pad_ellpack_grid(prefix)
         
     else:
         print("Incorrect format type. Did not add padded arrays.")

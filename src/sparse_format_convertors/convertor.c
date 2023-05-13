@@ -39,7 +39,7 @@ double* generate_sparse_matrix(int density, int n, int m){
         for (int j=0; j<m; j++) 
         { 
             if (rand()%100 < density){ 
-                matrix[i*m + j] = (double)(rand()%10 + 1); 
+                matrix[i*m + j] = (double)rand()/RAND_MAX; 
             }
         } 
     } 

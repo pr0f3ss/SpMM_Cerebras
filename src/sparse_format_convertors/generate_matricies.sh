@@ -6,11 +6,12 @@ grid_w=(4)
 M_w=(32)
 implementations=("CSC" "CSR" "COO" "ELLPACK")
 
+implementations_len=${#implementations[@]}
 testlen=${#A_heights[@]}
 
 for (( i=0; i<${testlen}; i++ ));
 do
-    for (( j=0; j<4; j++ ));
+    for (( j=0; j<implementations_len; j++ ));
     do
         dir="${implementations[j]}_${A_heights[i]}x${A_widths[i]}_${A_densities[i]}"
         mkdir $dir

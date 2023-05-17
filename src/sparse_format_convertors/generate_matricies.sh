@@ -19,11 +19,9 @@ do
     do
         dir="${implementations[j]}_${A_heights[i]}x${A_widths[i]}_${A_densities[i]}"
         mkdir $dir
-        cp a.out $dir
-        cp add_padding.py $dir
-        cd $dir
         ./a.out ${A_heights[i]} ${A_widths[i]} ${A_densities[i]} ${grid_h[i]} ${grid_w[i]} $j
         OUTPUT=($(python3 add_padding.py ${j}| tr -d '[],')) # Evaluate output from python script as an array of numbers
+        mv tmp* $dir
         case $j in
         0)
             val_len=${OUTPUT[2]} 
@@ -33,7 +31,7 @@ do
             echo $row_idx_len >> out.txt
             echo $col_ptr_len >> out.txt
             echo "" >> out.txt
-            cd ..
+            mv out.txt $dir
             mv $dir "../grid_csc_padshift"
             ;;
         1)  
@@ -44,7 +42,7 @@ do
             echo $col_idx_len >> out.txt
             echo $row_ptr_len >> out.txt
             echo "" >> out.txt
-            cd ..
+            mv out.txt $dir
             mv $dir "../grid_csr_padshift"
             ;;
         2)  
@@ -55,23 +53,19 @@ do
             echo $col_len >> out.txt
             echo $row_len >> out.txt
             echo "" >> out.txt
-            cd ..
+            mv out.txt $dir
             mv $dir "../grid_custom_padshift"
             ;;
         3)
             A_len=${OUTPUT[2]}
             echo $A_len >> out.txt
             echo "" >> out.txt
-            cd ..
+            mv out.txt $dir
             mv $dir "../grid_ellpack_padshift"
             ;;
         *)
             echo "Format specifier unknown."
             ;;
         esac
-        cd $dir
-        rm a.out
-        rm add_padding.py
-        cd ..
     done
 done

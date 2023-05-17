@@ -32,6 +32,8 @@ do
             echo $col_ptr_len >> out.txt
             echo "" >> out.txt
             mv out.txt $dir
+            # cp to Gemm implementation
+            cp -r $dir "../gemm_padshift"
             mv $dir "../grid_csc_padshift"
             ;;
         1)  

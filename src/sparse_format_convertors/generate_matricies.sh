@@ -19,13 +19,50 @@ do
     do
         dir="${implementations[j]}_${A_heights[i]}x${A_widths[i]}_${A_densities[i]}"
         mkdir $dir
-        mv a.out $dir
-        mv add_padding.py $dir
+        cp a.out $dir
+        cp add_padding.py $dir
         cd $dir
         ./a.out ${A_heights[i]} ${A_widths[i]} ${A_densities[i]} ${grid_h[i]} ${grid_w[i]} $j
         OUTPUT=($(python3 add_padding.py ${j}| tr -d '[],')) # Evaluate output from python script as an array of numbers
-        mv a.out ..
-        mv add_padding.py ..
+        case $j in
+        0)
+            val_len=${OUTPUT[2]} 
+            row_idx_len=${OUTPUT[6]}
+            col_ptr_len=${OUTPUT[10]}
+            echo $val_len >> out.txt
+            echo $row_idx_len >> out.txt
+            echo $col_ptr_len >> out.txt
+            echo "" >> out.txt
+            ;;
+        1)  
+            val_len=${OUTPUT[2]} 
+            col_idx_len=${OUTPUT[6]}
+            row_ptr_len=${OUTPUT[10]}
+            echo $val_len >> out.txt
+            echo $col_idx_len >> out.txt
+            echo $row_ptr_len >> out.txt
+            echo "" >> out.txt
+            ;;
+        2)  
+            val_len=${OUTPUT[2]} 
+            col_len=${OUTPUT[5]}
+            row_len=${OUTPUT[8]}
+            echo $val_len >> out.txt
+            echo $col_len >> out.txt
+            echo $row_len >> out.txt
+            echo "" >> out.txt
+            ;;
+        3)
+            A_len=${OUTPUT[2]}
+            echo $A_len >> out.txt
+            echo "" >> out.txt
+            ;;
+        *)
+            echo "Format specifier unknown."
+            ;;
+        esac
+        rm a.out
+        rm add_padding.py
         cd ..
     done
 done

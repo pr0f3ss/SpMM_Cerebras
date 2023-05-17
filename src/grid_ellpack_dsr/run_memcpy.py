@@ -215,6 +215,11 @@ def main():
   else:
     A_prefix = "test"
 
+  if args.file_dir is not None:
+    file_dir = args.file_dir
+  else:
+    file_dir = "test_vectors/"
+
   Nt = N // height
   Kt= K // width
 
@@ -225,9 +230,6 @@ def main():
   Kt = int(Kt)
 
   print(f"N = {N}, K = {K}, M = {M}, width = {width}, height = {height}")
-
-  # prepare host data and reference solution
-  file_dir = "test_vectors/"
 
   # Use this for reference solution
   A_dense_format = file_dir+A_prefix+".csv"

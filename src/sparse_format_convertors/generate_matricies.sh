@@ -33,6 +33,8 @@ do
             echo $row_idx_len >> out.txt
             echo $col_ptr_len >> out.txt
             echo "" >> out.txt
+            cd ..
+            mv $dir "../grid_csc_padshift"
             ;;
         1)  
             val_len=${OUTPUT[2]} 
@@ -42,6 +44,8 @@ do
             echo $col_idx_len >> out.txt
             echo $row_ptr_len >> out.txt
             echo "" >> out.txt
+            cd ..
+            mv $dir "../grid_csr_padshift"
             ;;
         2)  
             val_len=${OUTPUT[2]} 
@@ -51,16 +55,21 @@ do
             echo $col_len >> out.txt
             echo $row_len >> out.txt
             echo "" >> out.txt
+            cd ..
+            mv $dir "../grid_custom_padshift"
             ;;
         3)
             A_len=${OUTPUT[2]}
             echo $A_len >> out.txt
             echo "" >> out.txt
+            cd ..
+            mv $dir "../grid_ellpack_padshift"
             ;;
         *)
             echo "Format specifier unknown."
             ;;
         esac
+        cd $dir
         rm a.out
         rm add_padding.py
         cd ..

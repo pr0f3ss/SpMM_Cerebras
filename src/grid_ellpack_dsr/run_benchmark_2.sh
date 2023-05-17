@@ -9,6 +9,7 @@ grid_height=$4
 grid_width=$5
 M_width=$6
 test_vectors=$7
+file_dir="$test_vectors/"
 i=3
 
 cd $test_vectors
@@ -24,5 +25,5 @@ cslc ./layout.csl --fabric-dims=$(($grid_width + 7)),$(($grid_height + 2)) --fab
 
 echo "Running simulator now!"
 
-cs_python run_memcpy.py --name out -N=$A_height -K=$A_width -M=$M_width -A_prefix="tmp" -file_dir=$test_vectors -width=$grid_width -height=$grid_height
+cs_python run_memcpy.py --name out -N=$A_height -K=$A_width -M=$M_width -A_prefix="tmp" -file_dir=$file_dir -width=$grid_width -height=$grid_height
 

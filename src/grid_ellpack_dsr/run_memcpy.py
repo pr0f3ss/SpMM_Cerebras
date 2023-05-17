@@ -82,6 +82,8 @@ def parse_args():
                       help="number of columns of the matrix B and C.")
   parser.add_argument("-A_prefix", type=str,
                       help="prefix of all three grid custom grid files")
+  parser.add_argument("-file_dir", type=str,
+                      help="directory for vectors")
   parser.add_argument("-width", type=int,
                       help="width of PEs")
   parser.add_argument("-height", type=int,

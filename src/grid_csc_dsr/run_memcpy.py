@@ -85,6 +85,8 @@ def parse_args():
                       help="number of columns of the matrix B and C.")
   parser.add_argument("-A_prefix", type=str,
                       help="prefix of all three grid csc files")
+  parser.add_argument("-file_dir", type=str,
+                      help="directory for vectors")
   parser.add_argument("-width", type=int,
                       help="width of PEs")
   parser.add_argument("-height", type=int,
@@ -219,6 +221,11 @@ def main():
     A_prefix = args.A_prefix
   else:
     A_prefix = "test"
+  
+  if args.file_dir is not None:
+    file_dir = args.file_dir
+  else:
+    file_dir = "test_vectors/"
 
   Nt = N // height
   Kt= K // width
@@ -230,9 +237,6 @@ def main():
   Kt = int(Kt)
 
   print(f"N = {N}, K = {K}, M = {M}, width = {width}, height = {height}")
-
-  # prepare host data and reference solution
-  file_dir = "test_vectors/"
 
   # Use this for reference solution
   A_dense_format = file_dir+A_prefix+".csv"

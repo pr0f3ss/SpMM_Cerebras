@@ -47,9 +47,9 @@ param EXIT: color;     // entrypoint to leave RPC
 // A uses grid custom format and predetermined (padded) size 
 // A_len
 
-param Nt:i16;         
-param Kt:i16; 
-param M:i16;  
+param Nt:i32;         
+param Kt:i32; 
+param M:i32;  
 
 param A_len:i32;
 
@@ -82,10 +82,10 @@ const tsc = @import_module("<time>");
 // C is Nt x M
 
 // alignment calculation
-const pad_align:   i16 = 16;
-const elem_size:   i16 = 4;
-const align_ratio: i16 = pad_align / elem_size;
-const padded_M:   i16 = if (((M+1) / align_ratio) * align_ratio == (M+1)) (M+1)
+const pad_align:   i32 = 16;
+const elem_size:   i32 = 4;
+const align_ratio: i32 = pad_align / elem_size;
+const padded_M:   i32 = if (((M+1) / align_ratio) * align_ratio == (M+1)) (M+1)
                          else ((M+1) / align_ratio + 1) * align_ratio;
 
 const  _SIZE_B = Kt*padded_M;
@@ -198,14 +198,14 @@ task f_comp() void {
     // iterate over A_len
     for(@range(i16, A_len)) |idx|{
 
-        var a_i = @as(i16, A_x[idx]);   // get column
+        var a_i = @bitcast(i32, A_x[idx]);   // get column
 
         // If we reach pad values, break
         if(a_i == -1){
             break;
         }
 
-        var a_j = @as(i16, A_y[idx]);   // get row
+        var a_j = @bitcast(i32, A_y[idx]);   // get row
 
         var a = A_val[idx]; // value
         

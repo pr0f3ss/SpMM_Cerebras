@@ -251,8 +251,8 @@ def main():
 
   # Read in
   A_val = np.genfromtxt(A_val_file, delimiter=",", dtype=np.float32)
-  A_x = np.genfromtxt(A_x_file, delimiter=",", dtype=np.float32)
-  A_y = np.genfromtxt(A_y_file, delimiter=",", dtype=np.float32)
+  A_x = np.genfromtxt(A_x_file, delimiter=",", dtype=np.int32)
+  A_y = np.genfromtxt(A_y_file, delimiter=",", dtype=np.int32)
 
   # Get lengths
   A_len = A_val.shape[1]

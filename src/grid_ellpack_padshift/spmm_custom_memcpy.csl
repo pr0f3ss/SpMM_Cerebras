@@ -47,11 +47,11 @@ param EXIT: color;     // entrypoint to leave RPC
 // A uses grid Ellpack format and predetermined (padded) size 
 // A_len
 
-param Nt:i16;         
-param Kt:i16; 
-param M:i16;  
+param Nt:i32;         
+param Kt:i32; 
+param M:i32;  
 
-param A_len:i16;
+param A_len:i32;
 
 param width: i16;
 param height: i16;
@@ -81,17 +81,24 @@ const tsc = @import_module("<time>");
 // B is Kt x M
 // C is Nt x M
 
-const  _SIZE_B = Kt*M;
-const  _SIZE_C = Nt*M;
+// alignment calculation
+const pad_align:   i32 = 16;
+const elem_size:   i32 = 4;
+const align_ratio: i32 = pad_align / elem_size;
+const padded_M:   i32 = if (((M+1) / align_ratio) * align_ratio == (M+1)) (M+1)
+                         else ((M+1) / align_ratio + 1) * align_ratio;
+
+const  _SIZE_B = Kt*padded_M;
+const  _SIZE_C = Nt*padded_M;
 
 var A_val  = @zeros([Nt*A_len]f32);
 // Memcpy limitation: Have to be copied in as f32 as sys_mod requires us to have the same datatype
 var A_indices  = @zeros([Nt*A_len]f32);
 
-var B  = @zeros([Kt*M]f32);
+var B  = @zeros([Kt*padded_M]f32);
 
 // workspace for A*B
-var C = @zeros([Nt*M]f32);
+var C = @zeros([Nt*padded_M]f32);
 
 // Declare variables for storing the timestamp counter at the start and the end
 // of the core computation.
@@ -124,7 +131,7 @@ var ptr_time_memcpy: [*]f32 = &time_buf_f32;
 ////////////////////////////////////////////////////////////////////////////////
 
 // B buffer
-const mem_B_buf_dsd = @get_dsd(mem1d_dsd, .{ .tensor_access = |i|{Kt*M} -> B[i] });
+const mem_B_buf_dsd = @get_dsd(mem1d_dsd, .{ .tensor_access = |i|{Kt*padded_M} -> B[i] });
 
 // Receiving B
 const fab_recv_B_wdsd = @get_dsd(fabin_dsd, .{
@@ -141,7 +148,7 @@ const fab_trans_B_wdsd = @get_dsd(fabout_dsd, .{
 });
 
 // C buffer
-const mem_C_buf_dsd = @get_dsd(mem1d_dsd, .{ .tensor_access = |i|{Nt*M} -> C[i] });
+const mem_C_buf_dsd = @get_dsd(mem1d_dsd, .{ .tensor_access = |i|{Nt*padded_M} -> C[i] });
 
 // Receiving C (in last column)
 const fab_recv_C_wdsd = @get_dsd(fabin_dsd, .{
@@ -174,8 +181,8 @@ task f_comp() void {
 
 
     // Set up DSRs from DSDs
-    var B_dsd  = @get_dsd(mem1d_dsd, .{ .tensor_access = |i|{M} -> B[i] });
-    var C_dsd  = @get_dsd(mem1d_dsd, .{ .tensor_access = |i|{M} -> C[i] });
+    var B_dsd  = @get_dsd(mem1d_dsd, .{ .tensor_access = |i|{padded_M} -> B[i] });
+    var C_dsd  = @get_dsd(mem1d_dsd, .{ .tensor_access = |i|{padded_M} -> C[i+1] });
 
     const B_dsr = @get_dsr(dsr_src1, 0);
     const C_dsr = @get_dsr(dsr_src0, 1);
@@ -185,12 +192,12 @@ task f_comp() void {
 
     // C = A * B 
     // iterate over A_len
-    for(@range(i16, Nt)) |a_j|{
+    for(@range(i32, Nt)) |a_j|{
         var row = a_j*A_len;
 
-        for(@range(i16, A_len)) |idx|{
+        for(@range(i32, A_len)) |idx|{
             
-            var a_i = @as(i16, A_indices[row+idx]);   // get column
+            var a_i = @bitcast(i32, A_indices[row+idx]);   // get column
 
             // If we reach pad values, break
             if(a_i == -1){
@@ -199,8 +206,8 @@ task f_comp() void {
             var a = A_val[row+idx]; // value
             
             // Set base address to the rows we need
-            @set_dsr_base_addr(B_dsr, @ptrcast([*]f32, &(B[M*a_i])));
-            @set_dsr_base_addr(C_dsr, @ptrcast([*]f32, &(C[M*a_j])));
+            @set_dsr_base_addr(B_dsr, @ptrcast([*]f32, &(B[padded_M*a_i])));
+            @set_dsr_base_addr(C_dsr, @ptrcast([*]f32, &(C[padded_M*a_j])));
 
             @fmacs(C_dsr, C_dsr, B_dsr, a);
         }

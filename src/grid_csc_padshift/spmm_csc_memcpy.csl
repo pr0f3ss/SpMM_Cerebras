@@ -8,7 +8,7 @@
 // The last column of PEs finally contains the corresponding rows of C and sends its result back to the host
 //
 
-// Notation: a PE (Px.y) is labeled as (px = x, py = y)
+// Notation: a PE (Px.y) is labeled bitcast (px = x, py = y)
 
 param memcpyParams: comptime_struct;
 
@@ -84,18 +84,26 @@ const tsc = @import_module("<time>");
 // B is Kt x M
 // C is Nt x M
 
-const  _SIZE_B = Kt*M;
-const  _SIZE_C = Nt*M;
+// alignment calculation
+const pad_align:   i32 = 16;
+const elem_size:   i32 = 4;
+const align_ratio: i32 = pad_align / elem_size;
+const padded_M:   i32 = if (((M+1) / align_ratio) * align_ratio == (M+1)) (M+1)
+                         else ((M+1) / align_ratio + 1) * align_ratio;
+
+const  _SIZE_B = Kt*padded_M;
+const  _SIZE_C = Nt*padded_M;
+
 
 var A_val  = @zeros([A_val_len]f32);
-// Memcpy limitation: Have to be copied in as f32 as sys_mod requires us to have the same datatype
+// Memcpy limitation: Have to be copied in bitcast f32 bitcast sys_mod requires us to have the same datatype
 var A_row_idx  = @zeros([A_rowidx_len]f32);
 var A_col_ptr  = @zeros([A_colptr_len]f32);
 
-var B  = @zeros([Kt*M]f32);
+var B  = @zeros([Kt*padded_M]f32);
 
 // workspace for A*B
-var C = @zeros([Nt*M]f32);
+var C = @zeros([Nt*padded_M]f32);
 
 // Declare variables for storing the timestamp counter at the start and the end
 // of the core computation.
@@ -130,7 +138,7 @@ var ptr_time_memcpy: [*]f32 = &time_buf_f32;
 ////////////////////////////////////////////////////////////////////////////////
 
 // B buffer
-const mem_B_buf_dsd = @get_dsd(mem1d_dsd, .{ .tensor_access = |i|{Kt*M} -> B[i] });
+const mem_B_buf_dsd = @get_dsd(mem1d_dsd, .{ .tensor_access = |i|{Kt*padded_M} -> B[i] });
 
 // Receiving B
 const fab_recv_B_wdsd = @get_dsd(fabin_dsd, .{
@@ -147,7 +155,7 @@ const fab_trans_B_wdsd = @get_dsd(fabout_dsd, .{
 });
 
 // C buffer
-const mem_C_buf_dsd = @get_dsd(mem1d_dsd, .{ .tensor_access = |i|{Nt*M} -> C[i] });
+const mem_C_buf_dsd = @get_dsd(mem1d_dsd, .{ .tensor_access = |i|{Nt*padded_M} -> C[i] });
 
 // Receiving C
 const fab_recv_C_wdsd = @get_dsd(fabin_dsd, .{
@@ -182,8 +190,8 @@ task f_comp() void {
     tsc.get_timestamp(&tscStartBuffer);
 
     // Set up DSRs from DSDs
-    var B_dsd  = @get_dsd(mem1d_dsd, .{ .tensor_access = |i|{M} -> B[i] });
-    var C_dsd  = @get_dsd(mem1d_dsd, .{ .tensor_access = |i|{M} -> C[i] });
+    var B_dsd  = @get_dsd(mem1d_dsd, .{ .tensor_access = |i|{padded_M} -> B[i] });
+    var C_dsd  = @get_dsd(mem1d_dsd, .{ .tensor_access = |i|{padded_M} -> C[i+1] });
 
     const B_dsr = @get_dsr(dsr_src1, 0);
     const C_dsr = @get_dsr(dsr_src0, 1);
@@ -197,12 +205,12 @@ task f_comp() void {
 
         // get number of non-zero rows in the current column
         // cast from f32 to i32
-        var row_elems = @as(i32, A_col_ptr[j+1] - A_col_ptr[j]);
+        var row_elems = @bitcast(i32, A_col_ptr[j+1] - A_col_ptr[j]);
 
-        var row_idx_start = @as(i32, A_col_ptr[j]);
+        var row_idx_start = @bitcast(i32, A_col_ptr[j]);
 
         // Exit, if we reach padded end
-        if(@as(i32, A_col_ptr[j+1]) == -1){
+        if(@bitcast(i32, A_col_ptr[j+1]) == -1){
             break;
         }
 
@@ -210,7 +218,7 @@ task f_comp() void {
         for (@range(i32, row_elems)) |i| {
 
             // get the reference element row index
-            var ref_elem_row_idx = @as(i32, A_row_idx[row_idx_start+i]);
+            var ref_elem_row_idx = @bitcast(i32, A_row_idx[row_idx_start+i]);
 
             // extract the referenced non-zero value
             var a = A_val[row_idx_start+i];
@@ -220,8 +228,8 @@ task f_comp() void {
             var a_j : i32 = j;                  // col
 
             // Set base address to the rows we need
-            @set_dsr_base_addr(B_dsr, @ptrcast([*]f32, &(B[M*a_j])));
-            @set_dsr_base_addr(C_dsr, @ptrcast([*]f32, &(C[M*a_i])));
+            @set_dsr_base_addr(B_dsr, @ptrcast([*]f32, &(B[padded_M*a_j])));
+            @set_dsr_base_addr(C_dsr, @ptrcast([*]f32, &(C[padded_M*a_i])));
 
             @fmacs(C_dsr, C_dsr, B_dsr, a);
         }
@@ -278,15 +286,15 @@ task f_exit() void {
 
     lo_ = tscStartBuffer[0];
     hi_ = tscStartBuffer[1];
-    time_buf_f32[0] = @bitcast(f32, (@as(u32,hi_) << @as(u16,16)) | @as(u32, lo_) );
+    time_buf_f32[0] = @as(f32, (@as(u32,hi_) << @as(u16,16)) | @as(u32, lo_) );
 
     lo_ = tscStartBuffer[2];
     hi_ = tscEndBuffer[0];
-    time_buf_f32[1] = @bitcast(f32, (@as(u32,hi_) << @as(u16,16)) | @as(u32, lo_) );
+    time_buf_f32[1] = @as(f32, (@as(u32,hi_) << @as(u16,16)) | @as(u32, lo_) );
 
     lo_ = tscEndBuffer[1];
     hi_ = tscEndBuffer[2];
-    time_buf_f32[2] = @bitcast(f32, (@as(u32,hi_) << @as(u16,16)) | @as(u32, lo_) );
+    time_buf_f32[2] = @as(f32, (@as(u32,hi_) << @as(u16,16)) | @as(u32, lo_) );
 
     // the user must unblock cmd color for every PE
     sys_mod.unblock_cmd_stream();

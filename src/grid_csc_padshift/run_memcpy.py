@@ -42,6 +42,7 @@ from typing import Optional
 import shutil
 import subprocess
 import numpy as np
+import math
 
 from cerebras.sdk.runtime import runtime_utils # pylint: disable=no-name-in-module
 from cerebras.sdk.runtime.sdkruntimepybind import SdkRuntime # pylint: disable=no-name-in-module
@@ -238,6 +239,11 @@ def main():
 
   print(f"N = {N}, K = {K}, M = {M}, width = {width}, height = {height}")
 
+  # Calculate alignment and padding to avoid bank conflicts
+  align = 16
+  multiple = int(align/4)
+  padded_M = math.ceil((M+1)/multiple)*multiple
+
   # Use this for reference solution
   A_dense_format = file_dir+A_prefix+".csv"
   A_dense = np.genfromtxt(A_dense_format, delimiter=",", dtype=np.float32)
@@ -248,8 +254,8 @@ def main():
 
   # Read in
   A_val = np.genfromtxt(A_val_file, delimiter=",", dtype=np.float32)
-  A_row_idx = np.genfromtxt(A_rowidx_file, delimiter=",", dtype=np.float32)
-  A_col_ptr = np.genfromtxt(A_colptr_file, delimiter=",", dtype=np.float32)
+  A_row_idx = np.genfromtxt(A_rowidx_file, delimiter=",", dtype=np.int32)
+  A_col_ptr = np.genfromtxt(A_colptr_file, delimiter=",", dtype=np.int32)
 
   # Get lengths
   A_val_len = A_val.shape[1]
@@ -263,6 +269,14 @@ def main():
   print(f"C_ref = {C_ref}")
 
   print(f"B = {B}")
+
+  # Set up the actual B data:
+  # Now insert additional columns to make it divisible by the alignment
+  num_zero_columns = padded_M - M 
+  padded_B = np.pad(B, [(0, 0), (0, num_zero_columns)], mode='constant')
+
+  print(f"padded B = {padded_B}")
+
   # prepare the simulation
 
   # core dump after execution is complete
@@ -361,7 +375,7 @@ def main():
 
   # B distributes to {py = 0}
   # derived from Residual example code
-  iportmap_B = f"{{ B[i=0:{K-1}][j=0:{M-1}] -> [PE[i//{Kt}, 0] ->  index[i%{Kt}, j]] }}"
+  iportmap_B = f"{{ padded_B[i=0:{K-1}][j=0:{padded_M-1}] -> [PE[i//{Kt}, 0] ->  index[i%{Kt}, j]] }}"
   print(f"iportmap_B = {iportmap_B}")
 
   # C is gathered from P1.0 and P1.1
@@ -369,7 +383,7 @@ def main():
   # C's size in each PE is Nt*M
   # (Remember: Nt = N // height)
   # Total size: height * Nt * M = N * M 
-  oportmap_C = f"{{ C[n = 0:{N*M-1}] -> [PE[{width-1}, n // {Nt*M}] -> index[n % {Nt*M}]] }}"
+  oportmap_C = f"{{ C[n = 0:{N*padded_M-1}] -> [PE[{width-1}, n // {Nt*padded_M}] -> index[n % {Nt*padded_M}]] }}"
   print(f"oportmap_C = {oportmap_C}")
 
   # tsc gathered from all PEs
@@ -396,7 +410,7 @@ def main():
                      order=memcpy_order)
 
 
-  (px, py, w, h, l, data) = runtime_utils.convert_input_tensor(iportmap_B, B)
+  (px, py, w, h, l, data) = runtime_utils.convert_input_tensor(iportmap_B, padded_B)
   simulator.memcpy_h2d(symbol_B, data, px, py, w, h, l,
                      streaming=False, data_type=memcpy_dtype, nonblock=False,
                      order=memcpy_order)
@@ -413,7 +427,8 @@ def main():
   C_cs = runtime_utils.format_output_tensor(oportmap_C, np.float32, data)
 
   # Reshape back to original state
-  C_cs = np.reshape(C_cs, (N, M))
+  C_cs = np.reshape(C_cs, (N, padded_M))
+  C_cs = C_cs[:, :-(padded_M-M)]
 
   (px, py, w, h, l, data) = runtime_utils.prepare_output_tensor(oportmap_timestamps, np.float32)
   simulator.memcpy_d2h(data, symbol_time_memcpy, px, py, w, h, l,

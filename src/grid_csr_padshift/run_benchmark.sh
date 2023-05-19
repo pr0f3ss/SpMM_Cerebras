@@ -10,7 +10,6 @@ grid_width=$5
 M_width=$6
 test_vectors=$7
 file_dir="$test_vectors/"
-i=3
 
 cd $test_vectors
 
@@ -21,7 +20,7 @@ row_ptr_len=${OUTPUT[2]}
 
 cd ..
 
-cslc ./layout.csl --fabric-dims=$(($grid_width + 7)),$(($grid_height + 2)) --fabric-offsets=4,1 --params=width:$grid_width,height:$grid_height,Nt:$(($A_height / $grid_height)),Kt:$(($A_width / $grid_width)),M:$M_width,A_val_len:$val_len,A_colidx_len:$col_idx_len,A_rowptr_len:$row_ptr_len,LAUNCH_ID:4 -o=out --memcpy --channels=1 --width-west-buf=0 --width-east-buf=0
+cslc ./layout.csl --fabric-dims=757,996 --fabric-offsets=4,1 --params=width:$grid_width,height:$grid_height,Nt:$(($A_height / $grid_height)),Kt:$(($A_width / $grid_width)),M:$M_width,A_val_len:$val_len,A_colidx_len:$col_idx_len,A_rowptr_len:$row_ptr_len,LAUNCH_ID:4 -o=out --memcpy --channels=1 --width-west-buf=0 --width-east-buf=0
 
 echo "Running simulator now!"
 

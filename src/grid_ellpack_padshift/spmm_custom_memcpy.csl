@@ -199,10 +199,6 @@ task f_comp() void {
             
             var a_i = @bitcast(i32, A_indices[row+idx]);   // get column
 
-            // If we reach pad values, break
-            if(a_i == -1){
-                break;
-            }
             var a = A_val[row+idx]; // value
             
             // Set base address to the rows we need

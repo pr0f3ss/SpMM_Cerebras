@@ -200,11 +200,6 @@ task f_comp() void {
 
         var a_i = @bitcast(i32, A_x[idx]);   // get column
 
-        // If we reach pad values, break
-        if(a_i == -1){
-            break;
-        }
-
         var a_j = @bitcast(i32, A_y[idx]);   // get row
 
         var a = A_val[idx]; // value

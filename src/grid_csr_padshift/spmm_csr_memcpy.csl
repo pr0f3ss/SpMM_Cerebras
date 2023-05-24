@@ -207,11 +207,6 @@ task f_comp() void {
 
         var col_idx_start = @bitcast(i32, A_row_ptr[j]);
 
-        if(@bitcast(i32, A_row_ptr[j+1]) == -1){
-            // exit if we reach padded end
-            break;
-        }
-
         // iterate over all non-zero columns in the current row
         for (@range(i32, col_elems)) |i| {
 

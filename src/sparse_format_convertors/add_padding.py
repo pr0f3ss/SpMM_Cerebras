@@ -19,7 +19,7 @@ def col_is_nan(s):
     a = s.to_numpy()
     return np.isnan(a).all()
 
-def pad_file(input_filename, output_filename, replace=-1, dtype=int):
+def pad_file(input_filename, output_filename, replace=0, dtype=int):
     """Pads the input file with replace characters at NaN positions and writes it to a new file 'output_filename'
 
     Parameters
@@ -55,7 +55,7 @@ def pad_file(input_filename, output_filename, replace=-1, dtype=int):
     df.to_csv(output_filename, index=False, header=False)
 
 
-def pad_csc_grid(prefix, replace=-1):
+def pad_csc_grid(prefix, replace=0):
     """Takes the prefix of a grid CSC formatted matrix and pads NaN entries with replace
 
     Parameters
@@ -76,7 +76,7 @@ def pad_csc_grid(prefix, replace=-1):
     print("Column pointer length:")
     pad_file(prefix+"_col_ptr.csv", prefix+"_col_ptr_pad.csv", dtype=int)
 
-def pad_csr_grid(prefix, replace=-1):
+def pad_csr_grid(prefix, replace=0):
     """Takes the prefix of a grid CSR formatted matrix and pads NaN entries with replace
 
     Parameters
@@ -97,7 +97,7 @@ def pad_csr_grid(prefix, replace=-1):
     print("Row pointer length:")
     pad_file(prefix+"_row_ptr.csv", prefix+"_row_ptr_pad.csv", dtype=int)
 
-def pad_custom_grid(prefix, replace=-1):
+def pad_custom_grid(prefix, replace=0):
     """Takes the prefix of a grid custom formatted matrix and pads NaN entries with replace
 
     Parameters
@@ -118,7 +118,7 @@ def pad_custom_grid(prefix, replace=-1):
     print("Row length:")
     pad_file(prefix+"_y.csv", prefix+"_y_pad.csv", dtype=int)
 
-def pad_ellpack_grid(prefix, replace=-1):
+def pad_ellpack_grid(prefix, replace=0):
     """Takes the prefix of a grid ellpack formatted matrix and pads NaN entries with replace
 
     Parameters

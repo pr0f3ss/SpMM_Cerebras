@@ -6,9 +6,11 @@ import xlsxwriter,datetime,os
 import itertools
 from matplotlib.font_manager import FontProperties
 
+from operator import itemgetter
+
 # Defines the memory available per PE
 MEM = 48*1024
-RESERVED = 8*1024 # Reserve 1/6 of actual memory for program, dsd buffers etc.
+RESERVED = 6*1024 # Reserve 6 kB of memory for program, dsd buffers etc.
 GUARANTEE = 0.99
 AVAIL_HEIGHT = 996
 AVAIL_WIDTH = 757
@@ -191,78 +193,57 @@ def memory_used_gemm(Nt, Kt, M, density):
 
     return 4*(mem_B+mem_C+mem_A)
 
-
-M = 512
-density = 10
-N = 1024
+density = 20
+N = 4096
 K = 1024
 
-grid_height_list = [i for i in range(1, AVAIL_HEIGHT) if N % i == 0]
-grid_width_list = [i for i in range(1, AVAIL_WIDTH) if K % i == 0]
+print(f"N={N}, K={K}, density={density}%")
 
-zipped = list(itertools.product(grid_height_list,grid_width_list))
+output = []
 
-mem_used = [memory_used_coo(int(N/h), int(K/w), M, density) for (h,w) in zipped]
+for M in [32, 64, 128, 256, 512]:
+    grid_height_list = [i for i in range(1, AVAIL_HEIGHT) if N % i == 0]
+    grid_width_list = [i for i in range(1, AVAIL_WIDTH) if K % i == 0]
 
-# ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-# Create an new Excel file and add a worksheet.
-workbook = xlsxwriter.Workbook(f'src/memory_limits/mem_sheets/mem_limit_M{M}_N{N}_K{K}_d{density}.xlsx', {'nan_inf_to_errors': True})
-worksheet = workbook.add_worksheet()
+    zipped = list(itertools.product(grid_height_list,grid_width_list))
+
+    mem_used = [memory_used_coo(int(N/h), int(K/w), M, density) for (h,w) in zipped]
+
+    grid_height_list = [x[0] for x in zipped]
+    grid_width_list = [x[1] for x in zipped]
+
+    # Get configs that fit in a PE
+    configs = [(mem_used[i], grid_height_list[i], grid_width_list[i], (N/grid_height_list[i])*(K/grid_width_list[i]), int(M)) for i in range(len(grid_width_list)) if mem_used[i] < MEM-RESERVED]
+    best_config = sorted(configs, key=itemgetter(0))[-1]
+    mem_max = best_config[0]
+
+    # Get all configs that are within 5% range
+    for config in configs:
+        mem = config[0]
+        if mem_max - (mem_max*0.05) < mem:
+            output.append((mem, config[1], config[2], config[3], config[4]))
 
 
-# Widen the first column to make the text clearer.
-worksheet.set_column('A:A', 20)
+# Sort by Nt x Kt first (4th element) and extract highest amount
+max_ntkt = sorted(output, key=itemgetter(3))[-1][3]
+# Extract all configs with highest Nt x Kt
+ntkt_config = [c for c in output if max_ntkt==c[3]]
+# Sort by memory used and choose largest
+best_config = sorted(ntkt_config, key=itemgetter(0))[-1]
+mem_max = best_config[0]
 
-# Add a bold format to use to highlight cells.
-bold = workbook.add_format({'bold': True})
+result = []
+# Get all configs that are within 5% range
+for config in ntkt_config:
+    mem = config[0]
+    if mem_max - (mem_max*0.05) < mem:
+        result.append((mem, config[1], config[2], config[3], config[4]))
 
-worksheet.write(0,0, 'Grid height/width', bold)
+# Sort by M and extract highest M
+max_M = sorted(result, key=itemgetter(4))[-1][4]
+final_output = [c for c in result if max_M==c[4]]
+print(final_output)
 
-it = 0
-for j,x in enumerate(grid_height_list):
-    worksheet.write(j+1,0, str(x), bold)
-    for i,y in enumerate(grid_width_list):
-        worksheet.write(0,i+1, y, bold)
-        if(mem_used[it] <= MEM-RESERVED):
-            worksheet.write(j+1,i+1, mem_used[it])
-        it+=1
-
-workbook.close()
-
-grid_height_list = [x[0] for x in zipped]
-grid_width_list = [x[1] for x in zipped]
-
-# ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-# plot
-scatter_plot = plt.scatter(grid_height_list, grid_width_list, c=mem_used, cmap='hot', edgecolors='black')
-
-# Add a color bar for the heatmap
-scatter_plot.set_clim(vmin=0, vmax=MEM-RESERVED)
-cbar = plt.colorbar(scatter_plot, format='%.0f')
-cbar.set_label('Memory used in Bytes')
-
-# Set the axis labels
-plt.xlabel('Grid height')
-plt.ylabel('Grid width')
-
-plt.xscale('log')
-plt.yscale('log')
-
-# Set ticks
-plt.xticks(grid_height_list, grid_height_list)
-plt.yticks(grid_width_list, grid_width_list)
-
-# Create a FontProperties object with normal font weight
-font_normal = FontProperties(weight='normal')
-
-# Set the tick labels font properties to normal weight
-plt.xticks(fontproperties=font_normal)
-plt.yticks(fontproperties=font_normal)
-
-# Set the title of the plot
-titlestr=f"M = {M}, Density = {density}, NxK = {N}x{K}"
-plt.title(titlestr)
-plt.show()
 
 
 

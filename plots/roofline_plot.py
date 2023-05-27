@@ -2,19 +2,17 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 x = np.linspace(0,5,100)
-y = 22.27*x
+y = 24*x
 
-plt.axhline(y = 4, color = 'r', linestyle = '-')
+plt.axhline(y = 2, color = 'r', linestyle = '-')
 plt.plot(x, y, '-r', label='y=2x+1')
 
-plt.plot(8., 16/508, "ro")
-plt.plot(8., 16/634, "ro")
-plt.plot(8., 16/1249, "ro")
+plt.plot(0.672, 0.64, "ro")
 
 ax = plt.gca()
 
-ax.set_ylim([0, 6])
-ax.set_xlim([-0.2, 12])
+ax.set_ylim([0, 3])
+ax.set_xlim([0, 1])
 
 
 

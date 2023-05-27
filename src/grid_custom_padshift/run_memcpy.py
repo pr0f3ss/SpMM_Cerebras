@@ -481,7 +481,7 @@ def main():
 
   total_relative_accesses = width * height * (4*(3*A_len+2*A_len*padded_M))
   total_absolute_accesses = width * height * (4*(3*A_len+3*A_len*padded_M))
-  total_flop = width * height * (2*Nt*Kt*M)
+  total_flop = width * height * (2*A_len*padded_M)
 
   #################
   # Generate output

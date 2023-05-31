@@ -3,12 +3,7 @@
 set -x
 set -e
 
-A_heights=(768 3072 768 1024 4096 1024)
-A_widths=(768 768 3072 1024 1024 4096)
-A_densities=(20 20 20 20 20 20)
-grid_h=(16 24 16 8 32 128)
-grid_w=(6 16 24 128 128 32)
-M_w=(32 32 32 64 64 64)
+source ../memory_limits/COO_params.txt
 
 testlen=${#A_heights[@]}
 

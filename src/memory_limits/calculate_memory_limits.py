@@ -26,11 +26,11 @@ def find_upper_bound_nnz(Nt, Kt, density, t):
     Nt: dimension Nt = N / grid_height
     Kt: dimension Kt = K / grid_width
     density: density of the matrix A
-    t: number of trials (= PEs)
+    t: number of trials (= PEs = width*height)
 
     Returns
     -------
-    An upper bound (with probabilty 'GUARANTEE') of the elements inside a Nt x Kt submatrix with density 'd'.
+    An upper bound (with probabilty 'GUARANTEE') of the elements inside a Nt x Kt submatrix with density 'd' in a total 't' number of trials.
     """
 
     p = density/100
@@ -44,6 +44,7 @@ def find_upper_bound_nnz(Nt, Kt, density, t):
     k = math.ceil(mean + z * standard_deviation)
 
     return k
+
 def memory_used_coo(Nt, Kt, M, density, width, height):
     """Calculates the memory that is used per PE when using the grid COO format
 
@@ -141,7 +142,7 @@ def memory_used_csc(Nt, Kt, M, density, width, height):
     return 4*(mem_B+mem_C+mem_A_val+mem_A_rowidx+mem_A_colptr)
 
 def memory_used_ellpack(Nt, Kt, M, density, width, height):
-    """Calculates the memory that is used per PE when using the grid CSC format
+    """Calculates the memory that is used per PE when using the grid ellpack format
 
     Parameters
     ----------
@@ -171,8 +172,8 @@ def memory_used_ellpack(Nt, Kt, M, density, width, height):
 
     return 4*(mem_B+mem_C+mem_A_val+mem_A_indices)
 
-def memory_used_gemm(Nt, Kt, M, density):
-    """Calculates the memory that is used per PE when using the grid CSC format
+def memory_used_gemm(Nt, Kt, M, density, width, height):
+    """Calculates the memory that is used per PE when using GEMM
 
     Parameters
     ----------
@@ -198,56 +199,69 @@ def memory_used_gemm(Nt, Kt, M, density):
 
     return 4*(mem_B+mem_C+mem_A)
 
-density = 20
-N = 4096
-K = 1024
+density_list = [5, 10, 20, 30]
+NK_list = [(768, 768) , (3072, 768), (768, 3072), (1024,1024), (4096, 1024), (1024, 4096)]
 
-print(f"N={N}, K={K}, density={density}%")
+f_out = []
 
-output = []
+for density in density_list:
+    for (N,K) in NK_list:
+        output = []
+        for M in [32, 64, 128, 256, 512]:
+            grid_height_list = [i for i in range(1, AVAIL_HEIGHT) if N % i == 0]
+            grid_width_list = [i for i in range(1, AVAIL_WIDTH) if K % i == 0]
 
-for M in [32, 64, 128, 256, 512]:
-    grid_height_list = [i for i in range(1, AVAIL_HEIGHT) if N % i == 0]
-    grid_width_list = [i for i in range(1, AVAIL_WIDTH) if K % i == 0]
+            zipped = list(itertools.product(grid_height_list,grid_width_list))
 
-    zipped = list(itertools.product(grid_height_list,grid_width_list))
+            # Change which format is used here:
+            mem_used = [memory_used_gemm(int(N/h), int(K/w), M, density, w, h) for (h,w) in zipped]
 
-    mem_used = [memory_used_coo(int(N/h), int(K/w), M, density, w, h) for (h,w) in zipped]
+            grid_height_list = [x[0] for x in zipped]
+            grid_width_list = [x[1] for x in zipped]
 
-    grid_height_list = [x[0] for x in zipped]
-    grid_width_list = [x[1] for x in zipped]
+            # Get configs that fit in a PE
+            configs = [(mem_used[i], grid_height_list[i], grid_width_list[i], (N/grid_height_list[i])*(K/grid_width_list[i]), int(M)) for i in range(len(grid_width_list)) if mem_used[i] < MEM-RESERVED]
+            best_config = sorted(configs, key=itemgetter(0))[-1]
+            mem_max = best_config[0]
 
-    # Get configs that fit in a PE
-    configs = [(mem_used[i], grid_height_list[i], grid_width_list[i], (N/grid_height_list[i])*(K/grid_width_list[i]), int(M)) for i in range(len(grid_width_list)) if mem_used[i] < MEM-RESERVED]
-    best_config = sorted(configs, key=itemgetter(0))[-1]
-    mem_max = best_config[0]
-
-    # Get all configs that are within 5% range
-    for config in configs:
-        mem = config[0]
-        if mem_max - (mem_max*0.05) < mem:
-            output.append((mem, config[1], config[2], config[3], config[4]))
+            # Get all configs that are within 5% range
+            for config in configs:
+                mem = config[0]
+                if mem_max - (mem_max*0.05) < mem:
+                    output.append((mem, config[1], config[2], config[3], config[4]))
 
 
-# Sort by Nt x Kt first (4th element) and extract highest amount
-max_ntkt = sorted(output, key=itemgetter(3))[-1][3]
-# Extract all configs with highest Nt x Kt
-ntkt_config = [c for c in output if max_ntkt==c[3]]
-# Sort by memory used and choose largest
-best_config = sorted(ntkt_config, key=itemgetter(0))[-1]
-mem_max = best_config[0]
+        # Sort by Nt x Kt first (4th element) and extract highest amount
+        max_ntkt = sorted(output, key=itemgetter(3))[-1][3]
+        # Extract all configs with highest Nt x Kt
+        ntkt_config = [c for c in output if max_ntkt==c[3]]
+        # Sort by memory used and choose largest
+        best_config = sorted(ntkt_config, key=itemgetter(0))[-1]
+        mem_max = best_config[0]
 
-result = []
-# Get all configs that are within 5% range
-for config in ntkt_config:
-    mem = config[0]
-    if mem_max - (mem_max*0.05) < mem:
-        result.append((mem, config[1], config[2], config[3], config[4]))
+        result = []
+        # Get all configs that are within 5% range
+        for config in ntkt_config:
+            mem = config[0]
+            if mem_max - (mem_max*0.05) < mem:
+                result.append((mem, config[1], config[2], config[3], config[4]))
 
-# Sort by M and extract highest M
-max_M = sorted(result, key=itemgetter(4))[-1][4]
-final_output = [c for c in result if max_M==c[4]]
-print(final_output)
+        # Sort by M and extract highest M
+        max_M = sorted(result, key=itemgetter(4))[-1][4]
+        final_output = [c for c in result if max_M==c[4]]
+
+        # If there are multiple ones, just use first option
+        _, w, h, _, m = final_output[0]
+        f_out.append([N, K, density, h, w, m])
+
+# Print final output
+print(f"A_heights=({' '.join([str(x[0]) for x in f_out])})")
+print(f"A_widths=({' '.join([str(x[1]) for x in f_out])})")
+print(f"A_densities=({' '.join([str(x[2]) for x in f_out])})")
+print(f"grid_h=({' '.join([str(x[3]) for x in f_out])})")
+print(f"grid_w=({' '.join([str(x[4]) for x in f_out])})")
+print(f"M_w=({' '.join([str(x[5]) for x in f_out])})")
+        
 
 
 

@@ -383,12 +383,6 @@ def main():
   oportmap_C = f"{{ C[n = 0:{N*padded_M-1}] -> [PE[{width-1}, n // {Nt*padded_M}] -> index[n % {Nt*padded_M}]] }}"
   print(f"oportmap_C = {oportmap_C}")
 
-  # tsc gathered from all PEs
-  # timestamps are two 48-bit unsigned integers, concatenated and stored as three f32
-  # We only retrieve the cycle count of the last row of PEs
-  oportmap_timestamps = f"{{ time_memcpy[i=0:{3*height-1}] -> [PE[{width-1}, i // 3] -> index[i % 3]] }}"
-  print(f"oportmap_timestamps = {oportmap_timestamps}")
-
   # prepare all of A and B via memcpy
   # use the runtime_utils library to calculate memcpy args and shuffle data
   (px, py, w, h, l, data) = runtime_utils.convert_input_tensor(iportmap_A_val, A_val)
@@ -425,11 +419,6 @@ def main():
   C_cs = np.reshape(C_cs, (N, padded_M))
   C_cs = C_cs[:, :-(padded_M-M)]
 
-  # (px, py, w, h, l, data) = runtime_utils.prepare_output_tensor(oportmap_timestamps, np.float32)
-  # simulator.memcpy_d2h(data, symbol_time_memcpy, px, py, w, h, l,
-  #                    streaming=False, data_type=memcpy_dtype, nonblock=False,
-  #                    order=memcpy_order)
-
   # Copy back timestamps
   data = np.zeros((width*height*3, 1), dtype=np.float32)
   simulator.memcpy_d2h(data, symbol_time_memcpy, 0, 0, width, height, 3,
@@ -437,11 +426,6 @@ def main():
   maxmin_time_hwl = data.view(np.float32).reshape((height, width, 3))
 
   simulator.stop()
-
-
-  #raw_timestamps = runtime_utils.format_output_tensor(oportmap_timestamps, np.float32, data)
-  # Reshape timestamps to three f32 per row of PE's in the grid
-  #raw_timestamps = np.reshape(raw_timestamps, (height, 3))
 
   tsc_tensor_d2h = np.zeros(6).astype(np.uint16)
   min_cycles = math.inf
@@ -471,6 +455,7 @@ def main():
         max_h = h
 
   avg_cycles //= height*width
+
   #####################
   # Calculate bandwidth
   #####################

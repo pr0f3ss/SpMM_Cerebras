@@ -41,6 +41,7 @@ import shutil
 import subprocess
 import numpy as np
 import math
+import csv
 
 from cerebras.sdk.runtime import runtime_utils # pylint: disable=no-name-in-module
 from cerebras.sdk.runtime.sdkruntimepybind import SdkRuntime # pylint: disable=no-name-in-module
@@ -70,6 +71,9 @@ def float_to_hex(f):
 
 def make_u48(words):
   return words[0] + (words[1] << 16) + (words[2] << 32)
+
+def sub_ts(words):
+      return make_u48(words[3:]) - make_u48(words[0:3])
 
 def parse_args():
   """ parse the command line """
@@ -372,12 +376,6 @@ def main():
   oportmap_C = f"{{ C[n = 0:{N*padded_M-1}] -> [PE[{width-1}, n // {Nt*padded_M}] -> index[n % {Nt*padded_M}]] }}"
   print(f"oportmap_C = {oportmap_C}")
 
-  # tsc gathered from all PEs
-  # timestamps are two 48-bit unsigned integers, concatenated and stored as three f32
-  # We only retrieve the cycle count of the last row of PEs
-  oportmap_timestamps = f"{{ time_memcpy[i=0:{3*height-1}] -> [PE[{width-1}, i // 3] -> index[i % 3]] }}"
-  print(f"oportmap_timestamps = {oportmap_timestamps}")
-
   # prepare all of A and B via memcpy
   # use the runtime_utils library to calculate memcpy args and shuffle data
   # (px, py, w, h, l, data) = runtime_utils.convert_input_tensor(iportmap_A_val, A_val)
@@ -418,49 +416,76 @@ def main():
   C_cs = np.reshape(C_cs, (N, padded_M))
   C_cs = C_cs[:, :-(padded_M-M)]
 
-  (px, py, w, h, l, data) = runtime_utils.prepare_output_tensor(oportmap_timestamps, np.float32)
-  simulator.memcpy_d2h(data, symbol_time_memcpy, px, py, w, h, l,
-                     streaming=False, data_type=memcpy_dtype, nonblock=False,
-                     order=memcpy_order)
+  # Copy back timestamps
+  data = np.zeros((width*height*3, 1), dtype=np.float32)
+  simulator.memcpy_d2h(data, symbol_time_memcpy, 0, 0, width, height, 3,
+    streaming=False, data_type=MemcpyDataType.MEMCPY_32BIT, order=MemcpyOrder.ROW_MAJOR, nonblock=False)
+  maxmin_time_hwl = data.view(np.float32).reshape((height, width, 3))
 
   simulator.stop()
 
-  raw_timestamps = runtime_utils.format_output_tensor(oportmap_timestamps, np.float32, data)
-  # Reshape timestamps to three f32 per row of PE's in the grid
-  raw_timestamps = np.reshape(raw_timestamps, (height, 3))
+  tsc_tensor_d2h = np.zeros(6).astype(np.uint16)
+  min_cycles = math.inf
+  max_cycles = 0
+  avg_cycles = 0
+  for w in range(width):
+    for h in range(height):
+      hex_t0 = int(float_to_hex(maxmin_time_hwl[(h, w, 0)]), base=16)
+      hex_t1 = int(float_to_hex(maxmin_time_hwl[(h, w, 1)]), base=16)
+      hex_t2 = int(float_to_hex(maxmin_time_hwl[(h, w, 2)]), base=16)
+      tsc_tensor_d2h[0] = hex_t0 & 0x0000ffff
+      tsc_tensor_d2h[1] = (hex_t0 >> 16) & 0x0000ffff
+      tsc_tensor_d2h[2] = hex_t1 & 0x0000ffff
+      tsc_tensor_d2h[3] = (hex_t1 >> 16) & 0x0000ffff
+      tsc_tensor_d2h[4] = hex_t2 & 0x0000ffff
+      tsc_tensor_d2h[5] = (hex_t2 >> 16) & 0x0000ffff
 
-  time_start = np.zeros(height).astype(int)
-  time_end = np.zeros(height).astype(int)
-  word = np.zeros(3).astype(np.uint16)
+      cycles = sub_ts(tsc_tensor_d2h)
+      avg_cycles += cycles
+      if cycles < min_cycles:
+        min_cycles = cycles
+        min_w = w
+        min_h = h
+      if cycles > max_cycles:
+        max_cycles = cycles
+        max_w = w
+        max_h = h
 
-  # split three f32 into two u48
-  for h in range(height):
-      hex_t0 = int(float_to_hex(raw_timestamps[(h, 0)]), base=16)
-      hex_t1 = int(float_to_hex(raw_timestamps[(h, 1)]), base=16)
-      hex_t2 = int(float_to_hex(raw_timestamps[(h, 2)]), base=16)
-      word[0] = hex_t0 & 0x0000ffff
-      word[1] = (hex_t0 >> 16) & 0x0000ffff
-      word[2] = hex_t1 & 0x0000ffff
-      time_start[h] = make_u48(word)
-      word[0] = (hex_t1 >> 16) & 0x0000ffff
-      word[1] = hex_t2 & 0x0000ffff
-      word[2] = (hex_t2 >> 16) & 0x0000ffff
-      time_end[h] = make_u48(word)
+  avg_cycles //= height*width
 
-  cycles = time_end - time_start
+  #####################
+  # Calculate bandwidth
+  #####################
 
-  print(cycles)
+  # Read full A_indices, A_val = Nt*A_len * (2) 
+  # For every elem in A_val read row in B and C = Nt*A_len * (2*M)
+  # For absolute accesses also include writes to C = Nt*A_val * (3*M)
 
-  # Create file if it does not exist
-  try:
-    file1 = open("benchmark_results.txt", "x")
-    file1.close()
-  except:
-    pass
-  # Adds results to file
-  file1 = open("benchmark_results.txt", "a")  # append mode
-  file1.write(str(cycles) + ",")
-  file1.close()
+  total_relative_accesses = width * height * (4*Nt*A_len*(2+padded_M*2))
+  total_absolute_accesses = width * height * (4*Nt*A_len*(2+padded_M*3))
+  total_flop = width * height * (Nt*A_len*2*padded_M)
+
+  #################
+  # Generate output
+  #################
+
+  print()
+  print("Cycle Counts:")
+  print("Min cycles (", min_w, ", ", min_h, "): ", min_cycles)
+  print("Max cycles (", max_w, ", ", max_h, "): ", max_cycles)
+  print()
+  print("Accesses and FLOP Information:")
+  print("Relative accesses (bytes): ", total_relative_accesses)
+  print("Absolute accesses (bytes): ", total_absolute_accesses)
+  print("FP operations:             ", total_flop)
+  print()
+
+  # Write a CSV
+  csv_name = f"COO_benchmark" + ".csv"
+  with open(csv_name, mode='a') as csv_file:
+    csv_writer = csv.writer(csv_file)
+    csv_writer.writerow([width, height, N, K, padded_M, avg_cycles, min_cycles, max_cycles,
+      total_relative_accesses, total_absolute_accesses,  total_flop])
 
   if args.cmaddr is None:
     #move simulation log and core dump to the given folder

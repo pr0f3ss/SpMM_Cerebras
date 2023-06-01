@@ -430,11 +430,11 @@ def main():
 
   # Iterate over Kt: Read A column -> Iterate over M: Read C column and read one element
   # = 4*Kt*(Nt+M*(Nt+1))
-  # For absolute accesses also include writes to C = 4*Kt*(Nt+M*(2*Nt+1))
+  # For absolute accesses also include writes to C and additional A read inside M loop = 4*Kt*(Nt+M*(3*Nt+1))
 
   total_relative_accesses = width * height * (4*Kt*(Nt+M*(Nt+1)))
-  total_absolute_accesses = width * height * (4*Kt*(Nt+M*(2*Nt+1)))
-  total_flop = width * height * (2*Nt*M*Nt)
+  total_absolute_accesses = width * height * (4*Kt*(Nt+M*(3*Nt+1)))
+  total_flop = width * height * (Kt*M*2*Nt)
 
   #################
   # Generate output

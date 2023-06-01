@@ -464,8 +464,8 @@ def main():
   # For every elem in A_val read row in B and C = 2*A_val*M
   # For absolute accesses also include writes to C = 3*A_val*M
 
-  total_relative_accesses = width * height * (4*(3*A_len+2*A_len*padded_M))
-  total_absolute_accesses = width * height * (4*(3*A_len+3*A_len*padded_M))
+  total_relative_accesses = width * height * (4*(A_len*(3+2*padded_M)))
+  total_absolute_accesses = width * height * (4*(A_len*(3+3*padded_M)))
   total_flop = width * height * (2*A_len*padded_M)
 
   #################

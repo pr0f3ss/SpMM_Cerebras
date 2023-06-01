@@ -281,15 +281,15 @@ task f_exit() void {
 
     lo_ = tscStartBuffer[0];
     hi_ = tscStartBuffer[1];
-    time_buf_f32[0] = @as(f32, (@as(u32,hi_) << @as(u16,16)) | @as(u32, lo_) );
-
+    time_buf_f32[0] = @bitcast(f32, (@as(u32,hi_) << @as(u16,16)) | @as(u32, lo_) );
+    
     lo_ = tscStartBuffer[2];
     hi_ = tscEndBuffer[0];
-    time_buf_f32[1] = @as(f32, (@as(u32,hi_) << @as(u16,16)) | @as(u32, lo_) );
+    time_buf_f32[1] = @bitcast(f32, (@as(u32,hi_) << @as(u16,16)) | @as(u32, lo_) );
 
     lo_ = tscEndBuffer[1];
     hi_ = tscEndBuffer[2];
-    time_buf_f32[2] = @as(f32, (@as(u32,hi_) << @as(u16,16)) | @as(u32, lo_) );
+    time_buf_f32[2] = @bitcast(f32, (@as(u32,hi_) << @as(u16,16)) | @as(u32, lo_) );
 
     // the user must unblock cmd color for every PE
     sys_mod.unblock_cmd_stream();

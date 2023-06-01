@@ -481,7 +481,7 @@ def main():
   print()
 
   # Write a CSV
-  csv_name = f"COO_benchmark" + ".csv"
+  csv_name = f"ELLPACK_benchmark" + ".csv"
   with open(csv_name, mode='a') as csv_file:
     csv_writer = csv.writer(csv_file)
     csv_writer.writerow([width, height, N, K, padded_M, avg_cycles, min_cycles, max_cycles,

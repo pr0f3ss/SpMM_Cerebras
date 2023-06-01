@@ -27,7 +27,7 @@ do
 done
 
 # CSR
-source ../memory_limits/CSR_params.txt\
+source ../memory_limits/CSR_params.txt
 testlen=${#A_heights[@]}
 
 for (( i=0; i<${testlen}; i++ ));

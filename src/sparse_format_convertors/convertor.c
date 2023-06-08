@@ -25,27 +25,27 @@ void print_matrix(double *matrix, int n, int m) {
  * @param m column dimension of matrix 
  */
 double* generate_sparse_matrix(int density, int n, int m){ 
+    int i, j;
+    int total_elements = n * m;
+    int non_zero_elements = (int)(density * total_elements / 100.0);
 
-    // Initialize a matrix with all elements as 0.0 
-    double* matrix = (double*) calloc(n * m, sizeof(double)); 
-  
-    // Generate random numbers in range [0,1] 
-    srand(time(NULL)); 
-  
-    // Fill the matrix with random numbers 
-    // with a given density 
-    for (int i=0; i<n; i++) 
-    { 
-        for (int j=0; j<m; j++) 
-        { 
-            if (rand()%100 < density){ 
-                matrix[i*m + j] = (double)rand()/RAND_MAX; 
-            }
-        } 
-    } 
-  
-    // Return the matrix 
-    return matrix; 
+    // Seed the random number generator
+    // For reproducability, we set the seed to 0
+    srand(0);
+
+    // Allocate memory for the matrix
+    double* matrix = (double *)calloc(total_elements, sizeof(double));
+
+    // Generate random non-zero elements
+    for (i = 0; i < non_zero_elements; i++) {
+        int index;
+        do {
+            index = rand() % total_elements;
+        } while (matrix[index] != 0);
+        matrix[index] = (double)rand()/RAND_MAX;  // Set the non-zero element
+    }
+
+    return matrix;
 } 
 
 /**

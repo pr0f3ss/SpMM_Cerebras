@@ -8,6 +8,8 @@ import datetime,os
 import itertools
 from matplotlib.font_manager import FontProperties
 from scipy.stats import norm
+import subprocess
+from tqdm import tqdm
 
 from operator import itemgetter
 
@@ -18,38 +20,35 @@ GUARANTEE = 0.99
 AVAIL_HEIGHT = 996
 AVAIL_WIDTH = 757
 
-def find_upper_bound_nnz(Nt, Kt, density, t):
-    """Calculates an upper bound of elements 'x' in a Nt x Kt submatrix generated with density 'd'
-    in a total t number of trials.
-    The upper bound is guaranteed with probabilty at least 'GUARANTEE'
+def get_nnz_coo(N, K, height, width, density):
+    """Gets the A_len in COO format.
 
     Parameters
     ----------
-    Nt: dimension Nt = N / grid_height
-    Kt: dimension Kt = K / grid_width
+    N: row dimension
+    K: column dimension
+    height: grid height
+    width: grid width
     density: density of the matrix A
-    t: number of trials (= PEs = width*height)
 
     Returns
     -------
-    An upper bound (with probabilty 'GUARANTEE') of the elements inside a Nt x Kt submatrix with density 'd' in a total 't' number of trials.
+    Retrieves A_len for the submatrix defined by N x K and height x width PEs.
     """
 
-    p = density/100
-    n = int(Nt*Kt)
 
-    # Get variables needed for the formula
-    mean = n * p
-    variance = n * p * (1 - p)
-    standard_deviation = math.sqrt(variance)
+    # Generate the matrix format
+    generate_matrix = subprocess.check_output(f"./a.exe {N} {K} {density} {height} {width} 2", universal_newlines=True)
 
-    # Get confidence level value such that the multiplication of t trials will still hold with probability GUARANTEE
-    z = norm.ppf(GUARANTEE**(1/t)) 
+    retrieve_lengths = subprocess.check_output(f"python add_padding.py 2", universal_newlines=True)
 
-    # CI = mean + z * (s / sqrt(n))
-    k = math.ceil(mean + z * (standard_deviation / math.sqrt(n)))
+    # Remove the newly added files
+    subprocess.run(["rm", "tmp_*"])
 
-    return k
+    # Process the output of the second file
+    lines = retrieve_lengths.splitlines()
+
+    return int(lines[1])
 
 def memory_used_coo(Nt, Kt, M, density, width, height):
     """Calculates the memory that is used per PE when using the grid COO format
@@ -70,8 +69,22 @@ def memory_used_coo(Nt, Kt, M, density, width, height):
     multiple = int(align/4)
     padded_M = math.ceil((M+1)/multiple)*multiple
 
+    # We first estimate the memory so we can skip unnecessary computations
+    upper_nnz = Nt*Kt*(density/100)
+    upper_nnz += upper_nnz*0.15
+    mem_B = Kt*padded_M
+    mem_C = Nt*padded_M
+    mem_A_val = upper_nnz
+    mem_A_x = upper_nnz
+    mem_A_y = upper_nnz
+    mem_estimate = 4*(mem_B+mem_C+mem_A_val+mem_A_x+mem_A_y)
+
+    if(mem_estimate > MEM-RESERVED):
+        return mem_estimate
+
+    # If memory is within range, we do the actual computation
     # Calculate upper bound of nnz inside submatrix (0 <= upper_nnz <= Nt*Kt)
-    upper_nnz = find_upper_bound_nnz(Nt, Kt, density, width*height)
+    upper_nnz = get_nnz_coo(int(Nt*height), int(Kt*width), height, width, density)
 
     # Calculate the number of 4 byte elements
     # Rest of buffers accounted for in reserved memory
@@ -211,14 +224,15 @@ def main():
 
     f_out = []
 
-    for density in density_list:
-        for (N,K) in NK_list:
+    for density in tqdm(density_list):
+        for (N,K) in tqdm(NK_list, leave=False):
             output = []
-            for M in [32, 64, 128, 256, 512]:
-                grid_height_list = [i for i in range(1, AVAIL_HEIGHT) if N % i == 0]
-                grid_width_list = [i for i in range(1, AVAIL_WIDTH) if K % i == 0]
 
-                zipped = list(itertools.product(grid_height_list,grid_width_list))
+            grid_height_list = [i for i in range(1, AVAIL_HEIGHT) if N % i == 0]
+            grid_width_list = [i for i in range(1, AVAIL_WIDTH) if K % i == 0]
+            zipped = list(itertools.product(grid_height_list,grid_width_list))
+
+            for M in tqdm([32, 64, 128, 256, 512], leave=False):
 
                 # [IMPORTANT]: Change which format is used here:
                 # Options:
@@ -227,7 +241,7 @@ def main():
                 # memory_used_csr
                 # memory_used_ellpack
                 # memory_used_gemm
-                mem_used = [memory_used_ellpack(int(N/h), int(K/w), M, density, w, h) for (h,w) in zipped]
+                mem_used = [memory_used_coo(int(N/h), int(K/w), M, density, w, h) for (h,w) in zipped]
 
                 grid_height_list = [x[0] for x in zipped]
                 grid_width_list = [x[1] for x in zipped]

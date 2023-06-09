@@ -40,7 +40,7 @@ def pad_file(input_filename, output_filename, replace=0, dtype=int):
     length = max(col_count)
     column_names = [i for i in range(0, max(col_count))]
 
-    df = pd.read_csv(input_filename, delimiter=',', header=None, names=column_names, skip_blank_lines=False, lineterminator='\n')
+    df = pd.read_csv(input_filename, delimiter=',', header=None, names=column_names, skip_blank_lines=False, engine="python")
     
     if(col_is_nan(df[length-1])):
         length = length - 1

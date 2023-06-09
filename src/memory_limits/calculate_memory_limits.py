@@ -173,8 +173,8 @@ def memory_used_ellpack(Nt, Kt, M, density, width, height):
     # Rest of buffers accounted for in reserved memory
     mem_B = Kt*padded_M
     mem_C = Nt*padded_M
-    mem_A_val = upper_nnz
-    mem_A_indices = upper_nnz
+    mem_A_val = Nt*upper_nnz
+    mem_A_indices = Nt*upper_nnz
 
     return 4*(mem_B+mem_C+mem_A_val+mem_A_indices)
 
@@ -227,7 +227,7 @@ def main():
                 # memory_used_csr
                 # memory_used_ellpack
                 # memory_used_gemm
-                mem_used = [memory_used_coo(int(N/h), int(K/w), M, density, w, h) for (h,w) in zipped]
+                mem_used = [memory_used_ellpack(int(N/h), int(K/w), M, density, w, h) for (h,w) in zipped]
 
                 grid_height_list = [x[0] for x in zipped]
                 grid_width_list = [x[1] for x in zipped]

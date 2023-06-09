@@ -38,12 +38,16 @@ def find_upper_bound_nnz(Nt, Kt, density, t):
     p = density/100
     n = int(Nt*Kt)
 
+    # Get variables needed for the formula
     mean = n * p
     variance = n * p * (1 - p)
     standard_deviation = math.sqrt(variance)
 
-    z = norm.ppf(GUARANTEE**(1/t))
-    k = math.ceil(mean + z * standard_deviation)
+    # Get confidence level value such that the multiplication of t trials will still hold with probability GUARANTEE
+    z = norm.ppf(GUARANTEE**(1/t)) 
+
+    # CI = mean + z * (s / sqrt(n))
+    k = math.ceil(mean + z * (standard_deviation / math.sqrt(n)))
 
     return k
 

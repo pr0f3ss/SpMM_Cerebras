@@ -130,40 +130,17 @@ void write_csv_matrix(double* matrix, int rows, int cols, char* filename) {
 }
 
 /**
- * Converts a matrix containing doubles to local csc grid format and writes it into three files in row-wise grid traversal.
- * Each line for the file encodes the CSC format specifier for the grid (going from left to right).
- * If a grid is empty, it will print an empty line in 'filename_val' and 'filename_row_idx' and it will print '0,0' in 'filename_col_ptr'. 
- * @param mat double matrix
- * @param n row dimension of matrix 
+ * Retrieves relevant parameters for the memory calculation of the CSC formatted matrix
+ * @param matrix double matrix
+ * @param n row dimension of matrix
  * @param m column dimension of matrix 
  * @param Px grid dimension column
  * @param Py grid dimension row
- * @param filename_val filename to write the CSC values array into
- * @param filename_row_idx filename to write the CSC row index array into
- * @param filename_col_ptr filename to write the CSC column pointer array into
+ * @param A_len Largest A_len of any submatrix 
+ * @param A_rowidx_len Largest A_rowidx_len of any submatrix 
+ * @param A_colptr_len Largest A_colptr_len of any submatrix 
  */
-void convert_to_grid_csc_grid(double* matrix, int n, int m, int Px, int Py, char* filename_val, char* filename_row_idx, char* filename_col_ptr){
-    // open files
-    FILE* fp_val;
-    fp_val = fopen(filename_val, "w");
-    if (fp_val == NULL) {
-        printf("Error opening file!\n");
-        exit(1);
-    }
-
-    FILE* fp_row_idx;
-    fp_row_idx = fopen(filename_row_idx, "w");
-    if (fp_row_idx == NULL) {
-        printf("Error opening file!\n");
-        exit(1);
-    }
-
-    FILE* fp_col_ptr;
-    fp_col_ptr = fopen(filename_col_ptr, "w");
-    if (fp_col_ptr == NULL) {
-        printf("Error opening file!\n");
-        exit(1);
-    }
+void retrieve_grid_csc_grid_params(double* matrix, int n, int m, int Px, int Py, int* A_len, int* A_rowidx_len, int* A_colptr_len){
 
     int grid_col_idx;
     int grid_row_idx;
@@ -173,13 +150,16 @@ void convert_to_grid_csc_grid(double* matrix, int n, int m, int Px, int Py, char
     int grid_height = n % Py == 0 ? n / Py : n/Py + 1;
     int grid_width = m % Px == 0 ? m / Px : m/Px + 1;
 
+    int local_A_len, max_A_len, local_rowidx_len, max_rowidx_len, local_colptr_len, max_colptr_len;
+    local_A_len = max_A_len = local_rowidx_len = max_rowidx_len = local_colptr_len = max_colptr_len = 0;
+
     // Traverse gridwise (from left to right)
     for(int i=0; i<Py; i++){
         for(int j=0; j<Px; j++){
-
+            
+            local_A_len = local_rowidx_len = local_colptr_len = 0;
 
             // Here, we traverse inside the grid
-            int num_elems = 0;
             for(grid_col_idx = 0; grid_col_idx < grid_width; grid_col_idx++){
                 
                 // check column bounds
@@ -188,8 +168,7 @@ void convert_to_grid_csc_grid(double* matrix, int n, int m, int Px, int Py, char
                     break;
                 }
 
-                // write column pointer
-                fprintf(fp_col_ptr, "%d,", num_elems);
+                local_colptr_len++;
                 
 
                 for(grid_row_idx = 0; grid_row_idx < grid_height; grid_row_idx++){
@@ -204,11 +183,8 @@ void convert_to_grid_csc_grid(double* matrix, int n, int m, int Px, int Py, char
                     int index = global_row*m + global_col;
                     
                     if(matrix[index] != 0){
-
-                        num_elems++;
-
-                        fprintf(fp_val, "%f,", matrix[index]);
-                        fprintf(fp_row_idx, "%d,", grid_row_idx);
+                        local_A_len++;
+                        local_rowidx_len++;
                     }
 
                 }
@@ -216,72 +192,56 @@ void convert_to_grid_csc_grid(double* matrix, int n, int m, int Px, int Py, char
             }
 
             // write final amt
-            fprintf(fp_col_ptr, "%d", num_elems);
+            local_colptr_len++;
 
-            fprintf(fp_val, "\n");
-            fprintf(fp_row_idx, "\n");
-            fprintf(fp_col_ptr, "\n");
+            // Update max values
+            if(local_A_len > max_A_len)
+                max_A_len = local_A_len;
+
+            if(local_colptr_len > max_colptr_len)
+                max_colptr_len = local_colptr_len;
+
+            if(local_rowidx_len > max_rowidx_len)
+                max_rowidx_len = local_rowidx_len;
         }
     }
 
-    fclose(fp_val);
-    fclose(fp_row_idx);
-    fclose(fp_col_ptr);
+    *A_len = max_A_len;
+    *A_colptr_len = max_colptr_len;
+    *A_rowidx_len = max_rowidx_len;
 }
 
 
 /**
- * Converts a matrix containing doubles to local csr grid format and writes it into three files in row-wise grid traversal.
- * Each line for the file encodes the CSR format specifier for the grid (going from left to right).
- * If a grid is empty, it will print an empty line in 'filename_val' and 'filename_col_idx' and it will print '0,0' in 'filename_row_ptr'. 
- * @param mat double matrix
- * @param n row dimension of matrix 
+ * Retrieves relevant parameters for the memory calculation of the CSR formatted matrix
+ * @param matrix double matrix
+ * @param n row dimension of matrix
  * @param m column dimension of matrix 
  * @param Px grid dimension column
  * @param Py grid dimension row
- * @param filename_val filename to write the CSR values array into
- * @param filename_col_idx filename to write the CSR col index array into
- * @param filename_row_ptr filename to write the CSR column pointer array into
+ * @param A_len Largest A_len of any submatrix 
+ * @param A_colidx_len Largest A_rowidx_len of any submatrix 
+ * @param A_rowptr_len Largest A_colptr_len of any submatrix 
  */
-void convert_to_grid_csr_grid(double* matrix, int n, int m, int Px, int Py, char* filename_val, char* filename_col_idx, char* filename_row_ptr){
-    // open files
-    FILE* fp_val;
-    fp_val = fopen(filename_val, "w");
-    if (fp_val == NULL) {
-        printf("Error opening file!\n");
-        exit(1);
-    }
-
-    FILE* fp_col_idx;
-    fp_col_idx = fopen(filename_col_idx, "w");
-    if (fp_col_idx == NULL) {
-        printf("Error opening file!\n");
-        exit(1);
-    }
-
-    FILE* fp_row_ptr;
-    fp_row_ptr = fopen(filename_row_ptr, "w");
-    if (fp_row_ptr == NULL) {
-        printf("Error opening file!\n");
-        exit(1);
-    }
+void retrieve_to_grid_csr_grid_params(double* matrix, int n, int m, int Px, int Py, int* A_len, int* A_colidx_len, int* A_rowptr_len){
 
     int grid_col_idx;
     int grid_row_idx;
-
 
     // If grid dimension do not align, extend by one
     int grid_height = n % Py == 0 ? n / Py : n/Py + 1;
     int grid_width = m % Px == 0 ? m / Px : m/Px + 1;
 
+    int local_A_len, max_A_len, local_colidx_len, max_colidx_len, local_rowptr_len, max_rowptr_len;
+    local_A_len = max_A_len = local_colidx_len = max_colidx_len = local_rowptr_len = max_rowptr_len = 0;
 
     // Traverse gridwise (from left to right)
     for(int i=0; i<Py; i++){
         for(int j=0; j<Px; j++){
-
+            
+            local_A_len = local_colidx_len = local_rowptr_len = 0;
 
             // Here, we traverse inside the grid
-            int num_elems = 0;
             for(grid_row_idx = 0; grid_row_idx < grid_height; grid_row_idx++){
                 
                 // check row bounds
@@ -292,7 +252,7 @@ void convert_to_grid_csr_grid(double* matrix, int n, int m, int Px, int Py, char
 
 
                 // write row pointer
-                fprintf(fp_row_ptr, "%d,", num_elems);
+                local_rowptr_len++;
                 
 
                 for(grid_col_idx = 0; grid_col_idx < grid_width; grid_col_idx++){
@@ -307,11 +267,8 @@ void convert_to_grid_csr_grid(double* matrix, int n, int m, int Px, int Py, char
                     int index = global_row*m + global_col;
                     
                     if(matrix[index] != 0){
-
-                        num_elems++;
-
-                        fprintf(fp_val, "%f,", matrix[index]);
-                        fprintf(fp_col_idx, "%d,", grid_col_idx);
+                        local_A_len++;
+                        local_colidx_len++;
                     }
 
                 }
@@ -319,68 +276,51 @@ void convert_to_grid_csr_grid(double* matrix, int n, int m, int Px, int Py, char
             }
 
             // write final amt
-            fprintf(fp_row_ptr, "%d", num_elems);
+            local_rowptr_len++;
 
-            fprintf(fp_val, "\n");
-            fprintf(fp_col_idx, "\n");
-            fprintf(fp_row_ptr, "\n");
+            // Update max values
+            if(local_A_len > max_A_len)
+                max_A_len = local_A_len;
+
+            if(local_rowptr_len > max_rowptr_len)
+                max_rowptr_len = local_rowptr_len;
+
+            if(local_colidx_len > max_colidx_len)
+                max_colidx_len = local_colidx_len;
         }
     }
 
-    fclose(fp_val);
-    fclose(fp_col_idx);
-    fclose(fp_row_ptr);
+    *A_len = max_A_len;
+    *A_rowptr_len = max_rowptr_len;
+    *A_colidx_len = max_colidx_len;
 }
 
 /**
- * Converts a matrix containing doubles to local custom grid format and writes it into three files in row-wise grid traversal.
- * Each line for the file encodes the custom grid format specifier for the grid (going from left to right).
- * If a grid is empty, it will print an empty line in 'filename_val', 'filename_x' and 'filename_y'. 
- * @param mat double matrix
+ * Retrieves relevant parameters for the memory calculation of the COO formatted matrix
+ * @param matrix double matrix
  * @param n row dimension of matrix
  * @param m column dimension of matrix 
  * @param Px grid dimension column
  * @param Py grid dimension row
- * @param filename_val filename to write the CSR values array into
- * @param filename_x filename to write the custom x index array into
- * @param filename_y filename to write the custom y index array into
+ * @param A_len Largest A_len of any submatrix 
  */
-void convert_to_grid_custom_grid(double* matrix, int n, int m, int Px, int Py, char* filename_val, char* filename_x, char* filename_y){
-    // open files
-    FILE* fp_val;
-    fp_val = fopen(filename_val, "w");
-    if (fp_val == NULL) {
-        printf("Error opening file!\n");
-        exit(1);
-    }
-
-    FILE* fp_x;
-    fp_x = fopen(filename_x, "w");
-    if (fp_x == NULL) {
-        printf("Error opening file!\n");
-        exit(1);
-    }
-
-    FILE* fp_y;
-    fp_y = fopen(filename_y, "w");
-    if (fp_y == NULL) {
-        printf("Error opening file!\n");
-        exit(1);
-    }
+void retrieve_grid_custom_grid_params(double* matrix, int n, int m, int Px, int Py, int* A_len){
 
     int grid_col_idx;
     int grid_row_idx;
-
 
     // If grid dimension do not align, extend by one
     int grid_height = n % Py == 0 ? n / Py : n/Py + 1;
     int grid_width = m % Px == 0 ? m / Px : m/Px + 1;
 
+    int max = 0;
+    int local = 0;
 
-    // Traverse gridwise (from left to right)
+    // Traverse gridwise (from left to right) and find largest A_len of any submatrix 
     for(int i=0; i<Py; i++){
         for(int j=0; j<Px; j++){
 
+            local = 0;
 
             // Here, we traverse inside the grid
             for(grid_row_idx = 0; grid_row_idx < grid_height; grid_row_idx++){
@@ -403,54 +343,35 @@ void convert_to_grid_custom_grid(double* matrix, int n, int m, int Px, int Py, c
                     int index = global_row*m + global_col;
                     
                     if(matrix[index] != 0){
-                        fprintf(fp_y, "%d,", grid_row_idx);
-                        fprintf(fp_val, "%f,", matrix[index]);
-                        fprintf(fp_x, "%d,", grid_col_idx);
+                        local++;
                     }
 
                 }
                 
             }
 
-            fprintf(fp_val, "\n");
-            fprintf(fp_x, "\n");
-            fprintf(fp_y, "\n");
+            // Check and update if submatrix has higher A_len 
+            if(local > max){
+                max = local;
+            }
         }
     }
 
-    fclose(fp_val);
-    fclose(fp_x);
-    fclose(fp_y);
+    // Write variables back
+    *A_len = max;
 }
 
 /**
- * Converts a matrix containing doubles to local ellpack grid format and writes it into two files in row-wise grid traversal.
- * In each file, each grid is contained within 'grid_height' amount of lines. The value array denotes the values for the row, while the indices
- * denote the column position. The row is implicitly contained by the row identifier.
- * If a grid row is empty, it will print an empty line in 'filename_val' and 'filename_indices'. 
- * @param mat double matrix
+ * Retrieves relevant parameters for the memory calculation of the ELLPACK formatted matrix
+ * Note: Here we are only interested in A_len, i.e. the line length in our final output.
+ * @param matrix double matrix
  * @param n row dimension of matrix
  * @param m column dimension of matrix 
  * @param Px grid dimension column
  * @param Py grid dimension row
- * @param filename_val filename to write the ellpack values array into
- * @param filename_indices filename to write the ellpack column indices array into
+ * @param A_len Largest A_len of any submatrix 
  */
-void convert_to_grid_ellpack_grid(double* matrix, int n, int m, int Px, int Py, char* filename_val, char* filename_indices){
-    // open files
-    FILE* fp_val;
-    fp_val = fopen(filename_val, "w");
-    if (fp_val == NULL) {
-        printf("Error opening file!\n");
-        exit(1);
-    }
-
-    FILE* fp_indices;
-    fp_indices = fopen(filename_indices, "w");
-    if (fp_indices == NULL) {
-        printf("Error opening file!\n");
-        exit(1);
-    }
+void retrieve_to_grid_ellpack_grid_params(double* matrix, int n, int m, int Px, int Py, int* A_len){
 
     int grid_col_idx;
     int grid_row_idx;
@@ -459,6 +380,8 @@ void convert_to_grid_ellpack_grid(double* matrix, int n, int m, int Px, int Py, 
     int grid_height = n % Py == 0 ? n / Py : n/Py + 1;
     int grid_width = m % Px == 0 ? m / Px : m/Px + 1;
 
+    int max = 0;
+    int local = 0;
 
     // Traverse gridwise (from left to right)
     for(int i=0; i<Py; i++){
@@ -472,8 +395,11 @@ void convert_to_grid_ellpack_grid(double* matrix, int n, int m, int Px, int Py, 
                 if(global_row >= n){
                     break;
                 }
-                
+
+                local = 0;
+
                 for(grid_col_idx = 0; grid_col_idx < grid_width; grid_col_idx++){
+
                     // check column bounds
                     int global_col = grid_width*j + grid_col_idx;
                     if(global_col >= m){
@@ -484,20 +410,27 @@ void convert_to_grid_ellpack_grid(double* matrix, int n, int m, int Px, int Py, 
                     int index = global_row*m + global_col;
                     
                     if(matrix[index] != 0){
-                        fprintf(fp_val, "%f,", matrix[index]);
-                        fprintf(fp_indices, "%d,", grid_col_idx);
+                        local++;
                     }
+
                 }
-                fprintf(fp_val, "\n");
-                fprintf(fp_indices, "\n");
+
+                // Check and update if submatrix has higher A_len 
+                if(local > max){
+                    max = local;
+                }
             }
         }
     }
 
-    fclose(fp_val);
-    fclose(fp_indices);
+    // Write variables back
+    *A_len = max;
 }
 
+/**
+ * Checks if a file with a requested filename is available
+ * @param filename A string containing the filename
+ */
 bool isFileAvailable(const char* filename) {
     FILE* file = fopen(filename, "r");
     if (file) {
@@ -513,10 +446,6 @@ int main(int argc, char **argv)
     double* m;
     double* gen;
 
-    printf("A matrix:\n");
-    printf("Height: %s\n", argv[1]);
-    printf("Width: %s\n", argv[2]);
-    printf("Density: %s\n", argv[3]);
     int height = atoi(argv[1]);
     int width = atoi(argv[2]);
     int density = atoi(argv[3]);
@@ -533,15 +462,9 @@ int main(int argc, char **argv)
         write_csv_matrix(gen, height, width, filename);
     }
 
-    printf("=========================\n");
-    printf("Grid size:\n");
-    printf("Height: %s\n", argv[4]);
-    printf("Width: %s\n", argv[5]);
     int grid_height = atoi(argv[4]);
     int grid_width = atoi(argv[5]);
 
-    printf("=========================\n");
-    printf("Format type: ");
     // Format types
     // 0: CSC
     // 1: CSR
@@ -549,26 +472,29 @@ int main(int argc, char **argv)
     // 3: Ellpack
     int type = atoi(argv[6]);
 
+    // Declare variables for usage
+    int A_val_len, A_rowidx_len, A_colptr_len, A_len, A_colidx_len, A_rowptr_len;
+
     switch(type){
         case 0:
-            // Convert to grid CSC
-            convert_to_grid_csc_grid(gen, height, width, grid_width, grid_height, "tmp_val.csv", "tmp_row_idx.csv", "tmp_col_ptr.csv");
-            printf("CSC\n");
+            // Retrieve grid CSC
+            retrieve_grid_csc_grid_params(gen, height, width, grid_width, grid_height, &A_val_len, &A_rowidx_len, &A_colptr_len);
+            printf("%d\n%d\n%d\n", A_val_len, A_rowidx_len, A_colptr_len);
             break;
         case 1:
-            // Convert to grid CSR
-            convert_to_grid_csr_grid(gen, height, width, grid_width, grid_height, "tmp_val.csv", "tmp_col_idx.csv", "tmp_row_ptr.csv");
-            printf("CSR\n");
+            // Retrieve grid CSR
+            retrieve_to_grid_csr_grid_params(gen, height, width, grid_width, grid_height, &A_val_len, &A_colidx_len, &A_rowptr_len);
+            printf("%d\n%d\n%d\n", A_val_len, A_colidx_len, A_rowptr_len);
             break;
         case 2:
-            // Convert to grid Custom
-            convert_to_grid_custom_grid(gen, height, width, grid_width, grid_height, "tmp_val.csv", "tmp_x.csv", "tmp_y.csv");
-            printf("Custom\n");
+            // Retrieve grid Custom
+            retrieve_grid_custom_grid_params(gen, height, width, grid_width, grid_height, &A_len);
+            printf("%d\n", A_len);
             break;
         case 3:
-            // Convert to grid Ellpack
-            convert_to_grid_ellpack_grid(gen, height, width, grid_width, grid_height, "tmp_val.csv", "tmp_indices.csv");
-            printf("Ellpack\n");
+            // Retrieve grid Ellpack
+            retrieve_to_grid_ellpack_grid_params(gen, height, width, grid_width, grid_height, &A_len);
+            printf("%d\n", A_len);
             break;
         default:
             printf("Enter a correct format type. 0: CSC, 1: CSR, 2: Custom, 3: Ellpack");

@@ -20,6 +20,7 @@
 /src/*/out/*
 
 /src/*/test_vectors/*
+/src/memory_limits/mat_*
 
 /src/grid_csc_padshift/CSC_*
 /src/grid_csr_padshift/CSR_*

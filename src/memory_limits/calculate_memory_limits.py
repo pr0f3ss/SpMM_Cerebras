@@ -20,8 +20,8 @@ GUARANTEE = 0.99
 AVAIL_HEIGHT = 996
 AVAIL_WIDTH = 757
 
-def get_nnz_coo(N, K, height, width, density):
-    """Gets the A_len in COO format.
+def get_nnz_csc(N, K, height, width, density):
+    """Gets A_val_len, A_colidx_len, A_rowptr_len from a CSC formatted matrix.
 
     Parameters
     ----------
@@ -33,100 +33,16 @@ def get_nnz_coo(N, K, height, width, density):
 
     Returns
     -------
-    Retrieves A_len for the submatrix defined by N x K and height x width PEs.
+    A_len, A_colidx_len, A_rowptr_len for the submatrices defined by N x K and height x width PEs.
     """
-
 
     # Generate the matrix format
-    generate_matrix = subprocess.check_output(f"./a.exe {N} {K} {density} {height} {width} 2", universal_newlines=True)
-
-    retrieve_lengths = subprocess.check_output(f"python add_padding.py 2", universal_newlines=True)
-
-    # Remove the newly added files
-    subprocess.run(["rm", "tmp_*"])
+    retrieve_params = subprocess.check_output(f"./a.out {N} {K} {density} {height} {width} 0", shell=True, universal_newlines=True)
 
     # Process the output of the second file
-    lines = retrieve_lengths.splitlines()
+    lines = retrieve_params.splitlines()
 
-    return int(lines[1])
-
-def memory_used_coo(Nt, Kt, M, density, width, height):
-    """Calculates the memory that is used per PE when using the grid COO format
-
-    Parameters
-    ----------
-    Nt: dimension Nt = N / grid_height
-    Kt: dimension Kt = K / grid_width
-    M: dimension M 
-    density: density of the matrix A
-
-    Returns
-    -------
-    Memory in bytes being used per PE
-    """
-    # Calculate alignment and padding of M in implementation
-    align = 16
-    multiple = int(align/4)
-    padded_M = math.ceil((M+1)/multiple)*multiple
-
-    # We first estimate the memory so we can skip unnecessary computations
-    upper_nnz = Nt*Kt*(density/100)
-    upper_nnz += upper_nnz*0.15
-    mem_B = Kt*padded_M
-    mem_C = Nt*padded_M
-    mem_A_val = upper_nnz
-    mem_A_x = upper_nnz
-    mem_A_y = upper_nnz
-    mem_estimate = 4*(mem_B+mem_C+mem_A_val+mem_A_x+mem_A_y)
-
-    if(mem_estimate > MEM-RESERVED):
-        return mem_estimate
-
-    # If memory is within range, we do the actual computation
-    # Calculate upper bound of nnz inside submatrix (0 <= upper_nnz <= Nt*Kt)
-    upper_nnz = get_nnz_coo(int(Nt*height), int(Kt*width), height, width, density)
-
-    # Calculate the number of 4 byte elements
-    # Rest of buffers accounted for in reserved memory
-    mem_B = Kt*padded_M
-    mem_C = Nt*padded_M
-    mem_A_val = upper_nnz
-    mem_A_x = upper_nnz
-    mem_A_y = upper_nnz
-
-    return 4*(mem_B+mem_C+mem_A_val+mem_A_x+mem_A_y)
-
-def memory_used_csr(Nt, Kt, M, density, width, height):
-    """Calculates the memory that is used per PE when using the grid CSR format
-
-    Parameters
-    ----------
-    Nt: dimension Nt = N / grid_height
-    Kt: dimension Kt = K / grid_width
-    M: dimension M 
-    density: density of the matrix A
-
-    Returns
-    -------
-    Memory in bytes being used per PE
-    """
-    # Calculate alignment and padding of M in implementation
-    align = 16
-    multiple = int(align/4)
-    padded_M = math.ceil((M+1)/multiple)*multiple
-
-    # Calculate upper bound of nnz inside submatrix (0 <= upper_nnz <= Nt*Kt)
-    upper_nnz = find_upper_bound_nnz(Nt, Kt, density, width*height)
-
-    # Calculate the number of 4 byte elements
-    # Rest of buffers accounted for in reserved memory
-    mem_B = Kt*padded_M
-    mem_C = Nt*padded_M
-    mem_A_val = upper_nnz
-    mem_A_rowptr = Nt+1
-    mem_A_colidx = upper_nnz
-
-    return 4*(mem_B+mem_C+mem_A_val+mem_A_rowptr+mem_A_colidx)
+    return int(lines[0]), int(lines[1]), int(lines[2])
 
 def memory_used_csc(Nt, Kt, M, density, width, height):
     """Calculates the memory that is used per PE when using the grid CSC format
@@ -147,18 +63,190 @@ def memory_used_csc(Nt, Kt, M, density, width, height):
     multiple = int(align/4)
     padded_M = math.ceil((M+1)/multiple)*multiple
 
-    # Calculate upper bound of nnz inside submatrix (0 <= upper_nnz <= Nt*Kt)
-    upper_nnz = find_upper_bound_nnz(Nt, Kt, density, width*height)
-
-    # Calculate the number of 4 byte elements
-    # Rest of buffers accounted for in reserved memory
+    # Get B and C sizes
     mem_B = Kt*padded_M
     mem_C = Nt*padded_M
+
+    # We first estimate the memory so we can skip unnecessary computations
+    upper_nnz = Nt*Kt*(density/100) # calculate the mean nnz
+    upper_nnz -= upper_nnz*0.2 # Give some buffer
     mem_A_val = upper_nnz
     mem_A_rowidx = upper_nnz
     mem_A_colptr = Kt+1
 
-    return 4*(mem_B+mem_C+mem_A_val+mem_A_rowidx+mem_A_colptr)
+    mem_estimate = 4*(mem_B+mem_C+mem_A_val+mem_A_colptr+mem_A_rowidx)
+    if(mem_estimate > MEM-RESERVED):
+        return mem_estimate
+
+    # If estimated memory is within range, we do the actual computation
+    A_val_len, A_rowidx_len, A_colptr_len = get_nnz_csc(int(Nt*height), int(Kt*width), height, width, density)
+
+    # Use actual sizes
+    mem_A_val = A_val_len
+    mem_A_rowidx = A_rowidx_len
+    mem_A_colptr = A_colptr_len
+
+    return 4*(mem_B+mem_C+mem_A_val+mem_A_colptr+mem_A_rowidx)
+
+def get_nnz_csr(N, K, height, width, density):
+    """Gets A_val_len, A_rowidx_len, A_colptr_len from a CSR formatted matrix.
+
+    Parameters
+    ----------
+    N: row dimension
+    K: column dimension
+    height: grid height
+    width: grid width
+    density: density of the matrix A
+
+    Returns
+    -------
+    A_len, A_rowidx_len, A_colptr_len for the submatrices defined by N x K and height x width PEs.
+    """
+
+    # Generate the matrix format
+    retrieve_params = subprocess.check_output(f"./a.out {N} {K} {density} {height} {width} 1", shell=True, universal_newlines=True)
+
+    # Process the output of the second file
+    lines = retrieve_params.splitlines()
+
+    return int(lines[0]), int(lines[1]), int(lines[2])
+
+def memory_used_csr(Nt, Kt, M, density, width, height):
+    """Calculates the memory that is used per PE when using the grid CSR format
+
+    Parameters
+    ----------
+    Nt: dimension Nt = N / grid_height
+    Kt: dimension Kt = K / grid_width
+    M: dimension M 
+    density: density of the matrix A
+
+    Returns
+    -------
+    Memory in bytes being used per PE
+    """
+    # Calculate alignment and padding of M in implementation
+    align = 16
+    multiple = int(align/4)
+    padded_M = math.ceil((M+1)/multiple)*multiple
+
+    # Get B and C sizes
+    mem_B = Kt*padded_M
+    mem_C = Nt*padded_M
+
+    # We first estimate the memory so we can skip unnecessary computations
+    upper_nnz = Nt*Kt*(density/100) # calculate the mean nnz
+    upper_nnz -= upper_nnz*0.2 # Give some buffer
+    mem_A_val = upper_nnz
+    mem_A_colidx = upper_nnz
+    mem_A_rowptr = Nt+1
+
+    mem_estimate = 4*(mem_B+mem_C+mem_A_val+mem_A_rowptr+mem_A_colidx)
+    if(mem_estimate > MEM-RESERVED):
+        return mem_estimate
+
+    # If estimated memory is within range, we do the actual computation
+    A_val_len, A_colidx_len, A_rowptr_len = get_nnz_csr(int(Nt*height), int(Kt*width), height, width, density)
+
+    # Use actual sizes
+    mem_A_val = A_val_len
+    mem_A_colidx = A_colidx_len
+    mem_A_rowptr = A_rowptr_len
+
+    return 4*(mem_B+mem_C+mem_A_val+mem_A_rowptr+mem_A_colidx)
+
+def get_nnz_coo(N, K, height, width, density):
+    """Gets A_len from a COO formatted matrix.
+
+    Parameters
+    ----------
+    N: row dimension
+    K: column dimension
+    height: grid height
+    width: grid width
+    density: density of the matrix A
+
+    Returns
+    -------
+    A_len for the submatrices defined by N x K and height x width PEs.
+    """
+
+    # Generate the matrix format
+    retrieve_params = subprocess.check_output(f"./a.out {N} {K} {density} {height} {width} 2", shell=True, universal_newlines=True)
+
+    # Process the output of the second file
+    lines = retrieve_params.splitlines()
+
+    return int(lines[0])
+
+def memory_used_coo(Nt, Kt, M, density, width, height):
+    """Calculates the memory that is used per PE when using the grid COO format
+
+    Parameters
+    ----------
+    Nt: dimension Nt = N / grid_height
+    Kt: dimension Kt = K / grid_width
+    M: dimension M 
+    density: density of the matrix A
+
+    Returns
+    -------
+    Memory in bytes being used per PE
+    """
+    # Calculate alignment and padding of M in implementation
+    align = 16
+    multiple = int(align/4)
+    padded_M = math.ceil((M+1)/multiple)*multiple
+
+    # Get B and C sizes
+    mem_B = Kt*padded_M
+    mem_C = Nt*padded_M
+
+    # We first estimate the memory so we can skip unnecessary computations
+    upper_nnz = Nt*Kt*(density/100) # calculate the mean nnz
+    upper_nnz -= upper_nnz*0.2 # Give some buffer
+    mem_A_val = upper_nnz
+    mem_A_x = upper_nnz
+    mem_A_y = upper_nnz
+
+    mem_estimate = 4*(mem_B+mem_C+mem_A_val+mem_A_x+mem_A_y)
+    if(mem_estimate > MEM-RESERVED):
+        return mem_estimate
+
+    # If estimated memory is within range, we do the actual computation
+    A_len = get_nnz_coo(int(Nt*height), int(Kt*width), height, width, density)
+
+    # Use actual A_len
+    mem_A_val = A_len
+    mem_A_x = A_len
+    mem_A_y = A_len
+
+    return 4*(mem_B+mem_C+mem_A_val+mem_A_x+mem_A_y)
+
+def get_nnz_ellpack(N, K, height, width, density):
+    """Gets A_len from a ELLPACK formatted matrix.
+
+    Parameters
+    ----------
+    N: row dimension
+    K: column dimension
+    height: grid height
+    width: grid width
+    density: density of the matrix A
+
+    Returns
+    -------
+    A_len for the submatrices defined by N x K and height x width PEs.
+    """
+
+    # Generate the matrix format
+    retrieve_params = subprocess.check_output(f"./a.out {N} {K} {density} {height} {width} 3", shell=True, universal_newlines=True)
+
+    # Process the output of the second file
+    lines = retrieve_params.splitlines()
+
+    return int(lines[0])
 
 def memory_used_ellpack(Nt, Kt, M, density, width, height):
     """Calculates the memory that is used per PE when using the grid ellpack format
@@ -179,15 +267,26 @@ def memory_used_ellpack(Nt, Kt, M, density, width, height):
     multiple = int(align/4)
     padded_M = math.ceil((M+1)/multiple)*multiple
 
-    # Calculate upper bound of nnz inside submatrix (0 <= upper_nnz <= Nt*Kt)
-    upper_nnz = find_upper_bound_nnz(Nt, Kt, density, width*height)
-
-    # Calculate the number of 4 byte elements
-    # Rest of buffers accounted for in reserved memory
+    # Get B and C sizes
     mem_B = Kt*padded_M
     mem_C = Nt*padded_M
+
+    # We first estimate the memory so we can skip unnecessary computations
+    upper_nnz = Kt*(density/100) # calculate the mean nnz IN ONE ROW!
+    upper_nnz -= upper_nnz*0.2 # Give some buffer
     mem_A_val = Nt*upper_nnz
     mem_A_indices = Nt*upper_nnz
+
+    mem_estimate = 4*(mem_B+mem_C+mem_A_val+mem_A_indices)
+    if(mem_estimate > MEM-RESERVED):
+        return mem_estimate
+
+    # If estimated memory is within range, we do the actual computation
+    A_len = get_nnz_ellpack(int(Nt*height), int(Kt*width), height, width, density)
+    
+    # Use actual A_len
+    mem_A_val = Nt*A_len
+    mem_A_indices = Nt*A_len
 
     return 4*(mem_B+mem_C+mem_A_val+mem_A_indices)
 

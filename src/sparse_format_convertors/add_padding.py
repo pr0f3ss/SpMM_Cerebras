@@ -1,4 +1,4 @@
-# This python file defines functions that automatically pad the grid/custom format and output its corresponding lengths in STDOUT
+# This python file defines functions that automatically pad the grid format and output its corresponding lengths in STDOUT
 
 import numpy as np
 import pandas as pd
@@ -97,12 +97,12 @@ def pad_csr_grid(prefix, replace=0):
     print("Row pointer length:")
     pad_file(prefix+"_row_ptr.csv", prefix+"_row_ptr_pad.csv", dtype=int)
 
-def pad_custom_grid(prefix, replace=0):
-    """Takes the prefix of a grid custom formatted matrix and pads NaN entries with replace
+def pad_coo_grid(prefix, replace=0):
+    """Takes the prefix of a grid coo formatted matrix and pads NaN entries with replace
 
     Parameters
     ----------
-    prefix: prefix of the filenames of a custom grid formatted matrix
+    prefix: prefix of the filenames of a coo grid formatted matrix
     replace (optional): number to replace it with
 
     Returns
@@ -123,7 +123,7 @@ def pad_ellpack_grid(prefix, replace=0):
 
     Parameters
     ----------
-    prefix: prefix of the filenames of a custom grid formatted matrix
+    prefix: prefix of the filenames of a ellpack grid formatted matrix
     replace (optional): number to replace it with
 
     Returns
@@ -146,7 +146,7 @@ def main():
         pad_csr_grid(prefix)
         
     elif(fmt_type == 2):
-        pad_custom_grid(prefix)
+        pad_coo_grid(prefix)
     
     elif(fmt_type == 3):
         pad_ellpack_grid(prefix)

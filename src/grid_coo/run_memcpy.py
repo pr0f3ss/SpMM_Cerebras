@@ -21,7 +21,6 @@
    Last column has the result A*B = C from its rows.
 
    To simplify the example, the dimensions N and K are divisible by height and width respectively.
-   In a PE we compute C=A*B using the custom Ellpack format.
 
    The matrix B is distributed into columns. The first row receives B from the fabric,
    then broadcasts B into other rows.
@@ -73,7 +72,7 @@ def make_u48(words):
   return words[0] + (words[1] << 16) + (words[2] << 32)
 
 def sub_ts(words):
-      return make_u48(words[3:]) - make_u48(words[0:3])
+  return make_u48(words[3:]) - make_u48(words[0:3])
 
 def parse_args():
   """ parse the command line """
@@ -86,7 +85,7 @@ def parse_args():
   parser.add_argument("-M", type=int,
                       help="number of columns of the matrix B and C.")
   parser.add_argument("-A_prefix", type=str,
-                      help="prefix of all three grid custom grid files")
+                      help="prefix of all three coo grid files")
   parser.add_argument("-file_dir", type=str,
                       help="directory for vectors")
   parser.add_argument("-width", type=int,
@@ -221,7 +220,7 @@ def main():
     A_prefix = args.A_prefix
   else:
     A_prefix = "test"
-
+  
   if args.file_dir is not None:
     file_dir = args.file_dir
   else:
@@ -248,16 +247,16 @@ def main():
   A_dense = np.genfromtxt(A_dense_format, delimiter=",", dtype=np.float32)
 
   A_val_file = file_dir+A_prefix+"_val_pad.csv"
-  A_indices_file = file_dir+A_prefix+"_indices_pad.csv"
+  A_y_file = file_dir+A_prefix+"_y_pad.csv"
+  A_x_file = file_dir+A_prefix+"_x_pad.csv"
 
   # Read in
   A_val = np.genfromtxt(A_val_file, delimiter=",", dtype=np.float32)
-  A_indices = np.genfromtxt(A_indices_file, delimiter=",", dtype=np.int32)
+  A_x = np.genfromtxt(A_x_file, delimiter=",", dtype=np.int32)
+  A_y = np.genfromtxt(A_y_file, delimiter=",", dtype=np.int32)
 
   # Get lengths
   A_len = A_val.shape[1]
-  print("A_len:")
-  print(A_len)
 
   np.random.seed(2)
   B = np.arange(K*M).reshape(K, M).astype(np.float32) + 100
@@ -341,13 +340,15 @@ def main():
   simulator = SdkRuntime(args.name, cmaddr=args.cmaddr)
 
   symbol_A_val = simulator.get_id("A_val")
-  symbol_A_indices = simulator.get_id("A_indices")
+  symbol_A_x = simulator.get_id("A_x")
+  symbol_A_y = simulator.get_id("A_y")
   symbol_B = simulator.get_id("B")
   symbol_C = simulator.get_id("C")
   symbol_time_memcpy = simulator.get_id("time_memcpy")
 
   print(f"symbol_A_val = {symbol_A_val}")
-  print(f"symbol_A_indices = {symbol_A_indices}")
+  print(f"symbol_A_x = {symbol_A_x}")
+  print(f"symbol_A_y = {symbol_A_y}")
   print(f"symbol_x = {symbol_B}")
   print(f"symbol_C= {symbol_C}")
 
@@ -357,11 +358,14 @@ def main():
   num_PE = width*height
 
   # iport maps for A arrays are derived from Leighton's advice
-  iportmap_A_val = f"{{ A_val[i=0:{num_PE*Nt-1}][j=0:{A_len-1}] -> [PE[(i // {Nt}) // {width}, i // {Nt*width}] -> index[i % {Nt}, j]] }}"
+  iportmap_A_val = f"{{ A_val[i=0:{num_PE-1}][j=0:{A_len-1}] -> [PE[i % {width}, i // {width}] -> index[j]] }}"
   print(f"iportmap_A_val = {iportmap_A_val}")
 
-  iportmap_A_indices = f"{{ A_indices[i=0:{num_PE*Nt-1}][j=0:{A_len-1}] -> [PE[(i // {Nt}) // {width}, i // {Nt*width}] -> index[i % {Nt}, j]] }}"
-  print(f"iportmap_A_x = {iportmap_A_indices}")
+  iportmap_A_x = f"{{ A_x[i=0:{num_PE-1}][j=0:{A_len-1}] -> [PE[i % {width}, i // {width}] -> index[j]] }}"
+  print(f"iportmap_A_x = {iportmap_A_x}")
+
+  iportmap_A_y = f"{{ A_y[i=0:{num_PE-1}][j=0:{A_len-1}] -> [PE[i % {width}, i // {width}] -> index[j]] }}"
+  print(f"iportmap_A_y = {iportmap_A_y}")
 
   # B distributes to {py = 0}
   # derived from Residual example code
@@ -378,20 +382,16 @@ def main():
 
   # prepare all of A and B via memcpy
   # use the runtime_utils library to calculate memcpy args and shuffle data
-  # (px, py, w, h, l, data) = runtime_utils.convert_input_tensor(iportmap_A_val, A_val)
-  print("Nt:")
-  print(Nt)
-  l = Nt*A_len
-  print(l)
-  data_val = A_val.view(dtype=np.int32).flatten()
-  print(A_val.flatten())
-  simulator.memcpy_h2d(symbol_A_val, data_val, 0, 0, width, height, l,
+  (px, py, w, h, l, data) = runtime_utils.convert_input_tensor(iportmap_A_val, A_val)
+  simulator.memcpy_h2d(symbol_A_val, data, px, py, w, h, l,
                      streaming=False, data_type=memcpy_dtype, nonblock=False,
                      order=memcpy_order)
-  
-  #(px, py, w, h, l, data) = runtime_utils.convert_input_tensor(iportmap_A_indices, A_x)
-  data_indices = A_indices.view(dtype=np.int32).flatten()
-  simulator.memcpy_h2d(symbol_A_indices, data_indices, 0, 0, width, height, l,
+  (px, py, w, h, l, data) = runtime_utils.convert_input_tensor(iportmap_A_x, A_x)
+  simulator.memcpy_h2d(symbol_A_x, data, px, py, w, h, l,
+                     streaming=False, data_type=memcpy_dtype, nonblock=False,
+                     order=memcpy_order)
+  (px, py, w, h, l, data) = runtime_utils.convert_input_tensor(iportmap_A_y, A_y)
+  simulator.memcpy_h2d(symbol_A_y, data, px, py, w, h, l,
                      streaming=False, data_type=memcpy_dtype, nonblock=False,
                      order=memcpy_order)
 
@@ -457,13 +457,13 @@ def main():
   # Calculate bandwidth
   #####################
 
-  # Read full A_indices, A_val = Nt*A_len * (2) 
-  # For every elem in A_val read row in B and C = Nt*A_len * (2*M)
-  # For absolute accesses also include writes to C = Nt*A_val * (3*M)
+  # Read full A_x, A_y, A_val = 3 * A_len
+  # For every elem in A_val read row in B and C = 2*A_val*M
+  # For absolute accesses also include writes to C = 3*A_val*M
 
-  total_relative_accesses = width * height * (4*Nt*A_len*(2+padded_M*2))
-  total_absolute_accesses = width * height * (4*Nt*A_len*(2+padded_M*3))
-  total_flop = width * height * (Nt*A_len*2*padded_M)
+  total_relative_accesses = width * height * (4*(A_len*(3+2*padded_M)))
+  total_absolute_accesses = width * height * (4*(A_len*(3+3*padded_M)))
+  total_flop = width * height * (2*A_len*padded_M)
 
   #################
   # Generate output
@@ -481,7 +481,7 @@ def main():
   print()
 
   # Write a CSV
-  csv_name = f"ELLPACK_benchmark" + ".csv"
+  csv_name = f"COO_benchmark" + ".csv"
   with open(csv_name, mode='a') as csv_file:
     csv_writer = csv.writer(csv_file)
     csv_writer.writerow([width, height, N, K, padded_M, avg_cycles, min_cycles, max_cycles,

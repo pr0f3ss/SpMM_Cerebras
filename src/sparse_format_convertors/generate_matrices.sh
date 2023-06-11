@@ -22,8 +22,8 @@ do
     echo "" >> out.txt
     mv out.txt $dir
     # cp to Gemm implementation
-    cp -r $dir "../gemm_padshift"
-    mv $dir "../grid_csc_padshift"
+    cp -r $dir "../gemm"
+    mv $dir "../grid_csc"
 done
 
 # CSR
@@ -45,7 +45,7 @@ do
     echo $row_ptr_len >> out.txt
     echo "" >> out.txt
     mv out.txt $dir
-    mv $dir "../grid_csr_padshift"
+    mv $dir "../grid_csr"
 done
 
 # COO
@@ -67,7 +67,7 @@ do
     echo $row_len >> out.txt
     echo "" >> out.txt
     mv out.txt $dir
-    mv $dir "../grid_custom_padshift"
+    mv $dir "../grid_coo"
 done
 
 # ELLPACK
@@ -85,5 +85,5 @@ do
     echo $A_len >> out.txt
     echo "" >> out.txt
     mv out.txt $dir
-    mv $dir "../grid_ellpack_padshift"
+    mv $dir "../grid_ellpack"
 done

@@ -1,5 +1,5 @@
 // This program computes A*B on a height-by-width PE rectangle
-// The matrix A in grid custom format is distributed to every PE via memcpy
+// The matrix A in grid coo format is distributed to every PE via memcpy
 // The matrix B is distributed to first row PEs via memcpy
 // Pw.0, ..., Pw.h send out the result C_final via memcpy, where h = height-1 and w = width-1.
 // Note that this is the right-hand side column of PEs
@@ -44,7 +44,7 @@ param EXIT: color;     // entrypoint to leave RPC
 // C grid: Nt x Mt
 // We set Mt = M
 
-// A uses grid custom format and predetermined (padded) size 
+// A uses grid coo format and predetermined (padded) size 
 // A_len
 
 param Nt:i32;         
@@ -171,8 +171,6 @@ const fab_trans_C_wdsd = @get_dsd(fabout_dsd, .{
 ////////////////////////////////////////////////////////////////////////////////
 // Tasks
 ////////////////////////////////////////////////////////////////////////////////
-
-//const spmm_custom_mod = @import_module( "spmm_custom.csl" , .{  .A_len = A_len, .Nt = Nt,  .Kt = Kt, .M = M});
 
 // All PEs compute local A*B after A and B are received
 task f_comp() void {

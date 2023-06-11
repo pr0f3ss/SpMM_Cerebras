@@ -332,8 +332,8 @@ void convert_to_grid_csr_grid(double* matrix, int n, int m, int Px, int Py, char
 }
 
 /**
- * Converts a matrix containing doubles to local custom grid format and writes it into three files in row-wise grid traversal.
- * Each line for the file encodes the custom grid format specifier for the grid (going from left to right).
+ * Converts a matrix containing doubles to local coo grid format and writes it into three files in row-wise grid traversal.
+ * Each line for the file encodes the coo grid format specifier for the grid (going from left to right).
  * If a grid is empty, it will print an empty line in 'filename_val', 'filename_x' and 'filename_y'. 
  * @param mat double matrix
  * @param n row dimension of matrix
@@ -341,10 +341,10 @@ void convert_to_grid_csr_grid(double* matrix, int n, int m, int Px, int Py, char
  * @param Px grid dimension column
  * @param Py grid dimension row
  * @param filename_val filename to write the CSR values array into
- * @param filename_x filename to write the custom x index array into
- * @param filename_y filename to write the custom y index array into
+ * @param filename_x filename to write the coo x index array into
+ * @param filename_y filename to write the coo y index array into
  */
-void convert_to_grid_custom_grid(double* matrix, int n, int m, int Px, int Py, char* filename_val, char* filename_x, char* filename_y){
+void convert_to_grid_coo_grid(double* matrix, int n, int m, int Px, int Py, char* filename_val, char* filename_x, char* filename_y){
     // open files
     FILE* fp_val;
     fp_val = fopen(filename_val, "w");
@@ -545,7 +545,7 @@ int main(int argc, char **argv)
             break;
         case 2:
             // Convert to grid Custom
-            convert_to_grid_custom_grid(gen, height, width, grid_width, grid_height, "tmp_val.csv", "tmp_x.csv", "tmp_y.csv");
+            convert_to_grid_coo_grid(gen, height, width, grid_width, grid_height, "tmp_val.csv", "tmp_x.csv", "tmp_y.csv");
             printf("Custom\n");
             break;
         case 3:

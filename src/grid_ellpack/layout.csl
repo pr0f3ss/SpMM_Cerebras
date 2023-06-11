@@ -1,5 +1,5 @@
 // This program computes A*B on a height-by-width PE rectangle
-// The matrix A in grid Custom format is distributed to every PE via memcpy
+// The matrix A in grid Ellpack format is distributed to every PE via memcpy
 // The matrix B is distributed to first row PEs via memcpy
 // Pw.0, ..., Pw.h send out the result C_final via memcpy, where h = height-1 and w = width-1.
 // Note that this is the right-hand side column of PEs
@@ -12,9 +12,8 @@
 param LAUNCH_ID: i16;
 
 // Lengths
-//    A_val     A_len x 1
-//    A_x       A_len x 1
-//    A_y       A_len x 1
+//    A_val     height x A_len 
+//    A_indices height x A_len
 //    B         Kt x M
 //    C         Nt x M
 //
@@ -138,7 +137,7 @@ layout{
                         .{ .RXACT_B = NONE, .TXACT_B=RXACT_B_EVEN, .RXACT_C = NONE, .TXACT_C = C_REDUCE_EVEN},
                         .{ .memcpyParams = memcpyParams_col } );
                     
-                    @set_tile_code(pe_x, pe_y, "spmm_custom_memcpy.csl", @concat_structs(route, comm_params) );
+                    @set_tile_code(pe_x, pe_y, "spmm_ellpack_memcpy.csl", @concat_structs(route, comm_params) );
                     @set_color_config(pe_x, pe_y, C_REDUCE_EVEN, .{ .routes = ccr_C_RE });
                     @set_color_config(pe_x, pe_y, RXACT_B_EVEN, .{ .routes = ccr_B_RS });
 
@@ -152,7 +151,7 @@ layout{
                         .{ .RXACT_B = RXACT_B_EVEN, .TXACT_B=NONE, .RXACT_C = NONE, .TXACT_C = C_REDUCE_EVEN},
                         .{ .memcpyParams = memcpyParams_col } );
                     
-                        @set_tile_code(pe_x, pe_y, "spmm_custom_memcpy.csl", @concat_structs(route, comm_params) );
+                        @set_tile_code(pe_x, pe_y, "spmm_ellpack_memcpy.csl", @concat_structs(route, comm_params) );
                         @set_color_config(pe_x, pe_y, C_REDUCE_EVEN, .{ .routes = ccr_C_RE });
                         @set_color_config(pe_x, pe_y, RXACT_B_EVEN, .{ .routes = ccr_B_NR });
                     }else{
@@ -161,7 +160,7 @@ layout{
                         .{ .RXACT_B = RXACT_B_ODD, .TXACT_B=NONE, .RXACT_C = NONE, .TXACT_C = C_REDUCE_EVEN},
                         .{ .memcpyParams = memcpyParams_col } );
 
-                        @set_tile_code(pe_x, pe_y, "spmm_custom_memcpy.csl", @concat_structs(route, comm_params) );
+                        @set_tile_code(pe_x, pe_y, "spmm_ellpack_memcpy.csl", @concat_structs(route, comm_params) );
                         @set_color_config(pe_x, pe_y, C_REDUCE_EVEN, .{ .routes = ccr_C_RE });
                         @set_color_config(pe_x, pe_y, RXACT_B_ODD, .{ .routes = ccr_B_NR });
                     }
@@ -174,7 +173,7 @@ layout{
                         .{ .RXACT_B = RXACT_B_EVEN, .TXACT_B=RXACT_B_ODD, .RXACT_C = NONE, .TXACT_C = C_REDUCE_EVEN},
                         .{ .memcpyParams = memcpyParams_col } );
                     
-                        @set_tile_code(pe_x, pe_y, "spmm_custom_memcpy.csl", @concat_structs(route, comm_params) );
+                        @set_tile_code(pe_x, pe_y, "spmm_ellpack_memcpy.csl", @concat_structs(route, comm_params) );
                         @set_color_config(pe_x, pe_y, C_REDUCE_EVEN, .{ .routes = ccr_C_RE });
                         @set_color_config(pe_x, pe_y, RXACT_B_EVEN, .{ .routes = ccr_B_NR });
                         @set_color_config(pe_x, pe_y, RXACT_B_ODD, .{ .routes = ccr_B_RS });
@@ -184,7 +183,7 @@ layout{
                         .{ .RXACT_B = RXACT_B_ODD, .TXACT_B=RXACT_B_EVEN, .RXACT_C = NONE, .TXACT_C = C_REDUCE_EVEN},
                         .{ .memcpyParams = memcpyParams_col } );
                     
-                        @set_tile_code(pe_x, pe_y, "spmm_custom_memcpy.csl", @concat_structs(route, comm_params) );
+                        @set_tile_code(pe_x, pe_y, "spmm_ellpack_memcpy.csl", @concat_structs(route, comm_params) );
                         @set_color_config(pe_x, pe_y, C_REDUCE_EVEN, .{ .routes = ccr_C_RE });
                         @set_color_config(pe_x, pe_y, RXACT_B_EVEN, .{ .routes = ccr_B_RS });
                         @set_color_config(pe_x, pe_y, RXACT_B_ODD, .{ .routes = ccr_B_NR });
@@ -203,7 +202,7 @@ layout{
                             .{ .RXACT_B = NONE, .TXACT_B=RXACT_B_EVEN, .RXACT_C = C_REDUCE_EVEN, .TXACT_C = NONE},
                             .{ .memcpyParams = memcpyParams_col } );
                         
-                        @set_tile_code(pe_x, pe_y, "spmm_custom_memcpy.csl", @concat_structs(route, comm_params) );
+                        @set_tile_code(pe_x, pe_y, "spmm_ellpack_memcpy.csl", @concat_structs(route, comm_params) );
                         @set_color_config(pe_x, pe_y, C_REDUCE_EVEN, .{ .routes = ccr_C_WR });
                         @set_color_config(pe_x, pe_y, RXACT_B_EVEN, .{ .routes = ccr_B_RS });
                     }else{
@@ -212,7 +211,7 @@ layout{
                             .{ .RXACT_B = NONE, .TXACT_B=RXACT_B_EVEN, .RXACT_C = C_REDUCE_ODD, .TXACT_C = NONE},
                             .{ .memcpyParams = memcpyParams_col } );
                         
-                        @set_tile_code(pe_x, pe_y, "spmm_custom_memcpy.csl", @concat_structs(route, comm_params) );
+                        @set_tile_code(pe_x, pe_y, "spmm_ellpack_memcpy.csl", @concat_structs(route, comm_params) );
                         @set_color_config(pe_x, pe_y, C_REDUCE_ODD, .{ .routes = ccr_C_WR });
                         @set_color_config(pe_x, pe_y, RXACT_B_EVEN, .{ .routes = ccr_B_RS });
                     }
@@ -231,7 +230,7 @@ layout{
                             .{ .RXACT_B = RXACT_B_EVEN, .TXACT_B=NONE, .RXACT_C = C_REDUCE_EVEN, .TXACT_C = NONE},
                             .{ .memcpyParams = memcpyParams_col } );
                         
-                            @set_tile_code(pe_x, pe_y, "spmm_custom_memcpy.csl", @concat_structs(route, comm_params) );
+                            @set_tile_code(pe_x, pe_y, "spmm_ellpack_memcpy.csl", @concat_structs(route, comm_params) );
                             @set_color_config(pe_x, pe_y, C_REDUCE_EVEN, .{ .routes = ccr_C_WR });
                             @set_color_config(pe_x, pe_y, RXACT_B_EVEN, .{ .routes = ccr_B_NR });
                         }else{
@@ -240,7 +239,7 @@ layout{
                             .{ .RXACT_B = RXACT_B_ODD, .TXACT_B=NONE, .RXACT_C = C_REDUCE_EVEN, .TXACT_C = NONE},
                             .{ .memcpyParams = memcpyParams_col } );
                         
-                            @set_tile_code(pe_x, pe_y, "spmm_custom_memcpy.csl", @concat_structs(route, comm_params) );
+                            @set_tile_code(pe_x, pe_y, "spmm_ellpack_memcpy.csl", @concat_structs(route, comm_params) );
                             @set_color_config(pe_x, pe_y, C_REDUCE_EVEN, .{ .routes = ccr_C_WR });
                             @set_color_config(pe_x, pe_y, RXACT_B_ODD, .{ .routes = ccr_B_NR });
                         }
@@ -254,7 +253,7 @@ layout{
                             .{ .RXACT_B = RXACT_B_EVEN, .TXACT_B=NONE, .RXACT_C = C_REDUCE_ODD, .TXACT_C = NONE},
                             .{ .memcpyParams = memcpyParams_col } );
                         
-                            @set_tile_code(pe_x, pe_y, "spmm_custom_memcpy.csl", @concat_structs(route, comm_params) );
+                            @set_tile_code(pe_x, pe_y, "spmm_ellpack_memcpy.csl", @concat_structs(route, comm_params) );
                             @set_color_config(pe_x, pe_y, C_REDUCE_ODD, .{ .routes = ccr_C_WR });
                             @set_color_config(pe_x, pe_y, RXACT_B_EVEN, .{ .routes = ccr_B_NR });
                         }else{
@@ -263,7 +262,7 @@ layout{
                             .{ .RXACT_B = RXACT_B_ODD, .TXACT_B=NONE, .RXACT_C = C_REDUCE_ODD, .TXACT_C = NONE},
                             .{ .memcpyParams = memcpyParams_col } );
                         
-                            @set_tile_code(pe_x, pe_y, "spmm_custom_memcpy.csl", @concat_structs(route, comm_params) );
+                            @set_tile_code(pe_x, pe_y, "spmm_ellpack_memcpy.csl", @concat_structs(route, comm_params) );
                             @set_color_config(pe_x, pe_y, C_REDUCE_ODD, .{ .routes = ccr_C_WR });
                             @set_color_config(pe_x, pe_y, RXACT_B_ODD, .{ .routes = ccr_B_NR });
                         }
@@ -281,7 +280,7 @@ layout{
                                 .{ .RXACT_B = RXACT_B_EVEN, .TXACT_B=RXACT_B_ODD, .RXACT_C = C_REDUCE_EVEN, .TXACT_C = NONE},
                                 .{ .memcpyParams = memcpyParams_col } );
                             
-                            @set_tile_code(pe_x, pe_y, "spmm_custom_memcpy.csl", @concat_structs(route, comm_params) );
+                            @set_tile_code(pe_x, pe_y, "spmm_ellpack_memcpy.csl", @concat_structs(route, comm_params) );
                             @set_color_config(pe_x, pe_y, C_REDUCE_EVEN, .{ .routes = ccr_C_WR });
                             @set_color_config(pe_x, pe_y, RXACT_B_EVEN, .{ .routes = ccr_B_NR });
                             @set_color_config(pe_x, pe_y, RXACT_B_ODD, .{ .routes = ccr_B_RS });
@@ -292,7 +291,7 @@ layout{
                             .{ .RXACT_B = RXACT_B_ODD, .TXACT_B=RXACT_B_EVEN, .RXACT_C = C_REDUCE_EVEN, .TXACT_C = NONE},
                             .{ .memcpyParams = memcpyParams_col } );
                         
-                            @set_tile_code(pe_x, pe_y, "spmm_custom_memcpy.csl", @concat_structs(route, comm_params) );
+                            @set_tile_code(pe_x, pe_y, "spmm_ellpack_memcpy.csl", @concat_structs(route, comm_params) );
                             @set_color_config(pe_x, pe_y, C_REDUCE_EVEN, .{ .routes = ccr_C_WR });
                             @set_color_config(pe_x, pe_y, RXACT_B_EVEN, .{ .routes = ccr_B_RS });
                             @set_color_config(pe_x, pe_y, RXACT_B_ODD, .{ .routes = ccr_B_NR });
@@ -307,7 +306,7 @@ layout{
                                 .{ .RXACT_B = RXACT_B_EVEN, .TXACT_B=RXACT_B_ODD, .RXACT_C = C_REDUCE_ODD, .TXACT_C = NONE},
                                 .{ .memcpyParams = memcpyParams_col } );
                             
-                            @set_tile_code(pe_x, pe_y, "spmm_custom_memcpy.csl", @concat_structs(route, comm_params) );
+                            @set_tile_code(pe_x, pe_y, "spmm_ellpack_memcpy.csl", @concat_structs(route, comm_params) );
                             @set_color_config(pe_x, pe_y, C_REDUCE_ODD, .{ .routes = ccr_C_WR });
                             @set_color_config(pe_x, pe_y, RXACT_B_EVEN, .{ .routes = ccr_B_NR });
                             @set_color_config(pe_x, pe_y, RXACT_B_ODD, .{ .routes = ccr_B_RS });
@@ -318,7 +317,7 @@ layout{
                             .{ .RXACT_B = RXACT_B_ODD, .TXACT_B=RXACT_B_EVEN, .RXACT_C = C_REDUCE_ODD, .TXACT_C = NONE},
                             .{ .memcpyParams = memcpyParams_col } );
                         
-                            @set_tile_code(pe_x, pe_y, "spmm_custom_memcpy.csl", @concat_structs(route, comm_params) );
+                            @set_tile_code(pe_x, pe_y, "spmm_ellpack_memcpy.csl", @concat_structs(route, comm_params) );
                             @set_color_config(pe_x, pe_y, C_REDUCE_ODD, .{ .routes = ccr_C_WR });
                             @set_color_config(pe_x, pe_y, RXACT_B_EVEN, .{ .routes = ccr_B_RS });
                             @set_color_config(pe_x, pe_y, RXACT_B_ODD, .{ .routes = ccr_B_NR });
@@ -337,7 +336,7 @@ layout{
                         .{ .RXACT_B = NONE, .TXACT_B=RXACT_B_EVEN, .RXACT_C = C_REDUCE_EVEN, .TXACT_C = C_REDUCE_ODD},
                         .{ .memcpyParams = memcpyParams_col } );
                     
-                        @set_tile_code(pe_x, pe_y, "spmm_custom_memcpy.csl", @concat_structs(route, comm_params) );
+                        @set_tile_code(pe_x, pe_y, "spmm_ellpack_memcpy.csl", @concat_structs(route, comm_params) );
                         @set_color_config(pe_x, pe_y, C_REDUCE_EVEN, .{ .routes = ccr_C_WR });
                         @set_color_config(pe_x, pe_y, C_REDUCE_ODD, .{ .routes = ccr_C_RE });
                         @set_color_config(pe_x, pe_y, RXACT_B_EVEN, .{ .routes = ccr_B_RS });
@@ -347,7 +346,7 @@ layout{
                         .{ .RXACT_B = NONE, .TXACT_B=RXACT_B_EVEN, .RXACT_C = C_REDUCE_ODD, .TXACT_C = C_REDUCE_EVEN},
                         .{ .memcpyParams = memcpyParams_col } );
                     
-                        @set_tile_code(pe_x, pe_y, "spmm_custom_memcpy.csl", @concat_structs(route, comm_params) );
+                        @set_tile_code(pe_x, pe_y, "spmm_ellpack_memcpy.csl", @concat_structs(route, comm_params) );
                         @set_color_config(pe_x, pe_y, C_REDUCE_EVEN, .{ .routes = ccr_C_RE });
                         @set_color_config(pe_x, pe_y, C_REDUCE_ODD, .{ .routes = ccr_C_WR });
                         @set_color_config(pe_x, pe_y, RXACT_B_EVEN, .{ .routes = ccr_B_RS });
@@ -363,7 +362,7 @@ layout{
                             .{ .RXACT_B = RXACT_B_EVEN, .TXACT_B=NONE, .RXACT_C = C_REDUCE_EVEN, .TXACT_C = C_REDUCE_ODD},
                             .{ .memcpyParams = memcpyParams_col } );
                         
-                            @set_tile_code(pe_x, pe_y, "spmm_custom_memcpy.csl", @concat_structs(route, comm_params) );
+                            @set_tile_code(pe_x, pe_y, "spmm_ellpack_memcpy.csl", @concat_structs(route, comm_params) );
                             @set_color_config(pe_x, pe_y, C_REDUCE_EVEN, .{ .routes = ccr_C_WR });
                             @set_color_config(pe_x, pe_y, C_REDUCE_ODD, .{ .routes = ccr_C_RE });
                             @set_color_config(pe_x, pe_y, RXACT_B_EVEN, .{ .routes = ccr_B_NR });
@@ -373,7 +372,7 @@ layout{
                             .{ .RXACT_B = RXACT_B_EVEN, .TXACT_B=NONE, .RXACT_C = C_REDUCE_ODD, .TXACT_C = C_REDUCE_EVEN},
                             .{ .memcpyParams = memcpyParams_col } );
                         
-                            @set_tile_code(pe_x, pe_y, "spmm_custom_memcpy.csl", @concat_structs(route, comm_params) );
+                            @set_tile_code(pe_x, pe_y, "spmm_ellpack_memcpy.csl", @concat_structs(route, comm_params) );
                             @set_color_config(pe_x, pe_y, C_REDUCE_EVEN, .{ .routes = ccr_C_RE });
                             @set_color_config(pe_x, pe_y, C_REDUCE_ODD, .{ .routes = ccr_C_WR });
                             @set_color_config(pe_x, pe_y, RXACT_B_EVEN, .{ .routes = ccr_B_NR });
@@ -386,7 +385,7 @@ layout{
                             .{ .RXACT_B = RXACT_B_ODD, .TXACT_B=NONE, .RXACT_C = C_REDUCE_EVEN, .TXACT_C = C_REDUCE_ODD},
                             .{ .memcpyParams = memcpyParams_col } );
                         
-                            @set_tile_code(pe_x, pe_y, "spmm_custom_memcpy.csl", @concat_structs(route, comm_params) );
+                            @set_tile_code(pe_x, pe_y, "spmm_ellpack_memcpy.csl", @concat_structs(route, comm_params) );
                             @set_color_config(pe_x, pe_y, C_REDUCE_EVEN, .{ .routes = ccr_C_WR });
                             @set_color_config(pe_x, pe_y, C_REDUCE_ODD, .{ .routes = ccr_C_RE });
                             @set_color_config(pe_x, pe_y, RXACT_B_ODD, .{ .routes = ccr_B_NR });
@@ -396,7 +395,7 @@ layout{
                             .{ .RXACT_B = RXACT_B_ODD, .TXACT_B=NONE, .RXACT_C = C_REDUCE_ODD, .TXACT_C = C_REDUCE_EVEN},
                             .{ .memcpyParams = memcpyParams_col } );
                         
-                            @set_tile_code(pe_x, pe_y, "spmm_custom_memcpy.csl", @concat_structs(route, comm_params) );
+                            @set_tile_code(pe_x, pe_y, "spmm_ellpack_memcpy.csl", @concat_structs(route, comm_params) );
                             @set_color_config(pe_x, pe_y, C_REDUCE_EVEN, .{ .routes = ccr_C_RE });
                             @set_color_config(pe_x, pe_y, C_REDUCE_ODD, .{ .routes = ccr_C_WR });
                             @set_color_config(pe_x, pe_y, RXACT_B_ODD, .{ .routes = ccr_B_NR });
@@ -414,7 +413,7 @@ layout{
                             .{ .RXACT_B = RXACT_B_EVEN, .TXACT_B=RXACT_B_ODD, .RXACT_C = C_REDUCE_EVEN, .TXACT_C = C_REDUCE_ODD},
                             .{ .memcpyParams = memcpyParams_col } );
                         
-                            @set_tile_code(pe_x, pe_y, "spmm_custom_memcpy.csl", @concat_structs(route, comm_params) );
+                            @set_tile_code(pe_x, pe_y, "spmm_ellpack_memcpy.csl", @concat_structs(route, comm_params) );
                             @set_color_config(pe_x, pe_y, C_REDUCE_EVEN, .{ .routes = ccr_C_WR });
                             @set_color_config(pe_x, pe_y, C_REDUCE_ODD, .{ .routes = ccr_C_RE });
                             @set_color_config(pe_x, pe_y, RXACT_B_ODD, .{ .routes = ccr_B_RS });
@@ -425,7 +424,7 @@ layout{
                             .{ .RXACT_B = RXACT_B_EVEN, .TXACT_B=RXACT_B_ODD, .RXACT_C = C_REDUCE_ODD, .TXACT_C = C_REDUCE_EVEN},
                             .{ .memcpyParams = memcpyParams_col } );
                         
-                            @set_tile_code(pe_x, pe_y, "spmm_custom_memcpy.csl", @concat_structs(route, comm_params) );
+                            @set_tile_code(pe_x, pe_y, "spmm_ellpack_memcpy.csl", @concat_structs(route, comm_params) );
                             @set_color_config(pe_x, pe_y, C_REDUCE_EVEN, .{ .routes = ccr_C_RE });
                             @set_color_config(pe_x, pe_y, C_REDUCE_ODD, .{ .routes = ccr_C_WR });
                             @set_color_config(pe_x, pe_y, RXACT_B_ODD, .{ .routes = ccr_B_RS });
@@ -439,7 +438,7 @@ layout{
                             .{ .RXACT_B = RXACT_B_ODD, .TXACT_B=RXACT_B_EVEN, .RXACT_C = C_REDUCE_EVEN, .TXACT_C = C_REDUCE_ODD},
                             .{ .memcpyParams = memcpyParams_col } );
                         
-                            @set_tile_code(pe_x, pe_y, "spmm_custom_memcpy.csl", @concat_structs(route, comm_params) );
+                            @set_tile_code(pe_x, pe_y, "spmm_ellpack_memcpy.csl", @concat_structs(route, comm_params) );
                             @set_color_config(pe_x, pe_y, C_REDUCE_EVEN, .{ .routes = ccr_C_WR });
                             @set_color_config(pe_x, pe_y, C_REDUCE_ODD, .{ .routes = ccr_C_RE });
                             @set_color_config(pe_x, pe_y, RXACT_B_ODD, .{ .routes = ccr_B_NR });
@@ -450,7 +449,7 @@ layout{
                             .{ .RXACT_B = RXACT_B_ODD, .TXACT_B=RXACT_B_EVEN, .RXACT_C = C_REDUCE_ODD, .TXACT_C = C_REDUCE_EVEN},
                             .{ .memcpyParams = memcpyParams_col } );
                         
-                            @set_tile_code(pe_x, pe_y, "spmm_custom_memcpy.csl", @concat_structs(route, comm_params) );
+                            @set_tile_code(pe_x, pe_y, "spmm_ellpack_memcpy.csl", @concat_structs(route, comm_params) );
                             @set_color_config(pe_x, pe_y, C_REDUCE_EVEN, .{ .routes = ccr_C_RE });
                             @set_color_config(pe_x, pe_y, C_REDUCE_ODD, .{ .routes = ccr_C_WR });
                             @set_color_config(pe_x, pe_y, RXACT_B_ODD, .{ .routes = ccr_B_NR });
@@ -466,8 +465,7 @@ layout{
 
     // export symbol name
     @export_name("A_val", [*]f32, true);
-    @export_name("A_x", [*]f32, true);
-    @export_name("A_y", [*]f32, true);
+    @export_name("A_indices", [*]f32, true);
     @export_name("B", [*]f32, true);
     @export_name("C", [*]f32, true);
     @export_name("time_memcpy", [*]f32, true);

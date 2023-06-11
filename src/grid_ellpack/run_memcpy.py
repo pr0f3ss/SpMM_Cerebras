@@ -21,9 +21,7 @@
    Last column has the result A*B = C from its rows.
 
    To simplify the example, the dimensions N and K are divisible by height and width respectively.
-   A function 'spmm_csc_f32' is used to compute C=A*B using the CSC grid format.
-   This function is imported as a module via spmm_csc.csl.
-   The arrays A_val, A_row_idx, A_col_ptr, B, C are passed into the function as pointers.
+   In a PE we compute C=A*B using the grid Ellpack format.
 
    The matrix B is distributed into columns. The first row receives B from the fabric,
    then broadcasts B into other rows.
@@ -56,24 +54,6 @@ BENCHMARKS_DIR = os.path.dirname(RESIDUAL_DIR)
 CSL_DIR = os.path.dirname(BENCHMARKS_DIR)
 CSLC = os.path.join(CSL_DIR, "build") + "/bin/cslc"
 
-def split_matrix_into_grids(matrix, Nt, Kt):
-    N, K = matrix.shape
-    submatrices = []
-    for i in range(0, N, Nt):
-        for j in range(0, K, Kt):
-            submatrix = matrix[i:i+Nt, j:j+Kt].flatten()
-            submatrices.append(submatrix)
-    return np.array(submatrices)
-
-
-def float_to_hex(f):
-  return hex(struct.unpack('<I', struct.pack('<f', f))[0])
-
-def make_u48(words):
-  return words[0] + (words[1] << 16) + (words[2] << 32)
-
-def sub_ts(words):
-      return make_u48(words[3:]) - make_u48(words[0:3])
 
 def cast_uint32(x):
   if isinstance(x, (np.float16, np.int16, np.uint16)):
@@ -86,7 +66,14 @@ def cast_uint32(x):
 
   raise RuntimeError(f"type of x {type(x)} is not supported")
 
+def float_to_hex(f):
+  return hex(struct.unpack('<I', struct.pack('<f', f))[0])
 
+def make_u48(words):
+  return words[0] + (words[1] << 16) + (words[2] << 32)
+
+def sub_ts(words):
+      return make_u48(words[3:]) - make_u48(words[0:3])
 
 def parse_args():
   """ parse the command line """
@@ -99,7 +86,7 @@ def parse_args():
   parser.add_argument("-M", type=int,
                       help="number of columns of the matrix B and C.")
   parser.add_argument("-A_prefix", type=str,
-                      help="prefix of all three grid csc files")
+                      help="prefix of all two grid ellpack grid files")
   parser.add_argument("-file_dir", type=str,
                       help="directory for vectors")
   parser.add_argument("-width", type=int,
@@ -162,6 +149,7 @@ def csl_compile(
     compile_flag: bool,
     arch: Optional[str],
     LAUNCH: int,
+    A_len: int,
     M: int,
     Nt: int,
     Kt: int,
@@ -180,7 +168,7 @@ def csl_compile(
     args.append(f"--fabric-dims={fabric_width},{fabric_height}") # options
     args.append(f"--fabric-offsets={core_fabric_offset_x},{core_fabric_offset_y}") # options
     args.append(f"--params=width:{width},height:{height}") # options
-    args.append(f"--params=Nt:{Nt}, Kt:{Kt}, M:{M}") # options
+    args.append(f"--params=Nt:{Nt}, Kt:{Kt}, M:{M}, A_len:{A_len}") # options
 
     args.append(f"--params=LAUNCH_ID:{LAUNCH}") # options
 
@@ -250,18 +238,42 @@ def main():
 
   print(f"N = {N}, K = {K}, M = {M}, width = {width}, height = {height}")
 
+  # Calculate alignment and padding to avoid bank conflicts
+  align = 16
+  multiple = int(align/4)
+  padded_M = math.ceil((M+1)/multiple)*multiple
+
   # Use this for reference solution
   A_dense_format = file_dir+A_prefix+".csv"
-  A = np.genfromtxt(A_dense_format, delimiter=",", dtype=np.float32).reshape(N, K)
+  A_dense = np.genfromtxt(A_dense_format, delimiter=",", dtype=np.float32)
+
+  A_val_file = file_dir+A_prefix+"_val_pad.csv"
+  A_indices_file = file_dir+A_prefix+"_indices_pad.csv"
+
+  # Read in
+  A_val = np.genfromtxt(A_val_file, delimiter=",", dtype=np.float32)
+  A_indices = np.genfromtxt(A_indices_file, delimiter=",", dtype=np.int32)
+
+  # Get lengths
+  A_len = A_val.shape[1]
+  print("A_len:")
+  print(A_len)
 
   np.random.seed(2)
-  
   B = np.arange(K*M).reshape(K, M).astype(np.float32) + 100
 
-  C_ref = np.matmul(A, B)
+  C_ref = np.matmul(A_dense, B)
   print(f"C_ref = {C_ref}")
-  print(f"A = {A}")
+
   print(f"B = {B}")
+
+  # Set up the actual B data:
+  # Now insert additional columns to make it divisible by the alignment
+  num_zero_columns = padded_M - M 
+  padded_B = np.pad(B, [(0, 0), (0, num_zero_columns)], mode='constant')
+
+  print(f"padded B = {padded_B}")
+
   # prepare the simulation
 
   # core dump after execution is complete
@@ -312,6 +324,7 @@ def main():
       args.compile,
       args.arch,
       LAUNCH,
+      A_len,
       M,
       Nt,
       Kt,
@@ -327,12 +340,14 @@ def main():
 
   simulator = SdkRuntime(args.name, cmaddr=args.cmaddr)
 
-  symbol_A = simulator.get_id("A")
+  symbol_A_val = simulator.get_id("A_val")
+  symbol_A_indices = simulator.get_id("A_indices")
   symbol_B = simulator.get_id("B")
   symbol_C = simulator.get_id("C")
   symbol_time_memcpy = simulator.get_id("time_memcpy")
 
-  print(f"symbol_A = {symbol_A}")
+  print(f"symbol_A_val = {symbol_A_val}")
+  print(f"symbol_A_indices = {symbol_A_indices}")
   print(f"symbol_x = {symbol_B}")
   print(f"symbol_C= {symbol_C}")
 
@@ -341,15 +356,16 @@ def main():
 
   num_PE = width*height
 
-  A_prep = split_matrix_into_grids(A, Nt, Kt).reshape(height,width, Nt*Kt)
+  # iport maps for A arrays are derived from Leighton's advice
+  iportmap_A_val = f"{{ A_val[i=0:{num_PE*Nt-1}][j=0:{A_len-1}] -> [PE[(i // {Nt}) // {width}, i // {Nt*width}] -> index[i % {Nt}, j]] }}"
+  print(f"iportmap_A_val = {iportmap_A_val}")
 
-  # derived from Residual example code
-  iportmap_A = f"{{ A_prep[i=0:{height-1}][j=0:{width-1}][k=0:{Nt*Kt-1}] -> [PE[j, i] ->  index[k]] }}"
-  print(f"iportmap_A = {iportmap_A}")
+  iportmap_A_indices = f"{{ A_indices[i=0:{num_PE*Nt-1}][j=0:{A_len-1}] -> [PE[(i // {Nt}) // {width}, i // {Nt*width}] -> index[i % {Nt}, j]] }}"
+  print(f"iportmap_A_x = {iportmap_A_indices}")
 
   # B distributes to {py = 0}
   # derived from Residual example code
-  iportmap_B = f"{{ B[i=0:{K-1}][j=0:{M-1}] -> [PE[i//{Kt}, 0] ->  index[i%{Kt}, j]] }}"
+  iportmap_B = f"{{ padded_B[i=0:{K-1}][j=0:{padded_M-1}] -> [PE[i//{Kt}, 0] ->  index[i%{Kt}, j]] }}"
   print(f"iportmap_B = {iportmap_B}")
 
   # C is gathered from P1.0 and P1.1
@@ -357,23 +373,35 @@ def main():
   # C's size in each PE is Nt*M
   # (Remember: Nt = N // height)
   # Total size: height * Nt * M = N * M 
-  oportmap_C = f"{{ C[n = 0:{N*M-1}] -> [PE[{width-1}, n // {Nt*M}] -> index[n % {Nt*M}]] }}"
+  oportmap_C = f"{{ C[n = 0:{N*padded_M-1}] -> [PE[{width-1}, n // {Nt*padded_M}] -> index[n % {Nt*padded_M}]] }}"
   print(f"oportmap_C = {oportmap_C}")
 
   # prepare all of A and B via memcpy
   # use the runtime_utils library to calculate memcpy args and shuffle data
+  # (px, py, w, h, l, data) = runtime_utils.convert_input_tensor(iportmap_A_val, A_val)
+  print("Nt:")
+  print(Nt)
+  l = Nt*A_len
+  print(l)
+  data_val = A_val.view(dtype=np.int32).flatten()
+  print(A_val.flatten())
+  simulator.memcpy_h2d(symbol_A_val, data_val, 0, 0, width, height, l,
+                     streaming=False, data_type=memcpy_dtype, nonblock=False,
+                     order=memcpy_order)
+  
+  #(px, py, w, h, l, data) = runtime_utils.convert_input_tensor(iportmap_A_indices, A_x)
+  data_indices = A_indices.view(dtype=np.int32).flatten()
+  simulator.memcpy_h2d(symbol_A_indices, data_indices, 0, 0, width, height, l,
+                     streaming=False, data_type=memcpy_dtype, nonblock=False,
+                     order=memcpy_order)
 
-  (px, py, w, h, l, data) = runtime_utils.convert_input_tensor(iportmap_B, B)
+  (px, py, w, h, l, data) = runtime_utils.convert_input_tensor(iportmap_B, padded_B)
   simulator.memcpy_h2d(symbol_B, data, px, py, w, h, l,
                      streaming=False, data_type=memcpy_dtype, nonblock=False,
                      order=memcpy_order)
 
-  (px, py, w, h, l, data) = runtime_utils.convert_input_tensor(iportmap_A, A_prep)
-  simulator.memcpy_h2d(symbol_A, data, px, py, w, h, l,
-                     streaming=False, data_type=memcpy_dtype, nonblock=False,
-                     order=memcpy_order)
-
   simulator.call("bcast_B", [], nonblock=False)
+
 
   # receive C from P1.1 and P1.0
   # use the runtime_utils library to calculate memcpy args and manage output data
@@ -385,7 +413,8 @@ def main():
   C_cs = runtime_utils.format_output_tensor(oportmap_C, np.float32, data)
 
   # Reshape back to original state
-  C_cs = np.reshape(C_cs, (N, M))
+  C_cs = np.reshape(C_cs, (N, padded_M))
+  C_cs = C_cs[:, :-(padded_M-M)]
 
   # Copy back timestamps
   data = np.zeros((width*height*3, 1), dtype=np.float32)
@@ -428,13 +457,13 @@ def main():
   # Calculate bandwidth
   #####################
 
-  # Iterate over Kt: Read A column -> Iterate over M: Read C column and read one element
-  # = 4*Kt*(Nt+M*(Nt+1))
-  # For absolute accesses also include writes to C and additional A read inside M loop = 4*Kt*(Nt+M*(3*Nt+1))
+  # Read full A_indices, A_val = Nt*A_len * (2) 
+  # For every elem in A_val read row in B and C = Nt*A_len * (2*M)
+  # For absolute accesses also include writes to C = Nt*A_val * (3*M)
 
-  total_relative_accesses = width * height * (4*Kt*(Nt+M*(Nt+1)))
-  total_absolute_accesses = width * height * (4*Kt*(Nt+M*(3*Nt+1)))
-  total_flop = width * height * (Kt*M*2*Nt)
+  total_relative_accesses = width * height * (4*Nt*A_len*(2+padded_M*2))
+  total_absolute_accesses = width * height * (4*Nt*A_len*(2+padded_M*3))
+  total_flop = width * height * (Nt*A_len*2*padded_M)
 
   #################
   # Generate output
@@ -452,10 +481,10 @@ def main():
   print()
 
   # Write a CSV
-  csv_name = f"GEMM_benchmark" + ".csv"
+  csv_name = f"ELLPACK_benchmark" + ".csv"
   with open(csv_name, mode='a') as csv_file:
     csv_writer = csv.writer(csv_file)
-    csv_writer.writerow([width, height, N, K, M, avg_cycles, min_cycles, max_cycles,
+    csv_writer.writerow([width, height, N, K, padded_M, avg_cycles, min_cycles, max_cycles,
       total_relative_accesses, total_absolute_accesses,  total_flop])
 
   if args.cmaddr is None:

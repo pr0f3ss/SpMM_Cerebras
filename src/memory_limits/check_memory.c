@@ -304,7 +304,7 @@ void retrieve_to_grid_csr_grid_params(double* matrix, int n, int m, int Px, int 
  * @param Py grid dimension row
  * @param A_len Largest A_len of any submatrix 
  */
-void retrieve_grid_custom_grid_params(double* matrix, int n, int m, int Px, int Py, int* A_len){
+void retrieve_grid_coo_grid_params(double* matrix, int n, int m, int Px, int Py, int* A_len){
 
     int grid_col_idx;
     int grid_row_idx;
@@ -488,7 +488,7 @@ int main(int argc, char **argv)
             break;
         case 2:
             // Retrieve grid Custom
-            retrieve_grid_custom_grid_params(gen, height, width, grid_width, grid_height, &A_len);
+            retrieve_grid_coo_grid_params(gen, height, width, grid_width, grid_height, &A_len);
             printf("%d\n", A_len);
             break;
         case 3:

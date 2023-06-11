@@ -24,4 +24,4 @@ cslc ./layout.csl --fabric-dims=757,996 --fabric-offsets=4,1 --params=width:$gri
 
 echo "Running simulator now!"
 
-cs_python run_memcpy.py --name out -N=$A_height -K=$A_width -M=$M_width -A_prefix="tmp" -file_dir=$file_dir -width=$grid_width -height=$grid_height
+cs_python run_memcpy.py --name out -N=$A_height -K=$A_width -M=$M_width -A_prefix="tmp" -file_dir=$file_dir -width=$grid_width -height=$grid_height -density=$A_density

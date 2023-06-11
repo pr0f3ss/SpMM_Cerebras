@@ -19,11 +19,12 @@
 /src/*/simfab_traces/*
 /src/*/out/*
 
-/src/*/test_vectors/*
+/src/*/test_vectors
 /src/memory_limits/mat_*
 
-/src/grid_csc_padshift/CSC_*
-/src/grid_csr_padshift/CSR_*
-/src/grid_custom_padshift/COO_*
-/src/grid_ellpack_padshift/ELLPACK_*
-/src/gemm_padshift/CSC_*
+/src/grid_csc/CSC_*
+/src/grid_csr/CSR_*
+/src/grid_coo/COO_*
+/src/grid_ellpack/ELLPACK_*
+/src/gemm/CSC_*
+/src/gemm/GEMM_*

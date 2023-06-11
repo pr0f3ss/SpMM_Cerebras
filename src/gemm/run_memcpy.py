@@ -103,6 +103,8 @@ def parse_args():
                       help="width of PEs")
   parser.add_argument("-height", type=int,
                       help="height of PEs")
+  parser.add_argument("-density", type=int,
+                      help="density of A in percent")
   parser.add_argument(
       "--cslc",
       required=False,
@@ -235,6 +237,11 @@ def main():
     file_dir = args.file_dir
   else:
     file_dir = "test_vectors/"
+
+  if args.density is not None:
+    density = args.density
+  else:
+    density = 100
 
   Nt = N // height
   Kt= K // width
@@ -452,7 +459,7 @@ def main():
   csv_name = f"GEMM_benchmark" + ".csv"
   with open(csv_name, mode='a') as csv_file:
     csv_writer = csv.writer(csv_file)
-    csv_writer.writerow([width, height, N, K, M, avg_cycles, min_cycles, max_cycles,
+    csv_writer.writerow([width, height, N, K, M, density, avg_cycles, min_cycles, max_cycles,
       total_relative_accesses, total_absolute_accesses,  total_flop])
 
   if args.cmaddr is None:

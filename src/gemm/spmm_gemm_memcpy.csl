@@ -167,8 +167,7 @@ fn transformation(a_value : f32, b_value : f32, c_value : f32) f32 {
 // All PEs compute local A*B after A and B are received
 task f_comp() void {
 
-    tsc.enable_tsc();
-    tsc.get_timestamp(&tscStartBuffer);
+    
     // if we are in row inbetween, send over B to south
     if(0 < _py and _py < height-1 ){
         // Todo: see if async works here or if we have to assign a new task+color for a separate microthread
@@ -176,6 +175,9 @@ task f_comp() void {
         // They can overlap for 2x2 because they are not used simultaneously in a PE
         @fmovs(fab_trans_B_wdsd, mem_B_buf_dsd);
     }
+
+    tsc.enable_tsc();
+    tsc.get_timestamp(&tscStartBuffer);
 
     // Do an fmacs based local GEMM
     var A_dsd  = @get_dsd(mem1d_dsd, .{ .tensor_access = |i|{Nt} -> A[i*Kt] });

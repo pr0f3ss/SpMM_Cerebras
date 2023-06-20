@@ -14,22 +14,23 @@ def main():
     # Set plot data
     height = 768
     width = 768
+    density = 30
 
     # set general plot information
     type = "apwp"
     figtext = "Cerebras WSE-2"
     xlabel = "I(n) [flops/byte]"
     ylabel = "P(n) [flops/cycle]"
-    title = f"Performance of SpMM and GEMM implementations"
-    savefile = f"figures/test.png"
+    title = f"Performance of SpMM and GeMM implementations with {100 - density}% sparsity."
+    savefile = f"figures/roofline_{100-density}.png"
     ax = plt.gca()
 
     # initialize plot
-    plt.xlabel(xlabel)
-    plt.ylabel(ylabel, rotation="horizontal", labelpad=0, alpha=0.75)
+    plt.xlabel(xlabel, loc="center")
+    plt.ylabel(ylabel, rotation="horizontal", labelpad=0, alpha=0.75, loc="top")
     ax.yaxis.set_label_coords(0.1, 1.015)
     plt.figtext(0.73, 0.895, figtext, alpha=0.75)
-    plt.title(title, x=1.1, y=1.06, loc="right")
+    plt.title(title, y=1.06, loc="center")
 
     # retrieve dataset
     filepath_gemm = "../benchmarks/GEMM_benchmark.csv"
@@ -39,10 +40,19 @@ def main():
     filepath_ellpack = "../benchmarks/ELLPACK_benchmark.csv"
 
     df_gemm  = pd.read_csv(filepath_gemm)
+    df_gemm = df_gemm[df_gemm["density"] == 100]
+
     df_coo = pd.read_csv(filepath_coo)
+    df_coo = df_coo[df_coo["density"] == density]
+
     df_csc = pd.read_csv(filepath_csc)
+    df_csc = df_csc[df_csc["density"] == density]
+
     df_csr = pd.read_csv(filepath_csr)
+    df_csr = df_csr[df_csr["density"] == density]
+
     df_ellpack = pd.read_csv(filepath_ellpack) 
+    df_ellpack = df_ellpack[df_ellpack["density"] == density]
 
     # GEMM data
     gemm_flops = df_gemm["total_flops"]
@@ -59,8 +69,6 @@ def main():
 
     x2 = coo_flops / coo_bytes
     y2 = coo_flops / coo_cycles
-
-    print(x2)
 
     # CSC data
     csc_flops = df_csc["total_flops"]
@@ -85,6 +93,9 @@ def main():
 
     x5 = ellpack_flops / ellpack_bytes
     y5 = ellpack_flops / ellpack_cycles
+
+    print(x5)
+    print(y5)
 
     # # plot data
     fmt1 = "-v"
@@ -117,6 +128,7 @@ def main():
 
     # Set limits
     plt.xlim([0.15, 0.17])
+    plt.ylim([0.425, 2.1])
 
     # save
     plt.savefig(savefile, bbox_inches='tight', format='png')

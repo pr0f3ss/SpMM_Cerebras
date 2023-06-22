@@ -331,7 +331,7 @@ def main():
             grid_width_list = [i for i in range(1, AVAIL_WIDTH) if K % i == 0]
             zipped = list(itertools.product(grid_height_list,grid_width_list))
 
-            for M in tqdm([32, 64, 128, 256, 512], leave=False):
+            for M in tqdm([32, 64, 128, 256, 512, 768, 1024, 2048, 4096], leave=False):
 
                 # [IMPORTANT]: Change which format is used here:
                 # Options:
@@ -347,6 +347,9 @@ def main():
 
                 # Get configs that fit in a PE
                 configs = [(mem_used[i], grid_height_list[i], grid_width_list[i], (N/grid_height_list[i])*(K/grid_width_list[i]), int(M)) for i in range(len(grid_width_list)) if mem_used[i] < MEM-RESERVED]
+                
+                if(len(configs) == 0):
+                    continue
                 best_config = sorted(configs, key=itemgetter(0))[-1]
                 mem_max = best_config[0]
 
@@ -358,9 +361,15 @@ def main():
 
 
             # Sort by Nt x Kt first (4th element) and extract highest amount
-            max_ntkt = sorted(output, key=itemgetter(3))[-1][3]
-            # Extract all configs with highest Nt x Kt
-            ntkt_config = [c for c in output if max_ntkt==c[3]]
+            # max_ntkt = sorted(output, key=itemgetter(3))[-1][3]
+            # Extract all configs with high enough non-zeroes
+            BOUND = 64
+            dens_perc = density/100
+            #print(output)
+            ntkt_config = [c for c in output if BOUND<=(c[3]*dens_perc)]
+            #print(" ")
+            #print(len(ntkt_config))
+
             # Sort by memory used and choose largest
             best_config = sorted(ntkt_config, key=itemgetter(0))[-1]
             mem_max = best_config[0]

@@ -3,12 +3,12 @@
 set -x
 set -e
 
-A_heights=(16)
-A_widths=(16)
-A_densities=(100)
-grid_h=(2)
-grid_w=(2)
-M_w=(32)
+A_heights=(16 32 30 28)
+A_widths=(16 32 30 15)
+A_densities=(20 30 5 10)
+grid_h=(4 2 5 7)
+grid_w=(4 4 5 3)
+M_w=(32 31 30 29)
 
 # Remove test directories
 rm -rf ../gemm/test_vectors

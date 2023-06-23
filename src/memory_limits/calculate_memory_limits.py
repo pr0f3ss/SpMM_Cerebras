@@ -340,7 +340,8 @@ def main():
                 # memory_used_csr
                 # memory_used_ellpack
                 # memory_used_gemm
-                mem_used = [memory_used_coo(int(N/h), int(K/w), M, density, w, h) for (h,w) in zipped]
+                # If GEMM is used, comment out lines 364-366 and comment lines 370-372!
+                mem_used = [memory_used_ellpack(int(N/h), int(K/w), M, density, w, h) for (h,w) in zipped]
 
                 grid_height_list = [x[0] for x in zipped]
                 grid_width_list = [x[1] for x in zipped]
@@ -359,16 +360,16 @@ def main():
                     if mem_max - (mem_max*0.05) < mem:
                         output.append((mem, config[1], config[2], config[3], config[4]))
 
-
+            ############################ GEMM #################################
             # Sort by Nt x Kt first (4th element) and extract highest amount
             # max_ntkt = sorted(output, key=itemgetter(3))[-1][3]
+            # ntkt_config = [c for c in output if c[3]==max_ntkt]
+
+            ############################ SpMM #################################
             # Extract all configs with high enough non-zeroes
             BOUND = 64
             dens_perc = density/100
-            #print(output)
             ntkt_config = [c for c in output if BOUND<=(c[3]*dens_perc)]
-            #print(" ")
-            #print(len(ntkt_config))
 
             # Sort by memory used and choose largest
             best_config = sorted(ntkt_config, key=itemgetter(0))[-1]

@@ -18,6 +18,8 @@
 
 /src/*/simfab_traces/*
 /src/*/out/*
+/src/*/wio_flow.json
+/src/*/simconfig.json
 
 /src/*/test_vectors
 /src/memory_limits/mat_*
@@ -28,3 +30,4 @@
 /src/grid_ellpack/ELLPACK_*
 /src/gemm/CSC_*
 /src/gemm/GEMM_*
+

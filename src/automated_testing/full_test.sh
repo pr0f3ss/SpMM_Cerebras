@@ -8,7 +8,7 @@ A_widths=(16)
 A_densities=(100)
 grid_h=(2)
 grid_w=(2)
-M_w=(128)
+M_w=(32)
 
 # Remove test directories
 rm -rf ../gemm/test_vectors

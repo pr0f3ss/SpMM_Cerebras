@@ -5,10 +5,17 @@ set -e
 
 A_heights=(16)
 A_widths=(16)
-A_densities=(15)
+A_densities=(100)
 grid_h=(2)
-grid_w=(4)
-M_w=(32)
+grid_w=(2)
+M_w=(128)
+
+# Remove test directories
+rm -rf ../gemm/test_vectors
+rm -rf ../grid_csc/test_vectors
+rm -rf ../grid_csr/test_vectors
+rm -rf ../grid_coo/test_vectors
+rm -rf ../grid_ellpack/test_vectors
 
 testlen=${#A_heights[@]}
 

@@ -189,7 +189,7 @@ task f_comp() void {
 
     // Set up DSRs from DSDs
     var B_dsd  = @get_dsd(mem1d_dsd, .{ .tensor_access = |i|{padded_M} -> B[i] });
-    var C_dsd  = @get_dsd(mem1d_dsd, .{ .tensor_access = |i|{padded_M} -> C[i+1] });
+    var C_dsd  = @get_dsd(mem1d_dsd, .{ .tensor_access = |i|{padded_M} -> C[i] });
 
     const B_dsr = @get_dsr(dsr_src1, 0);
     const C_dsr = @get_dsr(dsr_src0, 1);
@@ -222,7 +222,7 @@ task f_comp() void {
 
             // Set base address to the rows we need
             @set_dsr_base_addr(B_dsr, @ptrcast([*]f32, &(B[padded_M*a_i])));
-            @set_dsr_base_addr(C_dsr, @ptrcast([*]f32, &(C[padded_M*a_j])));
+            @set_dsr_base_addr(C_dsr, @ptrcast([*]f32, &(C[padded_M*a_j+1])));
 
             @fmacs(C_dsr, C_dsr, B_dsr, a);
         }

@@ -421,7 +421,7 @@ def main():
 
   # Reshape back to original state
   C_cs = np.reshape(C_cs, (N, padded_M))
-  C_cs = C_cs[:, :-(padded_M-M)]
+  C_cs = C_cs[:, 1:-(padded_M-1-M)] if padded_M-1!=M else C_cs[:, 1:]
 
   # Copy back timestamps
   data = np.zeros((width*height*3, 1), dtype=np.float32)

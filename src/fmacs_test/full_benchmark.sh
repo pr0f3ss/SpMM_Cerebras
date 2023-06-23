@@ -8,7 +8,7 @@ A_widths=(2)
 A_densities=(100)
 grid_h=(2)
 grid_w=(2)
-M_w=(5120)
+M_w=(1024)
 
 for (( i=0; i<1; i++ ));
 do

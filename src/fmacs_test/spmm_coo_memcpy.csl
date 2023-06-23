@@ -130,7 +130,7 @@ const fab_recv_B_wdsd = @get_dsd(fabin_dsd, .{
     .extent = _SIZE_B,
     .fabric_color = RXACT_B,
     .input_queue = @get_input_queue(0),
-    .simd_mode = .{ .simd_64 = true }
+    .simd_mode = .{ .simd_64 = true },
 });
 
 // Sending B
@@ -138,7 +138,7 @@ const fab_trans_B_wdsd = @get_dsd(fabout_dsd, .{
     .extent = _SIZE_B,
     .fabric_color = TXACT_B,
     .output_queue = 1,
-    .simd_mode = .{ .simd_64 = true }
+    .simd_mode = .{ .simd_64 = true },
 });
 
 // C buffer
@@ -149,7 +149,7 @@ const fab_recv_C_wdsd = @get_dsd(fabin_dsd, .{
     .extent = _SIZE_C,
     .fabric_color = RXACT_C,
     .input_queue = @get_input_queue(2),
-    .simd_mode = .{ .simd_64 = true }
+    .simd_mode = .{ .simd_64 = true },
 });
 
 // Sending C (to right hand side last column PE)
@@ -157,7 +157,7 @@ const fab_trans_C_wdsd = @get_dsd(fabout_dsd, .{
     .extent = _SIZE_C,
     .fabric_color = TXACT_C,
     .output_queue = 3,
-    .simd_mode = .{ .simd_64 = true }
+    .simd_mode = .{ .simd_64 = true },
 });
 
 
@@ -174,8 +174,8 @@ task f_comp() void {
         @fmovs(fab_trans_B_wdsd, mem_B_buf_dsd, .{.async=true});
     }
 
-    var B_dsd  = @get_dsd(mem1d_dsd, .{ .tensor_access = |i|{padded_M} -> B[i] });
-    var C_dsd  = @get_dsd(mem1d_dsd, .{ .tensor_access = |i|{padded_M} -> C[i+1] });
+    var B_dsd  = @get_dsd(mem1d_dsd, .{ .tensor_access = |i|{padded_M} -> B[i]});
+    var C_dsd  = @get_dsd(mem1d_dsd, .{ .tensor_access = |i|{padded_M} -> C[i+1]});
 
     const B_dsr = @get_dsr(dsr_src1, 0);
     const C_dsr = @get_dsr(dsr_src0, 1);
@@ -183,9 +183,10 @@ task f_comp() void {
     @load_to_dsr(B_dsr, B_dsd);
     @load_to_dsr(C_dsr, C_dsd);
 
-    // Set base address to the rows we need
-    @set_dsr_base_addr(B_dsr, @ptrcast([*]f32, &(B[padded_M*0])));
-    @set_dsr_base_addr(C_dsr, @ptrcast([*]f32, &(C[padded_M*0])));
+    // // Set base address to the rows we need
+    // @set_dsr_base_addr(B_dsr, @ptrcast([*]f32, &(B[padded_M*0])));
+    const as = 2;
+    C_dsd = @get_dsd(mem1d_dsd, .{ .tensor_access = |i|{padded_M} -> C[i+as]});
     
     const a = 2.0;
 

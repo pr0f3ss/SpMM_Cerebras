@@ -14,7 +14,7 @@ def main():
     # Set plot data
     height = 768
     width = 768
-    density = 30
+    density = 20
 
     # set general plot information
     type = "apwp"
@@ -70,6 +70,9 @@ def main():
     x2 = coo_flops / coo_bytes
     y2 = coo_flops / coo_cycles
 
+    print(x2)
+    print(y2)
+
     # CSC data
     csc_flops = df_csc["total_flops"]
     csc_bytes = df_csc["total_absolute_accesses"]
@@ -93,9 +96,6 @@ def main():
 
     x5 = ellpack_flops / ellpack_bytes
     y5 = ellpack_flops / ellpack_cycles
-
-    print(x5)
-    print(y5)
 
     # # plot data
     fmt1 = "-v"
